@@ -2,21 +2,21 @@
 use crate::vec::Vec3;
 
 pub struct Ray {
-    pub origin: Vec3,
-    pub dir: Vec3,
+    pub origin: Vec3, // Origem do raio
+    pub dir: Vec3, // Direção do raio
 }
 
-// função R(t) = p0 + t*d
 impl Ray {
     #[inline]
     #[must_use]
     pub fn new(origin: Vec3, dir: Vec3) -> Ray {
         Ray {
             origin,
-            dir: dir.normalized() // direção do raio (normalizado)
+            dir: dir.normalized() // direção do raio (normalizado, assim t = distância entre origin e R(t))
         }
     }
-
+    
+    // função R(t) = p0 + t*d
     // retorna o ponto P em R(t)
     #[inline]
     #[must_use]

@@ -2,9 +2,9 @@ use crate::vec::Vec3;
 use sdl2::pixels::Color;
 
 pub struct Sphere {
-    pub center: Vec3,
-    pub radius: f32,
-    pub color: Color
+    pub center: Vec3, // Ponto x,y,z do centro da esfera
+    pub radius: f32, // Raio da esfera
+    pub color: Color // Cor da esfera
 }
 
 impl Sphere {
