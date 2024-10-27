@@ -24,6 +24,7 @@ use std::fs;
 //     ((r*255.0) as u8, (g*255.0) as u8, (b*255.0) as u8)
 // }
 
+// salva o canvas como uma imagem .ppm
 fn save_canvas_as_ppm (canvas: &Canvas<Window>) -> Result<(), Box<dyn std::error::Error>> {
     let (w, h) = canvas.output_size()?;
     let pixels: Vec<u8> = canvas.read_pixels(Rect::new(0,0,w,h), PixelFormatEnum::RGB24)?;
@@ -100,6 +101,7 @@ fn main() {
     let mut frame_count = 0; // contador de FPS no terminal
     let mut last_time = Instant::now();
     'running: loop {
+        // eventos de teclado mouse etc
         for event in event_pump.poll_iter() {
             match event {
                 // esc pra sair do programa
