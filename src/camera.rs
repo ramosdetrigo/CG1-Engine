@@ -35,9 +35,8 @@ impl Camera {
         canvas.draw_point(Point::new(px,py)).unwrap();
     }
 
-    // 
+    // desenha uma esfera em um canvas
     pub fn draw_sphere_to_canvas(self, canvas: &mut Canvas<Window>, sphere: &Sphere) {
-        canvas.set_draw_color(sphere.color);
         for row in 0..(self.viewport.rows as i32) { // linhas (eixo y)
             for col in 0..(self.viewport.cols as i32) { // colunas (eixo x)
                 let direction: Vec3 = // direção do raio
@@ -46,39 +45,17 @@ impl Camera {
                     - (row as f32)*self.viewport.dy)
                     - self.pos;
                 
-                // R(t) = p0 + t*direction
-                let ray = Ray::new(self.pos, direction); // cria um raio "atirado" na direção d, partindo de p0
-
-                // Se existe um t real tal que R(t) pertence à borda da esfera, houve colisão.
-                // Resolvendo a equação da esfera obtemos uma equação quadrática, então
-                // só precisamos saber se o delta é positivo.
-                // (C - R(t)) * (C - R(t)) = r²
-                // d*d * t +  -2d*(C - p0) + (C - p0) * (C - p0) - r² = 0
-                // v = (C - p0)
-                // a = d*d
-                // b = -2d*v
-                // c = v*v - r²
-                // delta = b² - 4ac
-                let v: Vec3 = sphere.center - ray.origin;
-                let a: f32 = ray.dir.dot(ray.dir);
-                let b: f32 = (-2.0 * ray.dir).dot(v);
-                let c: f32 = v.dot(v) - sphere.radius*sphere.radius;
-                let delta: f32 = b*b - 4.0*a*c;
-
-                // se o delta é positivo e != 0 (não apenas tangencia a esfera), houve colisão
-                if delta > 0.0 {
-                    let t1 = (-b + delta.sqrt()) / (2.0*a);
-                    let t2 = (-b - delta.sqrt()) / (2.0*a);
-                    // checa se pelo menos um t é positivo (a bola não está atrás do observador)
-                    if t1 > 0.0 || t2 > 0.0 {
-                        let min_t: f32 = if t2 < 0.0 || t1 < t2 {t1} else {t2}; // pega o menor t positivo
-                        let _collision_point = ray.at(min_t); // coordenada do ponto de interseção entre o raio e a esfera
-                        self.draw_pixel_on_canvas(canvas, col, row, sphere.color); // bola na frente do observador, pinta a cor da esfera
-                    } else {
-                        self.draw_pixel_on_canvas(canvas, col, row, self.bg_color); // bola atrás do observador, pinta a cor do background
-                    }
+                let ray = Ray::new(self.pos, direction); // cria um raio partindo de p0 "atirado" na direção d
+                let (intersect, t1, t2) = ray.intersects_sphere(sphere); // checa se o raio intersecta a esfera
+                
+                if intersect && (t1 > 0.0 || t2 > 0.0) {
+                    let min_t = if t2 <= 0.0 || t1 < t2 {t1} else {t2}; // obtém o menor t positivo
+                    let _collision_point = ray.at(min_t);
+                    // bola na frente do observador, pinta a cor da esfera
+                    self.draw_pixel_on_canvas(canvas, col, row, sphere.color);
                 } else {
-                    self.draw_pixel_on_canvas(canvas, col, row, self.bg_color); // não houve interseção, pinta a cor do background
+                    // não houve interseção ou a bola está atrás do observador, pinta a cor do background
+                    self.draw_pixel_on_canvas(canvas, col, row, self.bg_color);
                 }
             }
         }

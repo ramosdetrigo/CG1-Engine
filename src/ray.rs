@@ -1,5 +1,5 @@
 // #![allow(dead_code)]
-use crate::vec::Vec3;
+use crate::{sphere::Sphere, vec::Vec3};
 
 pub struct Ray {
     pub origin: Vec3, // Origem do raio
@@ -20,7 +20,35 @@ impl Ray {
     // retorna o ponto P em R(t)
     #[inline]
     #[must_use]
-    pub fn at(self: Ray, t: f32) -> Vec3 {
+    pub fn at(self, t: f32) -> Vec3 {
         self.origin + t*self.dir
+    }
+
+    pub fn intersects_sphere(&self, sphere: &Sphere) -> (bool, f32, f32) {
+        // Se existe um t real tal que R(t) pertence à borda da esfera, houve colisão.
+        // Resolvendo a equação da esfera obtemos uma equação quadrática,
+        // então só precisamos saber se o delta é positivo.
+        // (C - R(t)) * (C - R(t)) = r²
+        // d*d * t +  -2d*(C - p0) + (C - p0) * (C - p0) - r² = 0
+        // v = (C - p0)
+        // a = d*d
+        // b = -2d*v
+        // c = v*v - r²
+        // delta = b² - 4ac
+        let v: Vec3 = sphere.center - self.origin;
+        let a: f32 = self.dir.dot(self.dir);
+        let b: f32 = (-2.0 * self.dir).dot(v);
+        let c: f32 = v.dot(v) - sphere.radius*sphere.radius;
+        let delta: f32 = b*b - 4.0*a*c;
+        
+        // se o delta é positivo e != 0 (não apenas tangencia a esfera), houve colisão
+        if delta > 0.0 {
+            let t1 = (-b + delta.sqrt()) / (2.0*a);
+            let t2 = (-b - delta.sqrt()) / (2.0*a);
+            return (true, t1, t2);
+        } else {
+            return (false, -1.0, -1.0);
+        }
+
     }
 }   
