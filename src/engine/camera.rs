@@ -1,6 +1,6 @@
-use crate::ray::Ray;
-use crate::sphere::Sphere;
-use crate::vec::Vec3;
+use super::ray::Ray;
+use super::sphere::Sphere;
+use crate::utils::vec::Vec3;
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
 use sdl2::render::Canvas;
@@ -11,7 +11,7 @@ use sdl2::video::Window;
 pub struct Camera {
     pub pos: Vec3, // observador
     pub bg_color: Color,
-    pub viewport: Viewport // janela
+    viewport: Viewport // janela
 }
 
 impl Camera {
@@ -30,13 +30,12 @@ impl Camera {
 
     #[inline]
     // wrapper simples pra desenhar um pixel de cor <color> no ponto (px,py) de um canvas
-    fn draw_pixel_on_canvas(self, canvas:&mut Canvas<Window>, px: i32, py: i32, color: Color) {
+    fn draw_pixel(self, canvas:&mut Canvas<Window>, px: i32, py: i32, color: Color) {
         canvas.set_draw_color(color);
         canvas.draw_point(Point::new(px,py)).unwrap();
     }
 
-    // desenha uma esfera em um canvas
-    pub fn draw_sphere_to_canvas(self, canvas: &mut Canvas<Window>, sphere: &Sphere) {
+    pub fn draw_sphere(&self, canvas: &mut Canvas<Window>, sphere: &Sphere) {
         for row in 0..(self.viewport.rows as i32) { // linhas (eixo y)
             for col in 0..(self.viewport.cols as i32) { // colunas (eixo x)
                 let direction: Vec3 = // direção do raio
@@ -52,10 +51,10 @@ impl Camera {
                     let min_t = if t2 <= 0.0 || t1 < t2 {t1} else {t2}; // obtém o menor t positivo
                     let _collision_point = ray.at(min_t);
                     // bola na frente do observador, pinta a cor da esfera
-                    self.draw_pixel_on_canvas(canvas, col, row, sphere.color);
+                    self.draw_pixel(canvas, col, row, sphere.color);
                 } else {
                     // não houve interseção ou a bola está atrás do observador, pinta a cor do background
-                    self.draw_pixel_on_canvas(canvas, col, row, self.bg_color);
+                    self.draw_pixel(canvas, col, row, self.bg_color);
                 }
             }
         }
@@ -64,9 +63,9 @@ impl Camera {
 
 
 #[allow(dead_code)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 // Janela através a qual o observador vai olhar
-pub struct Viewport {
+struct Viewport {
     pub pos: Vec3, // posição do Viewport (vai sempre estar em p0 - (0,0,d))
     pub width: f32, pub height: f32, // largura x altura do quadro (em metros)
     pub cols: u32, pub rows: u32, // número de colunas e linhas do quadro (praticamente a resolução)

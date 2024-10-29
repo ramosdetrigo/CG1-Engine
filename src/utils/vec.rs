@@ -1,6 +1,6 @@
 use std::ops::{Add, Mul, Div, Sub};
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 /// Vetor x,y,z (f32)
 pub struct Vec3 {
     pub x: f32,

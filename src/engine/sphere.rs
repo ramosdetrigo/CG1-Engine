@@ -1,6 +1,8 @@
-use crate::vec::Vec3;
+use crate::utils::vec::Vec3;
 use sdl2::pixels::Color;
+// use core::borrow::Borrow;
 
+#[derive(PartialEq, Debug)]
 pub struct Sphere {
     pub center: Vec3, // Ponto x,y,z do centro da esfera
     pub radius: f32, // Raio da esfera

@@ -1,11 +1,9 @@
-mod camera;
-mod sphere;
-mod ray;
-mod vec;
+mod engine;
+mod utils;
 
-use camera::Camera;
-use sphere::Sphere;
-use vec::Vec3;
+use engine::camera::Camera;
+use engine::sphere::Sphere;
+use utils::vec::Vec3;
 use sdl2::keyboard::Keycode;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
@@ -70,13 +68,13 @@ fn main() {
     );
 
     let mut sphere = Sphere::new(
-        sphere_center,
-        sphere_radius,
-        sphere_color
+            sphere_center,
+            sphere_radius,
+            sphere_color
     );
 
 
-    // Main render loop
+    // Initializing SDL
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let mut event_pump = sdl_context.event_pump().unwrap(); // cuida dos eventos como teclado mouse etc.
@@ -87,13 +85,9 @@ fn main() {
         .build()
         .unwrap();
     let mut canvas = window.into_canvas().build().unwrap(); // o canvas que a gente vai usar pra desenhar
-    
-    // a janela no computador vai ter um tamanho maior,
-    // mas o canvas ainda é do tamanho da "grade" da câmera.
-    // (isso funciona como praticamente um "upscaling")
-    canvas.set_logical_size(image_width, image_height).unwrap();
+    canvas.set_logical_size(image_width, image_height).unwrap(); // pra fazer upscaling do canvas
 
-    camera.draw_sphere_to_canvas(&mut canvas, &sphere); // desenha a esfera na tela ;)
+    camera.draw_sphere(&mut canvas, &sphere); // desenha a esfera na tela ;)
     save_canvas_as_ppm(&canvas).unwrap(); // salva o que foi desenhado no canvas como uma imagem .ppm
     canvas.present(); // apresenta o canvas na tela do computador (isso também limpa o canvas)
     
@@ -116,14 +110,14 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::S), .. } => { sphere.center.z += 0.1; }
                 // espaço pra salvar a imagem atual do canvas como .ppm
                 Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => {
-                    camera.draw_sphere_to_canvas(&mut canvas, &sphere);
+                    camera.draw_sphere(&mut canvas, &sphere);
                     save_canvas_as_ppm(&canvas).unwrap();
                 }
                 _ => {}
             }
         }
 
-        camera.draw_sphere_to_canvas(&mut canvas, &sphere); // desenha a esfera na tela ;)
+        camera.draw_sphere(&mut canvas, &sphere);
         canvas.present(); // joga o que foi desenhado no canvas na janela do computador (isso também limpa o canvas)
         
         frame_count += 1;
