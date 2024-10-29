@@ -3,6 +3,7 @@ mod utils;
 
 use engine::camera::Camera;
 use engine::light_source::LightSource;
+use engine::scene::Scene;
 use engine::sphere::Sphere;
 use utils::vec::Vec3;
 use sdl2::keyboard::Keycode;
@@ -71,18 +72,9 @@ fn main() {
         bg_color // cor do background
     );
 
-    let mut sphere = Sphere::new(
-        sphere_center,
-        sphere_radius,
-        sphere_color
-    );
-
-    let mut light = LightSource::new(
-        light_pos,
-        light_color,
-        light_intensity
-    );
-
+    let sphere = Sphere::new( sphere_center, sphere_radius, sphere_color );
+    let light = LightSource::new( light_pos, light_color, light_intensity );
+    let scene = Scene::new(sphere, light);
 
     // Inicializando SDL
     let sdl_context = sdl2::init().unwrap();
@@ -97,7 +89,7 @@ fn main() {
     let mut canvas = window.into_canvas().build().unwrap(); // o canvas que a gente vai usar pra desenhar
     canvas.set_logical_size(image_width, image_height).unwrap(); // pra fazer upscaling do canvas
 
-    camera.draw_sphere(&mut canvas, &sphere); // desenha a esfera na tela ;)
+    camera.draw_scene(&mut canvas, &scene); // desenha a esfera na tela ;)
     save_canvas_as_ppm(&canvas).unwrap(); // salva o que foi desenhado no canvas como uma imagem .ppm
     canvas.present(); // apresenta o canvas na tela do computador (isso também limpa o canvas)
     
@@ -112,22 +104,22 @@ fn main() {
                 Event::Quit{ .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
                 // muda a posição da bola em 10cm pra cada lado pelas setas do teclado
                 // setas = eixos x,y // W,S = eixo z
-                Event::KeyDown { keycode: Some(Keycode::RIGHT), .. } => { sphere.center.x += 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::LEFT), .. } => { sphere.center.x -= 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::UP), .. } => { sphere.center.y += 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { sphere.center.y -= 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::W), .. } => { sphere.center.z -= 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::S), .. } => { sphere.center.z += 0.1; }
+                // Event::KeyDown { keycode: Some(Keycode::RIGHT), .. } => { sphere.center.x += 0.1; }
+                // Event::KeyDown { keycode: Some(Keycode::LEFT), .. } => { sphere.center.x -= 0.1; }
+                // Event::KeyDown { keycode: Some(Keycode::UP), .. } => { sphere.center.y += 0.1; }
+                // Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { sphere.center.y -= 0.1; }
+                // Event::KeyDown { keycode: Some(Keycode::W), .. } => { sphere.center.z -= 0.1; }
+                // Event::KeyDown { keycode: Some(Keycode::S), .. } => { sphere.center.z += 0.1; }
                 // espaço pra salvar a imagem atual do canvas como .ppm
                 Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => {
-                    camera.draw_sphere(&mut canvas, &sphere);
+                    camera.draw_scene(&mut canvas, &scene);
                     save_canvas_as_ppm(&canvas).unwrap();
                 }
                 _ => {}
             }
         }
 
-        camera.draw_sphere(&mut canvas, &sphere);
+        camera.draw_scene(&mut canvas, &scene);
         canvas.present(); // joga o que foi desenhado no canvas na janela do computador (isso também limpa o canvas)
         
         frame_count += 1;

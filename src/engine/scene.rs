@@ -4,8 +4,8 @@ use super::light_source::LightSource;
 
 // #[derive(Clone, PartialEq, Debug)]
 pub struct Scene {
-    sphere: Sphere,
-    light: LightSource
+    pub sphere: Sphere,
+    pub light: LightSource
 }
 
 impl Scene {

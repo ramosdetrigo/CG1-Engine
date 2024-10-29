@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Div, Sub};
+use std::ops::{Add, Mul, Div, Sub, Neg};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 /// Vetor x,y,z (f32)
@@ -95,6 +95,18 @@ impl Div<f32> for Vec3 {
             x: self.x / rhs,
             y: self.y / rhs,
             z: self.z / rhs,
+        }
+    }
+}
+
+impl Neg for Vec3 {
+    type Output = Self;
+    #[inline]
+    fn neg(self) -> Self {
+        Self {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z
         }
     }
 }

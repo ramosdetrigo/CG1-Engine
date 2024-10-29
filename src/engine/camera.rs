@@ -1,5 +1,5 @@
 use super::ray::Ray;
-use super::sphere::Sphere;
+use super::scene::Scene;
 use crate::utils::vec::Vec3;
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
@@ -35,14 +35,12 @@ impl Camera {
         canvas.draw_point(Point::new(px,py)).unwrap();
     }
 
-    pub fn draw_sphere(&self, canvas: &mut Canvas<Window>, sphere: &Sphere) {
+    pub fn draw_scene(&self, canvas: &mut Canvas<Window>, scene: &Scene) {
+        let sphere = &scene.sphere;
+        let _light = &scene.light;
         for row in 0..(self.viewport.rows as i32) { // linhas (eixo y)
             for col in 0..(self.viewport.cols as i32) { // colunas (eixo x)
-                let direction: Vec3 = // direção do raio
-                    (self.viewport.p00_coords
-                    + (col as f32)*self.viewport.dx
-                    - (row as f32)*self.viewport.dy)
-                    - self.pos;
+                let direction: Vec3 = (self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos;
                 
                 let ray = Ray::new(self.pos, direction); // cria um raio partindo de p0 "atirado" na direção d
                 let (intersect, t1, t2) = ray.intersects_sphere(sphere); // checa se o raio intersecta a esfera
