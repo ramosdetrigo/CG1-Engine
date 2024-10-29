@@ -2,6 +2,7 @@ mod engine;
 mod utils;
 
 use engine::camera::Camera;
+use engine::light_source::LightSource;
 use engine::sphere::Sphere;
 use utils::vec::Vec3;
 use sdl2::keyboard::Keycode;
@@ -47,7 +48,6 @@ fn main() {
     // imagem de 320x180 (em 16:9) (isso é o número de colunas e linhas na grade)
     let image_width: u32 = 320;
     let image_height: u32 = ((image_width as f32)/aspect_ratio) as u32;
-    
     // janela de 3.2m * 1.8m (em 16:9)
     let viewport_width: f32 = 3.2;
     let viewport_height: f32 = viewport_width/aspect_ratio;
@@ -55,9 +55,13 @@ fn main() {
     
     let sphere_radius = 1.0; // 1m de raio
     let sphere_center = Vec3::new(p0.x, p0.y, p0.z - (viewport_distance + sphere_radius)); // centro da esfera (z negativo)
-    let sphere_color = Color::RGB(255, 0, 0); // cor da esfera (foi pedido 255, 0, 0)
+    let sphere_color = Color::RGB(100, 100, 100); // cor da esfera
     
-    let bg_color = Color::RGB(100, 100, 100); // cor do background (foi pedido 100,100,100)
+    let light_pos = Vec3::new(-1.5, 1.5, -1.5);
+    let light_color = Color::RGB(255, 255, 255);
+    let light_intensity = 1.0;
+    
+    let bg_color = Color::RGB(127, 200, 255); // cor do background
     
     let camera: Camera = Camera::new(
         p0, // a posição do observador (0,0,0)
@@ -68,13 +72,19 @@ fn main() {
     );
 
     let mut sphere = Sphere::new(
-            sphere_center,
-            sphere_radius,
-            sphere_color
+        sphere_center,
+        sphere_radius,
+        sphere_color
+    );
+
+    let mut light = LightSource::new(
+        light_pos,
+        light_color,
+        light_intensity
     );
 
 
-    // Initializing SDL
+    // Inicializando SDL
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let mut event_pump = sdl_context.event_pump().unwrap(); // cuida dos eventos como teclado mouse etc.
