@@ -62,14 +62,14 @@ impl Camera {
 
                     let mut nl = n.dot(l);
                     let mut rl = r.dot(l);
-                    if nl < 0.0 { nl = 0.0 }
+                    if nl < 0.0 { nl = 0.0; rl = 0.0; }
                     if rl < 0.0 { rl = 0.0 }
 
-                    let iamb = plane.k_ambiente * scene.ambient_light;
-                    let idif = plane.k_difuso * nl;
-                    let iesp = plane.k_especular * rl.powf(plane.e);
+                    let iamb = plane.k_ambiente * scene.ambient_light * plane.color;
+                    let idif = plane.k_difuso * nl * plane.color * light.color;
+                    let iesp = plane.k_especular * rl.powf(plane.e) * light.color;
 
-                    let ieye = (iamb + idif + iesp) * plane.color;
+                    let ieye = iamb + idif + iesp;
 
                     self.draw_pixel(canvas, col, row, vec_to_color(ieye));
                 }
@@ -98,14 +98,14 @@ impl Camera {
                     let mut nl = n.dot(l);
                     let mut rl = r.dot(l);
                     // impede bugs gráficos com a reflexão em partes não iluminadas da esfera
-                    if nl < 0.0 { nl = 0.0 }
+                    if nl < 0.0 { nl = 0.0; rl = 0.0; }
                     if rl < 0.0 { rl = 0.0 } 
 
-                    let iamb = sphere.k_ambiente * scene.ambient_light;
-                    let idif = sphere.k_difuso * nl;
-                    let iesp = sphere.k_especular * rl.powf(sphere.e);
+                    let iamb = sphere.k_ambiente * scene.ambient_light * sphere.color;
+                    let idif = sphere.k_difuso * nl * sphere.color * light.color;
+                    let iesp = sphere.k_especular * rl.powf(sphere.e) * light.color;
 
-                    let ieye = (iamb + idif + iesp) * sphere.color;
+                    let ieye = iamb + idif + iesp;
 
                     self.draw_pixel(canvas, col, row, vec_to_color(ieye.rgb_255()));
                 }

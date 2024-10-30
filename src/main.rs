@@ -58,8 +58,8 @@ fn main() {
     
     let k_ambiente = Vec3::new(0.1, 0.1, 0.1);
     let k_difuso = Vec3::new(0.7,0.7,0.7);
-    let k_especular = Vec3::new(0.7,0.7,0.7);
-    let e = 100.0;
+    let k_especular = Vec3::new(0.3,0.3,0.3);
+    let e = 5.0;
     
     let light_pos = Vec3::new(-0.8, 0.8, 0.0);
     let light_color = Vec3::new(255.0, 255.0, 255.0).rgb_normal();
