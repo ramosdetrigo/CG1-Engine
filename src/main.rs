@@ -3,8 +3,9 @@ mod utils;
 
 use engine::camera::Camera;
 use engine::light_source::LightSource;
-use engine::scene::Scene;
 use engine::sphere::Sphere;
+use engine::plane::Plane;
+use engine::scene::Scene;
 use utils::vec::Vec3;
 use sdl2::keyboard::Keycode;
 use sdl2::rect::Rect;
@@ -13,16 +14,9 @@ use sdl2::video::Window;
 use sdl2::event::Event;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
+use utils::vec_to_color;
 use std::time::{Duration, Instant};
 use std::fs;
-
-// fn rgb_to_normalized(r:u8, g:u8, b:u8) -> (f32, f32, f32) {
-//     ((r as f32)/255.0, (g as f32)/255.0, (b as f32)/255.0)
-// }
-
-// fn normalized_to_rgb(r:f32, g:f32, b:f32) -> (u8, u8, u8) {
-//     ((r*255.0) as u8, (g*255.0) as u8, (b*255.0) as u8)
-// }
 
 // salva o canvas como uma imagem .ppm
 fn save_canvas_as_ppm (canvas: &Canvas<Window>) -> Result<(), Box<dyn std::error::Error>> {
@@ -44,10 +38,10 @@ fn main() {
     let p0 = Vec3::new(0.0, 0.0, 0.0); // posição do observador
     
     let aspect_ratio: f32 = 16.0/9.0; // aspect ratio que eu quero na imagem (16:9)
-    let scale: f32 = 3.0; // cada quadrado na "câmera" vale por quantos pixels na janela do computador?
+    let scale: f32 = 1.0; // cada quadrado na "câmera" vale por quantos pixels na janela do computador?
 
     // imagem de 320x180 (em 16:9) (isso é o número de colunas e linhas na grade)
-    let image_width: u32 = 320;
+    let image_width: u32 = 960;
     let image_height: u32 = ((image_width as f32)/aspect_ratio) as u32;
     // janela de 3.2m * 1.8m (em 16:9)
     let viewport_width: f32 = 3.2;
@@ -56,13 +50,23 @@ fn main() {
     
     let sphere_radius = 1.0; // 1m de raio
     let sphere_center = Vec3::new(p0.x, p0.y, p0.z - (viewport_distance + sphere_radius)); // centro da esfera (z negativo)
-    let sphere_color = Color::RGB(100, 100, 100); // cor da esfera
+    let sphere_color = Vec3::new(255.0, 0.0, 0.0).rgb_normal(); // cor da esfera
+
+    let plane_p0 = Vec3::new(0.0, -1.8, 0.0);
+    let plane_normal = Vec3::new(0.0, 1.0 ,0.0);
+    let plane_color = Vec3::new(0.0, 255.0, 0.0);
     
-    let light_pos = Vec3::new(-1.5, 1.5, -1.5);
-    let light_color = Color::RGB(255, 255, 255);
+    let k_ambiente = Vec3::new(0.1, 0.1, 0.1);
+    let k_difuso = Vec3::new(0.7,0.7,0.7);
+    let k_especular = Vec3::new(0.7,0.7,0.7);
+    let e = 100.0;
+    
+    let light_pos = Vec3::new(-0.8, 0.8, 0.0);
+    let light_color = Vec3::new(255.0, 255.0, 255.0).rgb_normal();
     let light_intensity = 1.0;
     
-    let bg_color = Color::RGB(127, 200, 255); // cor do background
+    let ambient_light = Vec3::new(255.0, 255.0, 255.0).rgb_normal();
+    let bg_color = vec_to_color(Vec3::new(0.0,0.0,0.0).rgb_255()); // cor do background
     
     let camera: Camera = Camera::new(
         p0, // a posição do observador (0,0,0)
@@ -72,9 +76,10 @@ fn main() {
         bg_color // cor do background
     );
 
-    let sphere = Sphere::new( sphere_center, sphere_radius, sphere_color );
+    let sphere = Sphere::new( sphere_center, sphere_radius, sphere_color, k_ambiente, k_difuso, k_especular, e);
+    let plane = Plane::new( plane_p0, plane_normal, plane_color, k_ambiente, k_difuso, k_especular, 1.0 );
     let light = LightSource::new( light_pos, light_color, light_intensity );
-    let scene = Scene::new(sphere, light);
+    let mut scene = Scene::new(sphere, plane, light, ambient_light);
 
     // Inicializando SDL
     let sdl_context = sdl2::init().unwrap();
@@ -104,12 +109,12 @@ fn main() {
                 Event::Quit{ .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
                 // muda a posição da bola em 10cm pra cada lado pelas setas do teclado
                 // setas = eixos x,y // W,S = eixo z
-                // Event::KeyDown { keycode: Some(Keycode::RIGHT), .. } => { sphere.center.x += 0.1; }
-                // Event::KeyDown { keycode: Some(Keycode::LEFT), .. } => { sphere.center.x -= 0.1; }
-                // Event::KeyDown { keycode: Some(Keycode::UP), .. } => { sphere.center.y += 0.1; }
-                // Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { sphere.center.y -= 0.1; }
-                // Event::KeyDown { keycode: Some(Keycode::W), .. } => { sphere.center.z -= 0.1; }
-                // Event::KeyDown { keycode: Some(Keycode::S), .. } => { sphere.center.z += 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::RIGHT), .. } => { scene.light.pos.x += 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::LEFT), .. } => { scene.light.pos.x -= 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::UP), .. } => { scene.light.pos.z -= 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { scene.light.pos.z += 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::W), .. } => { scene.light.pos.y += 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::S), .. } => { scene.light.pos.y -= 0.1; }
                 // espaço pra salvar a imagem atual do canvas como .ppm
                 Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => {
                     camera.draw_scene(&mut canvas, &scene);
@@ -127,6 +132,7 @@ fn main() {
             println!("FPS: {frame_count}"); // printa o número de frames desenhados no último segundo (FPS)
             frame_count = 0;
             last_time = Instant::now();
+            // println!("{:?}", scene.light.pos);
         }
     }
 }

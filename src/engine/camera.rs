@@ -1,6 +1,7 @@
 use super::ray::Ray;
 use super::scene::Scene;
 use crate::utils::vec::Vec3;
+use crate::utils::vec_to_color;
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
 use sdl2::render::Canvas;
@@ -35,24 +36,78 @@ impl Camera {
         canvas.draw_point(Point::new(px,py)).unwrap();
     }
 
+    // draws entire scene
     pub fn draw_scene(&self, canvas: &mut Canvas<Window>, scene: &Scene) {
+        canvas.set_draw_color(self.bg_color);
+        canvas.clear();
+        self.draw_scene_plane(canvas, scene);
+        self.draw_scene_sphere(canvas, scene);
+    }
+
+    // draws the scene's plane
+    fn draw_scene_plane(&self, canvas:&mut Canvas<Window>, scene: &Scene) {
+        let plane = &scene.plane;
+        let light = &scene.light;
+        for row in 0..(self.viewport.rows as i32) {
+            for col in 0..(self.viewport.cols as i32) {
+                let direction: Vec3 = (self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos;
+                let ray = Ray::new(self.pos, direction); // cria um raio partindo de p0 "atirado" na direção d
+                let (intersect, t) = ray.intersects_plane(plane); // checa se o raio intersecta a esfera
+
+                if intersect && t > 0.0 {
+                    let p_i = ray.at(t); // ponto de interseção 
+                    let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
+                    let n = plane.normal; // vetor normal
+                    let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
+
+                    let mut nl = n.dot(l);
+                    let mut rl = r.dot(l);
+                    if nl < 0.0 { nl = 0.0 }
+                    if rl < 0.0 { rl = 0.0 }
+
+                    let iamb = plane.k_ambiente * scene.ambient_light;
+                    let idif = plane.k_difuso * nl;
+                    let iesp = plane.k_especular * rl.powf(plane.e);
+
+                    let ieye = (iamb + idif + iesp) * plane.color;
+
+                    self.draw_pixel(canvas, col, row, vec_to_color(ieye));
+                }
+            }
+        }
+    }
+
+    // draws the scene's sphere
+    fn draw_scene_sphere(&self, canvas:&mut Canvas<Window>, scene: &Scene) {
         let sphere = &scene.sphere;
-        let _light = &scene.light;
+        let light = &scene.light;
         for row in 0..(self.viewport.rows as i32) { // linhas (eixo y)
             for col in 0..(self.viewport.cols as i32) { // colunas (eixo x)
-                let direction: Vec3 = (self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos;
-                
+                let direction: Vec3 = (self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos;                
                 let ray = Ray::new(self.pos, direction); // cria um raio partindo de p0 "atirado" na direção d
                 let (intersect, t1, t2) = ray.intersects_sphere(sphere); // checa se o raio intersecta a esfera
                 
                 if intersect && (t1 > 0.0 || t2 > 0.0) {
                     let min_t = if t2 <= 0.0 || t1 < t2 {t1} else {t2}; // obtém o menor t positivo
-                    let _collision_point = ray.at(min_t);
-                    // bola na frente do observador, pinta a cor da esfera
-                    self.draw_pixel(canvas, col, row, sphere.color);
-                } else {
-                    // não houve interseção ou a bola está atrás do observador, pinta a cor do background
-                    self.draw_pixel(canvas, col, row, self.bg_color);
+                    let p_i = ray.at(min_t); // ponto de interseção 
+                    
+                    let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
+                    let n = (p_i - sphere.center).normalize(); // vetor normal
+                    let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
+
+                    let mut nl = n.dot(l);
+                    let mut rl = r.dot(l);
+                    // impede bugs gráficos com a reflexão em partes não iluminadas da esfera
+                    if nl < 0.0 { nl = 0.0 }
+                    if rl < 0.0 { rl = 0.0 } 
+
+                    let iamb = sphere.k_ambiente * scene.ambient_light;
+                    let idif = sphere.k_difuso * nl;
+                    let iesp = sphere.k_especular * rl.powf(sphere.e);
+
+                    let ieye = (iamb + idif + iesp) * sphere.color;
+
+                    self.draw_pixel(canvas, col, row, vec_to_color(ieye.rgb_255()));
                 }
             }
         }
@@ -73,7 +128,7 @@ struct Viewport {
     pub p00_coords: Vec3 // coordenadas do quadrado 0,0 do frame
 }
 
-impl Viewport {
+impl Viewport { 
     #[inline]
     pub fn new(pos: Vec3, width: f32, height: f32, cols: u32, rows: u32) -> Viewport {
         let top_left_coords: Vec3 = Vec3::new(pos.x - width/2.0, pos.y + height/2.0, pos.z);
