@@ -1,5 +1,6 @@
 // #![allow(dead_code)]
 use super::sphere::Sphere;
+use super::plane::Plane;
 use crate::utils::vec::Vec3;
 
 pub struct Ray {
@@ -13,7 +14,7 @@ impl Ray {
     pub fn new(origin: Vec3, dir: Vec3) -> Ray {
         Ray {
             origin,
-            dir: dir.normalized() // direção do raio (normalizado, assim t = distância entre origin e R(t))
+            dir: dir.normalize() // direção do raio (normalizado, assim t = distância entre origin e R(t))
         }
     }
     
@@ -23,6 +24,16 @@ impl Ray {
     #[must_use]
     pub fn at(self, t: f32) -> Vec3 {
         self.origin + t*self.dir
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn intersects_plane(&self, plane: &Plane) -> (bool, f32) {
+        let top = plane.normal.dot(self.origin - plane.p0);
+        let bottom = plane.normal.dot(self.dir);
+        if bottom == 0.0 { return ( false, -1.0 )}
+
+        ( true, - top/bottom )
     }
 
     pub fn intersects_sphere(&self, sphere: &Sphere) -> (bool, f32, f32) {
