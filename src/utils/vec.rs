@@ -27,7 +27,7 @@ impl Vec3 {
     #[inline]
     #[must_use]
     /// Retorna uma cópia do vetor normalizado
-    pub fn normalized(self) -> Self {
+    pub fn normalize(self) -> Self {
         self / self.length()
     }
 
@@ -36,6 +36,36 @@ impl Vec3 {
     /// Retorna o tamanho do vetor
     pub fn length(self) -> f32 {
         self.dot(self).sqrt()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn clamp(self, i: f32, j: f32) -> Self {
+        Self {
+            x: self.x.clamp(i, j),
+            y: self.y.clamp(i, j),
+            z: self.z.clamp(i, j)
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn rgb_normal(self) -> Self {
+        Self {
+            x: self.x / 255.0,
+            y: self.y / 255.0,
+            z: self.z / 255.0
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn rgb_255(self) -> Self {
+        Self {
+            x: self.x * 255.0,
+            y: self.y * 255.0,
+            z: self.z * 255.0
+        }
     }
 }
 
@@ -87,6 +117,18 @@ impl Mul<Vec3> for f32 {
     }
 }
 
+impl Mul<Vec3> for Vec3 {
+    type Output = Self;
+    #[inline]
+    fn mul(self, rhs: Vec3) -> Self {
+        Vec3 {
+            x: self.x * rhs.x,
+            y: self.y * rhs.y,
+            z: self.z * rhs.z
+        }
+    }
+}
+
 impl Div<f32> for Vec3 {
     type Output = Self;
     #[inline]
@@ -95,6 +137,18 @@ impl Div<f32> for Vec3 {
             x: self.x / rhs,
             y: self.y / rhs,
             z: self.z / rhs,
+        }
+    }
+}
+
+impl Div<Vec3> for Vec3 {
+    type Output = Self;
+    #[inline]
+    fn div(self, rhs: Vec3) -> Self {
+        Self {
+            x: self.x / rhs.x,
+            y: self.y / rhs.y,
+            z: self.z / rhs.z
         }
     }
 }
