@@ -3,8 +3,8 @@ mod utils;
 
 use engine::camera::Camera;
 use engine::light::Light;
-use engine::sphere::Sphere;
-use engine::plane::Plane;
+use engine::shapes::sphere::Sphere;
+use engine::shapes::plane::Plane;
 use engine::scene::Scene;
 use utils::vec::Vec3;
 use sdl2::keyboard::Keycode;

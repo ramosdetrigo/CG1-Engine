@@ -1,6 +1,6 @@
 #![allow(dead_code)]
-use super::sphere::Sphere;
-use super::plane::Plane;
+use super::shapes::sphere::Sphere;
+use super::shapes::plane::Plane;
 use super::light::Light;
 use crate::utils::vec::Vec3;
 
