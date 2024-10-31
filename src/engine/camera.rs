@@ -40,77 +40,44 @@ impl Camera {
     pub fn draw_scene(&self, canvas: &mut Canvas<Window>, scene: &Scene) {
         canvas.set_draw_color(self.bg_color);
         canvas.clear();
-        self.draw_scene_plane(canvas, scene);
-        self.draw_scene_sphere(canvas, scene);
-    }
-
-    // draws the scene's plane
-    fn draw_scene_plane(&self, canvas:&mut Canvas<Window>, scene: &Scene) {
-        let plane = &scene.plane;
         let light = &scene.light;
-        for row in 0..(self.viewport.rows as i32) {
-            for col in 0..(self.viewport.cols as i32) {
-                let direction: Vec3 = (self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos;
-                let ray = Ray::new(self.pos, direction); // cria um raio partindo de p0 "atirado" na direção d
-                let (intersect, t) = ray.intersects_plane(plane); // checa se o raio intersecta a esfera
+        for shape in &scene.shapes {
 
-                if intersect && t > 0.0 {
-                    let p_i = ray.at(t); // ponto de interseção 
-                    let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
-                    let n = plane.normal; // vetor normal
-                    let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
+            for row in 0..(self.viewport.rows as i32) {
+                for col in 0..(self.viewport.cols as i32) {
+                    let direction: Vec3 = (self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos;
+                    let ray = Ray::new(self.pos, direction); // cria um raio partindo de p0 "atirado" na direção d
+                    let (intersect, t1, t2) = shape.intersects(&ray); // checa se o raio intersecta a esfera
 
-                    let mut nl = n.dot(l);
-                    let mut rl = r.dot(l);
-                    if nl < 0.0 { nl = 0.0; rl = 0.0; }
-                    if rl < 0.0 { rl = 0.0 }
+                    if intersect && (t1 > 0.0 || t2 > 0.0) {
+                        let min_t = if t2 < 0.0 || t1 < t2 {t1} else {t2}; // mínimo positivo
+                        let p_i = ray.at(min_t); // ponto de interseção 
 
-                    let iamb = plane.k_ambiente * scene.ambient_light * plane.color;
-                    let idif = plane.k_difuso * nl * plane.color * light.color;
-                    let iesp = plane.k_especular * rl.powf(plane.e) * light.color;
+                        let v = (- direction).normalize();
+                        let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
+                        let n = shape.normal(&p_i); // vetor normal do objeto com o ponto p_i
+                        let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
 
-                    let ieye = iamb + idif + iesp;
+                        let mut nl = n.dot(l); // normal escalar l
+                        let mut rv = r.dot(v); // r escalar l
+                        // impede de desenhar a luz no "lado escuro da esfera"
+                        if nl < 0.0 { nl = 0.0 }
+                        if rv < 0.0 { rv = 0.0 }
 
-                    self.draw_pixel(canvas, col, row, vec_to_color(ieye));
+                        let mat = shape.material();
+                        let iamb = mat.k_amb * scene.ambient_light;            // cor vindo da luz ambiente
+                        let idif = mat.k_dif * nl * light.color;               // cor vindo de reflexão difusa
+                        let iesp = mat.k_esp * rv.powf(mat.e) * light.color;   // cor vindo de reflexão especular
+
+                        let ieye = iamb + idif + iesp;
+
+                        self.draw_pixel(canvas, col, row, vec_to_color(ieye.rgb_255()));
+                    }
                 }
             }
+
         }
-    }
-
-    // draws the scene's sphere
-    fn draw_scene_sphere(&self, canvas:&mut Canvas<Window>, scene: &Scene) {
-        let sphere = &scene.sphere;
-        let light = &scene.light;
-        for row in 0..(self.viewport.rows as i32) { // linhas (eixo y)
-            for col in 0..(self.viewport.cols as i32) { // colunas (eixo x)
-                let direction: Vec3 = (self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos;                
-                let ray = Ray::new(self.pos, direction); // cria um raio partindo de p0 "atirado" na direção d
-                let (intersect, t1, t2) = ray.intersects_sphere(sphere); // checa se o raio intersecta a esfera
-                
-                if intersect && (t1 > 0.0 || t2 > 0.0) {
-                    let min_t = if t2 <= 0.0 || t1 < t2 {t1} else {t2}; // obtém o menor t positivo
-                    let p_i = ray.at(min_t); // ponto de interseção 
-                    
-                    let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
-                    let n = (p_i - sphere.center).normalize(); // vetor normal
-                    let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
-
-                    let mut nl = n.dot(l);
-                    let mut rl = r.dot(l);
-                    // impede bugs gráficos com a reflexão em partes não iluminadas da esfera
-                    if nl < 0.0 { nl = 0.0; rl = 0.0; }
-                    if rl < 0.0 { rl = 0.0 } 
-
-                    let iamb = sphere.k_ambiente * scene.ambient_light * sphere.color;
-                    let idif = sphere.k_difuso * nl * sphere.color * light.color;
-                    let iesp = sphere.k_especular * rl.powf(sphere.e) * light.color;
-
-                    let ieye = iamb + idif + iesp;
-
-                    self.draw_pixel(canvas, col, row, vec_to_color(ieye.rgb_255()));
-                }
-            }
-        }
+        canvas.present();
     }
 }
 

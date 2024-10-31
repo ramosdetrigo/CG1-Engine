@@ -3,7 +3,9 @@ mod utils;
 
 use engine::camera::Camera;
 use engine::light::Light;
+use engine::shapes::material::Material;
 use engine::shapes::sphere::Sphere;
+use engine::shapes::shape::Shape;
 use engine::shapes::plane::Plane;
 use engine::scene::Scene;
 use utils::vec::Vec3;
@@ -49,22 +51,29 @@ fn main() {
     
     let sphere_radius = 1.0; // 1m de raio
     let sphere_center = Vec3::new(p0.x, p0.y, p0.z - (viewport_distance + sphere_radius)); // centro da esfera (z negativo)
-    let sphere_color = Vec3::new(255.0, 0.0, 0.0).rgb_normal(); // cor da esfera
 
     let plane_p0 = Vec3::new(0.0, -1.8, 0.0);
     let plane_normal = Vec3::new(0.0, 1.0 ,0.0);
-    let plane_color = Vec3::new(0.0, 255.0, 0.0);
     
-    let k_ambiente = Vec3::new(0.1, 0.1, 0.1);
-    let k_difuso = Vec3::new(0.7,0.7,0.7);
-    let k_especular = Vec3::new(0.3,0.3,0.3);
-    let e = 5.0;
+    let sphere_material = Material::new(
+        Vec3::new(0.1, 0.0, 0.0), // Ambient
+        Vec3::new(0.7, 0.0, 0.0), // Diffuse
+        Vec3::new(0.3, 0.3, 0.3), // Specular
+        5.0, // e
+    );
+
+    let plane_material = Material::new(
+        Vec3::new(0.0, 0.1, 0.0), // Ambient
+        Vec3::new(0.0, 0.7, 0.0), // Diffuse
+        Vec3::new(0.3, 0.3, 0.3), // Specular
+        5.0, // e
+    );
     
     let light_pos = Vec3::new(-0.8, 0.8, 0.0);
-    let light_color = Vec3::new(255.0, 255.0, 255.0).rgb_normal();
+    let light_color = Vec3::new(1.0, 1.0, 1.0);
     let light_intensity = 1.0;
     
-    let ambient_light = Vec3::new(255.0, 255.0, 255.0).rgb_normal();
+    let ambient_light = Vec3::new(1.0, 1.0, 1.0);
     let bg_color = vec_to_color(Vec3::new(0.0,0.0,0.0).rgb_255()); // cor do background
     
     let camera: Camera = Camera::new(
@@ -75,10 +84,13 @@ fn main() {
         bg_color // cor do background
     );
 
-    let sphere = Sphere::new( sphere_center, sphere_radius, sphere_color, k_ambiente, k_difuso, k_especular, e);
-    let plane = Plane::new( plane_p0, plane_normal, plane_color, k_ambiente, k_difuso, k_especular, 1.0 );
-    let light = Light::new( light_pos, light_color, light_intensity );
-    let mut scene = Scene::new(sphere, plane, light, ambient_light);
+    let sphere = Sphere::new( sphere_center, sphere_radius, sphere_material );
+    let plane = Plane::new( plane_p0, plane_normal, plane_material );
+    let light = Light::new( light_pos, light_color, light_intensity ); 
+    
+    let mut scene = Scene::new(light, ambient_light);
+    scene.add_shape(Shape::Plane(plane));
+    scene.add_shape(Shape::Sphere(sphere));
 
     // Inicializando SDL
     let sdl_context = sdl2::init().unwrap();
