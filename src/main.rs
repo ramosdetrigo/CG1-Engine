@@ -2,7 +2,7 @@ mod engine;
 mod utils;
 
 use engine::camera::Camera;
-use engine::light_source::LightSource;
+use engine::light::Light;
 use engine::sphere::Sphere;
 use engine::plane::Plane;
 use engine::scene::Scene;
@@ -12,7 +12,6 @@ use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use sdl2::event::Event;
-use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 use utils::vec_to_color;
 use std::time::{Duration, Instant};
@@ -78,7 +77,7 @@ fn main() {
 
     let sphere = Sphere::new( sphere_center, sphere_radius, sphere_color, k_ambiente, k_difuso, k_especular, e);
     let plane = Plane::new( plane_p0, plane_normal, plane_color, k_ambiente, k_difuso, k_especular, 1.0 );
-    let light = LightSource::new( light_pos, light_color, light_intensity );
+    let light = Light::new( light_pos, light_color, light_intensity );
     let mut scene = Scene::new(sphere, plane, light, ambient_light);
 
     // Inicializando SDL
