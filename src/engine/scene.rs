@@ -2,7 +2,7 @@ use super::shapes::Shape;
 use super::Light;
 use crate::utils::Vec3;
 
-// #[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq)]
 pub struct Scene {
     pub shapes: Vec<Shape>,
     pub light: Light,
@@ -10,11 +10,13 @@ pub struct Scene {
 }
 
 impl Scene {
+    #[inline]
+    #[must_use]
     pub fn new(light: Light, ambient_light: Vec3) -> Scene {
-        let shapes: Vec<Shape> = Vec::new();
-        Scene { shapes, light, ambient_light }
+        Scene { shapes: Vec::new(), light, ambient_light }
     }
 
+    #[inline]
     pub fn add_shape(&mut self, s: Shape) {
         self.shapes.push(s);
     }

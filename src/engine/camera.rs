@@ -8,7 +8,7 @@ use sdl2::render::Canvas;
 use sdl2::video::Window;
 
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq)]
 pub struct Camera {
     pub pos: Vec3, // observador
     pub bg_color: Color,
@@ -17,6 +17,7 @@ pub struct Camera {
 
 impl Camera {
     #[inline]
+    #[must_use]
     pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f32, viewport_h: f32, viewport_distance: f32, bg_color: Color) -> Camera {
         Camera {
             pos: pos, // posição do observador
@@ -41,33 +42,32 @@ impl Camera {
         canvas.set_draw_color(self.bg_color);
         canvas.clear();
         let light = &scene.light;
+        let mut ray = Ray::new(self.pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
+
         for shape in &scene.shapes {
-            let mut ray = Ray::new(self.pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
             let mat = shape.material();
+            let iamb = mat.k_amb * scene.ambient_light;            // cor vindo da luz ambiente
+            let mut idif = Vec3::NULL; // cor vindo de reflexão difusa
+            let mut iesp = Vec3::NULL; // cor vindo de reflexão especular
 
             for row in 0..(self.viewport.rows as i32) {
                 for col in 0..(self.viewport.cols as i32) {
-                    let dr: Vec3 = ((self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos).normalize();
+                    let dr = ((self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos).normalize();
                     ray.dr = dr;
-                    let (intersect, t1, t2) = shape.intersects(&ray); // checa se o raio intersecta a esfera
+                    let (intersect, t) = shape.intersects(&ray); // checa se o raio intersecta a esfera
 
-                    if intersect && (t1 > 0.0 || t2 > 0.0) {
-                        let min_t = if t2 < 0.0 || t1 < t2 {t1} else {t2}; // mínimo positivo
-                        let p_i = ray.at(min_t); // ponto de interseção 
+                    if intersect && (t > 0.0) {
+                        let p_i = ray.at(t); // ponto de interseção 
 
                         let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
                         let n = shape.normal(&p_i); // vetor normal do objeto com o ponto p_i
                         let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
 
-                        let mut nl = n.dot(l); // normal escalar l
-                        let mut rv = r.dot(-dr); // r escalar l
+                        let nl = n.dot(l); // normal escalar l
+                        let rv = r.dot(-dr); // r escalar l
                         // impede de desenhar a luz no "lado escuro da esfera"
-                        if nl < 0.0 { nl = 0.0 }
-                        if rv < 0.0 { rv = 0.0 }
-
-                        let iamb = mat.k_amb * scene.ambient_light;            // cor vindo da luz ambiente
-                        let idif = mat.k_dif * nl * light.color;               // cor vindo de reflexão difusa
-                        let iesp = mat.k_esp * rv.powf(mat.e) * light.color;   // cor vindo de reflexão especular
+                        if nl > 0.0 { idif = mat.k_dif * nl * light.color * light.intensity }
+                        if rv > 0.0 { iesp = mat.k_esp * rv.powf(mat.e) * light.color * light.intensity }
 
                         let ieye = iamb + idif + iesp;
 
@@ -82,7 +82,7 @@ impl Camera {
 }
 
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq)]
 // Janela através a qual o observador vai olhar
 struct Viewport {
     pub pos: Vec3, // posição do Viewport (vai sempre estar em p0 - (0,0,d))
@@ -96,6 +96,7 @@ struct Viewport {
 
 impl Viewport { 
     #[inline]
+    #[must_use]
     pub fn new(pos: Vec3, width: f32, height: f32, cols: u32, rows: u32) -> Viewport {
         let top_left_coords: Vec3 = Vec3::new(pos.x - width/2.0, pos.y + height/2.0, pos.z);
         let dx = Vec3::new(width/(cols as f32), 0.0, 0.0);

@@ -1,5 +1,6 @@
 use crate::utils::Vec3;
 
+#[derive(Clone, PartialEq)]
 pub struct Ray {
     pub origin: Vec3, // Origem do raio
     pub dr: Vec3, // Direção do raio
