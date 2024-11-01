@@ -1,3 +1,4 @@
+use std::f32::NEG_INFINITY;
 use super::Material;
 use super::super::Ray;
 use crate::utils::Vec3;
@@ -19,10 +20,10 @@ impl Plane {
 
     #[inline]
     #[must_use]
-    pub fn intersects(&self, r: &Ray) -> (bool, f32) {
+    pub fn intersects(&self, r: &Ray) -> f32 {
         let top = self.normal.dot(r.origin - self.p0);
         let bottom = self.normal.dot(r.dr);
-        if bottom == 0.0 { return ( false, -1.0 )}
-        ( true, - top/bottom )
+        if bottom == 0.0 { return NEG_INFINITY }
+        -top/bottom
     }
 }

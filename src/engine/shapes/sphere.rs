@@ -1,3 +1,5 @@
+use std::f32::NEG_INFINITY;
+
 use super::Material;
 use crate::utils::Vec3;
 use super::super::Ray;
@@ -21,9 +23,9 @@ impl Sphere {
     pub fn normal(&self, p: &Vec3) -> Vec3 {
         (*p - self.center).normalize()
     }
-    
+
     #[must_use]
-    pub fn intersects(&self, r: &Ray) -> (bool, f32) {
+    pub fn intersects(&self, r: &Ray) -> f32 {
         // Se existe um t real tal que R(t) pertence à borda da esfera, houve colisão.
         // Resolvendo a equação da esfera obtemos uma equação quadrática,
         // então só precisamos saber se o delta é positivo.
@@ -45,9 +47,9 @@ impl Sphere {
             let t1 = (-b + delta.sqrt()) / (2.0*a);
             let t2 = (-b - delta.sqrt()) / (2.0*a);
             let min_t = if t2 < 0.0 || t1 < t2 {t1} else {t2}; // mínimo positivo
-            return (true, min_t);
+            return min_t;
         } else {
-            return (false, -1.0);
+            return NEG_INFINITY;
         }
     }
 }

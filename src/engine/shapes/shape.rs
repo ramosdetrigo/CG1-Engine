@@ -32,7 +32,7 @@ impl Shape {
 
     #[inline]
     #[must_use]
-    pub fn intersects(&self, r: &Ray) -> (bool, f32) {
+    pub fn intersects(&self, r: &Ray) -> f32 {
         match self {
             Self::Sphere(sphere) => { sphere.intersects(r) }
             Self::Plane(plane) => { plane.intersects(r) }
