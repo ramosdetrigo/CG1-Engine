@@ -47,80 +47,91 @@ impl Camera {
     pub fn draw_scene(&mut self, canvas: &mut Canvas<Window>, scene: &Scene) {
         canvas.set_draw_color(self.bg_color);
         canvas.clear();
-        let mut ray = Ray::new(self.pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
-        let mut mat: &Material;
-        let scene = Arc::new(scene);
+        let scene = Arc::new(scene.clone());
+        let viewport = Arc::new(self.viewport.clone());
+        let pos = Arc::new(self.pos.clone());
 
-        let mut handles = Vec::new();
-        for thread_n in 0..num_cpus::get() {
+        let mut handles = vec![];
+        let num_threads = num_cpus::get() as i32;
+        for thread_n in 0..num_threads {
+            let scene = Arc::clone(&scene);
+            let viewport = Arc::clone(&viewport);
+            let pos = Arc::clone(&pos);
+            
+            let chunk_size = (viewport.rows as f32) / (num_threads as f32);
+            
             let handle = thread::spawn(move || {
-                println!("I am thread number {thread_n}!");
-                vec![1 * thread_n, 2 * thread_n, 3 * thread_n]
+                let mut draws: Vec<(i32, i32, Color)> = vec![];
+                let pos = *pos;
+                let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
+                let mut mat: &Material;
+                
+                for row in ((chunk_size * (thread_n as f32)).round() as i32)..((chunk_size * ((thread_n+1) as f32)).round() as i32) { // TODO: thread_n
+                    for col in 0..(viewport.cols as i32) {
+                        let dr = (((viewport.p00_coords) + (col as f32)*viewport.dx - (row as f32)*viewport.dy) - pos).normalize();
+                        ray.dr = dr;
+
+                        let mut shape: Option<&Shape> = None;
+                        let mut t = INFINITY;
+                        for s in &scene.shapes {
+                            let t_s = s.intersects(&ray);
+                            // se o objeto colid com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
+                            if t_s > 0.0 && t_s < t {
+                                shape = Some(s);
+                                t = t_s;
+                            }
+                        }
+                        if shape.is_none() { continue; } // se o raio não colide com nenhum objeto, passa pro próximo pixel
+                        let shape = shape.unwrap();
+                        mat = shape.material(); // material do objeto
+                        let mut ieye = mat.k_amb * scene.ambient_light; // intensidade da luz que chega no olho do observador
+                        let p_i = ray.at(t); // ponto de interseção
+                        
+                        for light in &scene.lights {
+                            let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
+                            let mut idif = Vec3::NULL; // cor vindo de reflexão difusa
+                            let mut iesp = Vec3::NULL; // cor vindo de reflexão especular
+                            let mut under_light = true;
+        
+                            let light_ray = Ray::new(p_i, light.pos - p_i); // raio partindo de p_i até a posição da luz
+                            for s in &scene.shapes {
+                                if s == shape { continue; }
+                                let tl = s.intersects(&light_ray);
+                                if tl < 1.0 && tl > 0.0001 { under_light = false; break; } // se tem um objeto ENTRE P_I E A LUZ 
+                            }
+                            
+                            if under_light {
+                                let n = shape.normal(&p_i); // vetor normal do objeto com o ponto p_i
+                                let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
+        
+                                let nl = n.dot(l); // normal escalar l
+                                let rv = r.dot(-dr); // r escalar l
+        
+                                // impede de desenhar a luz no "lado escuro da esfera"
+                                if nl > 0.0 { idif = mat.k_dif * nl * light.color * light.intensity }
+                                if rv > 0.0 { iesp = mat.k_esp * rv.powf(mat.e) * light.color * light.intensity }
+                                
+                                ieye += idif + iesp;
+                            }
+                        }
+
+                        draws.push( (col, row, vec_to_color(ieye.rgb_255())) );
+                    }
+                }
+
+                draws
             });
+
             handles.push(handle);
         }
 
         for handle in handles {
             let result = handle.join().unwrap();
-            println!("{:?}", result);
-        }
-
-
-        for row in 0..(self.viewport.rows as i32) {
-            for col in 0..(self.viewport.cols as i32) {
-                // vetor direção (muda a direção do raio)
-                let dr = ((self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos).normalize();
-                ray.dr = dr;
-                
-                // checa o objeto que colide com o raio R com menor distância t até o olho do observador
-                let mut shape: Option<&Shape> = None;
-                let mut t = INFINITY;
-                for s in &scene.shapes {
-                    let t_s = s.intersects(&ray);
-                    // se o objeto colid com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
-                    if t_s > 0.0 && t_s < t {
-                        shape = Some(s);
-                        t = t_s;
-                    }
-                }
-                if shape.is_none() { continue; } // se o raio não colide com nenhum objeto, passa pro próximo pixel
-                let shape = shape.unwrap();
-                mat = shape.material(); // material do objeto
-                let mut ieye = mat.k_amb * scene.ambient_light; // intensidade da luz que chega no olho do observador
-                let p_i = ray.at(t); // ponto de interseção 
-
-                for light in &scene.lights {
-                    let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
-                    let mut idif = Vec3::NULL; // cor vindo de reflexão difusa
-                    let mut iesp = Vec3::NULL; // cor vindo de reflexão especular
-                    let mut under_light = true;
-
-                    let light_ray = Ray::new(p_i, light.pos - p_i); // raio partindo de p_i até a posição da luz
-                    for s in &scene.shapes {
-                        if s == shape { continue; }
-                        let tl = s.intersects(&light_ray);
-                        if tl < 1.0 && tl > 0.0001 { under_light = false; break; } // se tem um objeto ENTRE P_I E A LUZ 
-                    }
-                    
-                    if under_light {
-                        let n = shape.normal(&p_i); // vetor normal do objeto com o ponto p_i
-                        let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
-
-                        let nl = n.dot(l); // normal escalar l
-                        let rv = r.dot(-dr); // r escalar l
-
-                        // impede de desenhar a luz no "lado escuro da esfera"
-                        if nl > 0.0 { idif = mat.k_dif * nl * light.color * light.intensity }
-                        if rv > 0.0 { iesp = mat.k_esp * rv.powf(mat.e) * light.color * light.intensity }
-                        
-                        ieye += idif + iesp;
-                    }
-                }
-
-                self.draw_pixel(canvas, col, row, vec_to_color(ieye.rgb_255()));
+            for pixel in result {
+                self.draw_pixel(canvas, pixel.0, pixel.1, pixel.2);
             }
-
         }
+
         canvas.present();
     }
 }
