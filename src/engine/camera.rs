@@ -1,5 +1,4 @@
 use std::f32::INFINITY;
-
 use super::Ray;
 use super::Scene;
 use super::shapes::Material;
@@ -45,59 +44,55 @@ impl Camera {
     pub fn draw_scene(&mut self, canvas: &mut Canvas<Window>, scene: &Scene) {
         canvas.set_draw_color(self.bg_color);
         canvas.clear();
-        let light = &scene.light;
         let mut ray = Ray::new(self.pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
         let mut mat: &Material;
-        let mut iamb: Vec3;
         
         for row in 0..(self.viewport.rows as i32) {
             for col in 0..(self.viewport.cols as i32) {
-                let mut shape: Option<&Shape> = None;
                 let dr = ((self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos).normalize();
                 ray.dr = dr;
                 
+                let mut shape: Option<&Shape> = None;
                 let mut t = INFINITY;
                 for s in &scene.shapes {
-                    let t_s = s.intersects(&ray); // checa se o raio intersecta a esfera
-                    if t_s > 0.0 && t_s < t { 
+                    let t_s = s.intersects(&ray);
+                    if t_s > 0.0 && t_s < t {
                         shape = Some(s);
                         t = t_s;
                     }
                 }
-
                 if shape.is_none() { continue; }
                 let shape = shape.unwrap();
                 mat = shape.material();
-                iamb = mat.k_amb * scene.ambient_light;
-
+                let mut ieye = mat.k_amb * scene.ambient_light;
                 let p_i = ray.at(t); // ponto de interseção 
-                let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
-                let mut idif = Vec3::NULL; // cor vindo de reflexão difusa
-                let mut iesp = Vec3::NULL; // cor vindo de reflexão especular
-                let mut under_light = true;
 
-                let light_ray = Ray::new(p_i, light.pos - p_i);
-                for s in &scene.shapes {
-                    if s == shape { continue; }
-                    let tl = s.intersects(&light_ray);
-                    if tl < 1.0 && tl > 0.0001 {
-                        under_light = false;
-                        break;
+                for light in &scene.lights {
+                    let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
+                    let mut idif = Vec3::NULL; // cor vindo de reflexão difusa
+                    let mut iesp = Vec3::NULL; // cor vindo de reflexão especular
+                    let mut under_light = true;
+
+                    let light_ray = Ray::new(p_i, light.pos - p_i);
+                    for s in &scene.shapes {
+                        if s == shape { continue; }
+                        let tl = s.intersects(&light_ray);
+                        if tl < 1.0 && tl > 0.0001 { under_light = false; break; }
+                    }
+                    
+                    if under_light {
+                        let n = shape.normal(&p_i); // vetor normal do objeto com o ponto p_i
+                        let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
+
+                        let nl = n.dot(l); // normal escalar l
+                        let rv = r.dot(-dr); // r escalar l
+                        // impede de desenhar a luz no "lado escuro da esfera"
+                        if nl > 0.0 { idif = mat.k_dif * nl * light.color * light.intensity }
+                        if rv > 0.0 { iesp = mat.k_esp * rv.powf(mat.e) * light.color * light.intensity }
+                        ieye += idif + iesp;
                     }
                 }
-                
-                if under_light {
-                    let n = shape.normal(&p_i); // vetor normal do objeto com o ponto p_i
-                    let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
 
-                    let nl = n.dot(l); // normal escalar l
-                    let rv = r.dot(-dr); // r escalar l
-                    // impede de desenhar a luz no "lado escuro da esfera"
-                    if nl > 0.0 { idif = mat.k_dif * nl * light.color * light.intensity }
-                    if rv > 0.0 { iesp = mat.k_esp * rv.powf(mat.e) * light.color * light.intensity }
-                }
-
-                let ieye = iamb + idif + iesp;
 
                 self.draw_pixel(canvas, col, row, vec_to_color(ieye.rgb_255()));
             }

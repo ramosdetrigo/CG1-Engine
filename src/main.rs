@@ -63,15 +63,23 @@ fn main() {
     );
 
     let plane_material = Material::new(
-        Vec3::new(0.0, 0.1, 0.0), // Ambient
-        Vec3::new(0.0, 0.7, 0.0), // Diffuse
+        Vec3::new(0.1, 0.1, 0.1), // Ambient
+        Vec3::new(0.7, 0.7, 0.7), // Diffuse
         Vec3::new(0.3, 0.3, 0.3), // Specular
         5.0, // e
     );
     
-    let light_pos = Vec3::new(-0.8, 0.8, 0.0);
-    let light_color = Vec3::new(1.0, 1.0, 1.0);
-    let light_intensity = 1.0;
+    let light1_pos = Vec3::new(-1.6, 0.8, 0.0);
+    let light1_color = Vec3::new(1.0, 0.0, 0.0);
+    let light1_intensity = 1.0;
+
+    let light2_pos = Vec3::new(0.0, 1.6, 0.0);
+    let light2_color = Vec3::new(0.0, 1.0, 0.0);
+    let light2_intensity = 1.0;
+
+    let light3_pos = Vec3::new(1.6, 0.8, 0.0);
+    let light3_color = Vec3::new(0.0, 0.0, 1.0);
+    let light3_intensity = 1.0;
     
     let ambient_light = Vec3::new(1.0, 1.0, 1.0);
     let bg_color = vec_to_color(Vec3::new(0.0,0.0,0.0).rgb_255()); // cor do background
@@ -86,11 +94,16 @@ fn main() {
 
     let sphere = Sphere::new( sphere_center, sphere_radius, sphere_material );
     let plane = Plane::new( plane_p0, plane_normal, plane_material );
-    let light = Light::new( light_pos, light_color, light_intensity ); 
+    let light1 = Light::new( light1_pos, light1_color, light1_intensity ); 
+    let light2 = Light::new( light2_pos, light2_color, light2_intensity );
+    let light3 = Light::new( light3_pos, light3_color, light3_intensity );
     
-    let mut scene = Scene::new(light, ambient_light);
+    let mut scene = Scene::new(ambient_light);
     scene.add_shape(Shape::Plane(plane));
     scene.add_shape(Shape::Sphere(sphere));
+    scene.add_light(light1);
+    scene.add_light(light2);
+    scene.add_light(light3);
 
     // Inicializando SDL
     let sdl_context = sdl2::init().unwrap();
@@ -120,12 +133,12 @@ fn main() {
                 Event::Quit{ .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
                 // muda a posição da bola em 10cm pra cada lado pelas setas do teclado
                 // setas = eixos x,y // W,S = eixo z
-                Event::KeyDown { keycode: Some(Keycode::RIGHT), .. } => { scene.light.pos.x += 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::LEFT), .. } => { scene.light.pos.x -= 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::UP), .. } => { scene.light.pos.z -= 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { scene.light.pos.z += 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::W), .. } => { scene.light.pos.y += 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::S), .. } => { scene.light.pos.y -= 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::RIGHT), .. } => { scene.lights[0].pos.x += 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::LEFT), .. } => { scene.lights[0].pos.x -= 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::UP), .. } => { scene.lights[0].pos.z -= 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { scene.lights[0].pos.z += 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::W), .. } => { scene.lights[0].pos.y += 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::S), .. } => { scene.lights[0].pos.y -= 0.1; }
                 // espaço pra salvar a imagem atual do canvas como .ppm
                 Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => {
                     camera.draw_scene(&mut canvas, &scene);
