@@ -32,8 +32,8 @@ impl Sphere {
         // c = v*v - r²
         // delta = b² - 4ac
         let v: Vec3 = self.center - r.origin;
-        let a: f32 = r.dir.dot(r.dir);
-        let b: f32 = (-2.0 * r.dir).dot(v);
+        let a: f32 = r.dr.dot(r.dr);
+        let b: f32 = -2.0 * r.dr.dot(v);
         let c: f32 = v.dot(v) - self.radius*self.radius;
         let delta: f32 = b*b - 4.0*a*c;
         

@@ -21,7 +21,7 @@ impl Plane {
 
     pub fn intersects(&self, r: &Ray) -> (bool, f32, f32) {
         let top = self.normal.dot(r.origin - self.p0);
-        let bottom = self.normal.dot(r.dir);
+        let bottom = self.normal.dot(r.dr);
         if bottom == 0.0 { return ( false, -1.0, -INFINITY )}
         ( true, - top/bottom, -INFINITY )
     }

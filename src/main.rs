@@ -76,7 +76,7 @@ fn main() {
     let ambient_light = Vec3::new(1.0, 1.0, 1.0);
     let bg_color = vec_to_color(Vec3::new(0.0,0.0,0.0).rgb_255()); // cor do background
     
-    let camera: Camera = Camera::new(
+    let mut camera: Camera = Camera::new(
         p0, // a posição do observador (0,0,0)
         image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
         viewport_width, viewport_height, // tamanho da janela (em metros)

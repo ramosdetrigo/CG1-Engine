@@ -8,7 +8,7 @@ use sdl2::render::Canvas;
 use sdl2::video::Window;
 
 
-#[derive(Clone, Copy)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Camera {
     pub pos: Vec3, // observador
     pub bg_color: Color,
@@ -24,47 +24,47 @@ impl Camera {
             viewport: Viewport::new(
                 Vec3::new(pos.x, pos.y, pos.z-viewport_distance), // posição da janela em relação ao observador (0, 0, -d)
                 viewport_w, viewport_h, // altura * largura da janela
-                n_cols, n_rows // número de colunas e linhas, basicamente a resolução da câmera.
+                n_cols, n_rows, // número de colunas e linhas, basicamente a resolução da câmera.
             )
         }
     }
 
     #[inline]
     // wrapper simples pra desenhar um pixel de cor <color> no ponto (px,py) de um canvas
-    fn draw_pixel(self, canvas:&mut Canvas<Window>, px: i32, py: i32, color: Color) {
+    fn draw_pixel(&self, canvas:&mut Canvas<Window>, px: i32, py: i32, color: Color) {
         canvas.set_draw_color(color);
         canvas.draw_point(Point::new(px,py)).unwrap();
     }
 
     // draws entire scene
-    pub fn draw_scene(&self, canvas: &mut Canvas<Window>, scene: &Scene) {
+    pub fn draw_scene(&mut self, canvas: &mut Canvas<Window>, scene: &Scene) {
         canvas.set_draw_color(self.bg_color);
         canvas.clear();
         let light = &scene.light;
         for shape in &scene.shapes {
+            let mut ray = Ray::new(self.pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
+            let mat = shape.material();
 
             for row in 0..(self.viewport.rows as i32) {
                 for col in 0..(self.viewport.cols as i32) {
-                    let direction: Vec3 = (self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos;
-                    let ray = Ray::new(self.pos, direction); // cria um raio partindo de p0 "atirado" na direção d
+                    let dr: Vec3 = ((self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos).normalize();
+                    ray.dr = dr;
                     let (intersect, t1, t2) = shape.intersects(&ray); // checa se o raio intersecta a esfera
 
                     if intersect && (t1 > 0.0 || t2 > 0.0) {
                         let min_t = if t2 < 0.0 || t1 < t2 {t1} else {t2}; // mínimo positivo
                         let p_i = ray.at(min_t); // ponto de interseção 
 
-                        let v = (- direction).normalize();
                         let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
                         let n = shape.normal(&p_i); // vetor normal do objeto com o ponto p_i
                         let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
 
                         let mut nl = n.dot(l); // normal escalar l
-                        let mut rv = r.dot(v); // r escalar l
+                        let mut rv = r.dot(-dr); // r escalar l
                         // impede de desenhar a luz no "lado escuro da esfera"
                         if nl < 0.0 { nl = 0.0 }
                         if rv < 0.0 { rv = 0.0 }
 
-                        let mat = shape.material();
                         let iamb = mat.k_amb * scene.ambient_light;            // cor vindo da luz ambiente
                         let idif = mat.k_dif * nl * light.color;               // cor vindo de reflexão difusa
                         let iesp = mat.k_esp * rv.powf(mat.e) * light.color;   // cor vindo de reflexão especular
@@ -83,7 +83,7 @@ impl Camera {
 
 
 #[allow(dead_code)]
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 // Janela através a qual o observador vai olhar
 struct Viewport {
     pub pos: Vec3, // posição do Viewport (vai sempre estar em p0 - (0,0,d))
@@ -109,7 +109,7 @@ impl Viewport {
             rows, cols,
 
             dx, dy,
-            top_left_coords, p00_coords
+            top_left_coords, p00_coords,
         }
     }
 }
