@@ -1,5 +1,4 @@
-#![allow(dead_code)]
-use crate::utils::vec::Vec3;
+use crate::utils::Vec3;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Light {

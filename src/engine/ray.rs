@@ -1,5 +1,4 @@
-// #![allow(dead_code)]
-use crate::utils::vec::Vec3;
+use crate::utils::Vec3;
 
 pub struct Ray {
     pub origin: Vec3, // Origem do raio

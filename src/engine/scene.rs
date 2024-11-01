@@ -1,7 +1,6 @@
-#![allow(dead_code)]
-use super::shapes::shape::Shape;
-use super::light::Light;
-use crate::utils::vec::Vec3;
+use super::shapes::Shape;
+use super::Light;
+use crate::utils::Vec3;
 
 // #[derive(Clone, PartialEq, Debug)]
 pub struct Scene {

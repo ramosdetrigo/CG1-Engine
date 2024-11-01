@@ -1,8 +1,8 @@
 use std::f32::INFINITY;
 
-use super::material::Material;
-use super::super::ray::Ray;
-use crate::utils::vec::Vec3;
+use super::Material;
+use super::super::Ray;
+use crate::utils::Vec3;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Plane {

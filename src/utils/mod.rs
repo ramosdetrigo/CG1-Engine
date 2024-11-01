@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 pub mod vec;
-use vec::Vec3;
+pub use vec::Vec3;
 use sdl2::pixels::Color;
 
 pub fn vec_to_color(v: Vec3) -> Color {

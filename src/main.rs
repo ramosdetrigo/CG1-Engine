@@ -1,21 +1,21 @@
 mod engine;
 mod utils;
 
-use engine::camera::Camera;
-use engine::light::Light;
-use engine::shapes::material::Material;
-use engine::shapes::sphere::Sphere;
-use engine::shapes::shape::Shape;
-use engine::shapes::plane::Plane;
-use engine::scene::Scene;
-use utils::vec::Vec3;
+use engine::Camera;
+use engine::Light;
+use engine::Scene;
+use engine::shapes::Material;
+use engine::shapes::Sphere;
+use engine::shapes::Shape;
+use engine::shapes::Plane;
+use utils::Vec3;
+use utils::vec_to_color;
 use sdl2::keyboard::Keycode;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use sdl2::event::Event;
 use sdl2::pixels::PixelFormatEnum;
-use utils::vec_to_color;
 use std::time::{Duration, Instant};
 use std::fs;
 

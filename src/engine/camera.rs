@@ -1,6 +1,6 @@
-use super::ray::Ray;
-use super::scene::Scene;
-use crate::utils::vec::Vec3;
+use super::Ray;
+use super::Scene;
+use crate::utils::Vec3;
 use crate::utils::vec_to_color;
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
@@ -82,7 +82,6 @@ impl Camera {
 }
 
 
-#[allow(dead_code)]
 #[derive(Clone, PartialEq, Debug)]
 // Janela através a qual o observador vai olhar
 struct Viewport {

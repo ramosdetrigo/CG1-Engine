@@ -1,6 +1,6 @@
-use super::material::Material;
-use crate::utils::vec::Vec3;
-use super::super::ray::Ray;
+use super::Material;
+use crate::utils::Vec3;
+use super::super::Ray;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Sphere {

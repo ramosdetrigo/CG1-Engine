@@ -1,8 +1,8 @@
-use super::material::Material;
-use super::sphere::Sphere;
-use super::plane::Plane;
-use crate::engine::ray::Ray;
-use crate::utils::vec::Vec3;
+use super::Material;
+use super::Sphere;
+use super::Plane;
+use super::super::Ray;
+use crate::utils::Vec3;
 
 // TODO: struct instead of enum?
 pub enum Shape {

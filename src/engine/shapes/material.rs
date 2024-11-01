@@ -1,7 +1,7 @@
 // TODO: k_amb k_dif k_esp are vectors, not floats.
 // TODO: are they also the color? maybe having a color as an abstraction could be good but eh. idk.
 // TODO: they being the color could also explain the specular reflection being white etc.
-use crate::utils::vec::Vec3;
+use crate::utils::Vec3;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Material {
