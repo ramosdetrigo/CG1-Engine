@@ -17,7 +17,6 @@ use sdl2::video::Window;
 use sdl2::event::Event;
 use sdl2::pixels::PixelFormatEnum;
 use std::time::{Duration, Instant};
-use std::fs;
 
 // salva o canvas como uma imagem .ppm
 fn save_canvas_as_ppm (canvas: &Canvas<Window>) -> Result<(), Box<dyn std::error::Error>> {
@@ -30,7 +29,7 @@ fn save_canvas_as_ppm (canvas: &Canvas<Window>) -> Result<(), Box<dyn std::error
     for i in (0..pixels.len()).step_by(3) { // adiciona cada trio de pixels
         output += &format!("{} {} {}\n", pixels[i], pixels[i+1], pixels[i+2])
     }
-    fs::write("output.ppm", output)?; // salva o arquivo.ppm
+    std::fs::write("output.ppm", output)?; // salva o arquivo.ppm
 
     Ok(())
 }

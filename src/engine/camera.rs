@@ -1,4 +1,5 @@
 use std::f32::INFINITY;
+use std::vec;
 use super::Ray;
 use super::Scene;
 use super::shapes::Material;
@@ -9,7 +10,9 @@ use sdl2::pixels::Color;
 use sdl2::rect::Point;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
-
+use std::thread;
+use std::sync::Arc;
+use num_cpus;
 
 #[derive(Clone, PartialEq)]
 pub struct Camera {
@@ -46,25 +49,44 @@ impl Camera {
         canvas.clear();
         let mut ray = Ray::new(self.pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
         let mut mat: &Material;
-        
+        let scene = Arc::new(scene);
+
+        let mut handles = Vec::new();
+        for thread_n in 0..num_cpus::get() {
+            let handle = thread::spawn(move || {
+                println!("I am thread number {thread_n}!");
+                vec![1 * thread_n, 2 * thread_n, 3 * thread_n]
+            });
+            handles.push(handle);
+        }
+
+        for handle in handles {
+            let result = handle.join().unwrap();
+            println!("{:?}", result);
+        }
+
+
         for row in 0..(self.viewport.rows as i32) {
             for col in 0..(self.viewport.cols as i32) {
+                // vetor direção (muda a direção do raio)
                 let dr = ((self.viewport.p00_coords + (col as f32)*self.viewport.dx - (row as f32)*self.viewport.dy) - self.pos).normalize();
                 ray.dr = dr;
                 
+                // checa o objeto que colide com o raio R com menor distância t até o olho do observador
                 let mut shape: Option<&Shape> = None;
                 let mut t = INFINITY;
                 for s in &scene.shapes {
                     let t_s = s.intersects(&ray);
+                    // se o objeto colid com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
                     if t_s > 0.0 && t_s < t {
                         shape = Some(s);
                         t = t_s;
                     }
                 }
-                if shape.is_none() { continue; }
+                if shape.is_none() { continue; } // se o raio não colide com nenhum objeto, passa pro próximo pixel
                 let shape = shape.unwrap();
-                mat = shape.material();
-                let mut ieye = mat.k_amb * scene.ambient_light;
+                mat = shape.material(); // material do objeto
+                let mut ieye = mat.k_amb * scene.ambient_light; // intensidade da luz que chega no olho do observador
                 let p_i = ray.at(t); // ponto de interseção 
 
                 for light in &scene.lights {
@@ -73,11 +95,11 @@ impl Camera {
                     let mut iesp = Vec3::NULL; // cor vindo de reflexão especular
                     let mut under_light = true;
 
-                    let light_ray = Ray::new(p_i, light.pos - p_i);
+                    let light_ray = Ray::new(p_i, light.pos - p_i); // raio partindo de p_i até a posição da luz
                     for s in &scene.shapes {
                         if s == shape { continue; }
                         let tl = s.intersects(&light_ray);
-                        if tl < 1.0 && tl > 0.0001 { under_light = false; break; }
+                        if tl < 1.0 && tl > 0.0001 { under_light = false; break; } // se tem um objeto ENTRE P_I E A LUZ 
                     }
                     
                     if under_light {
@@ -86,13 +108,14 @@ impl Camera {
 
                         let nl = n.dot(l); // normal escalar l
                         let rv = r.dot(-dr); // r escalar l
+
                         // impede de desenhar a luz no "lado escuro da esfera"
                         if nl > 0.0 { idif = mat.k_dif * nl * light.color * light.intensity }
                         if rv > 0.0 { iesp = mat.k_esp * rv.powf(mat.e) * light.color * light.intensity }
+                        
                         ieye += idif + iesp;
                     }
                 }
-
 
                 self.draw_pixel(canvas, col, row, vec_to_color(ieye.rgb_255()));
             }
