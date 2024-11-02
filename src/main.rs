@@ -38,7 +38,7 @@ fn main() {
     let p0 = Vec3::new(0.0, 0.0, 0.0); // posição do observador
     
     let aspect_ratio: f32 = 16.0/9.0; // aspect ratio que eu quero na imagem (16:9)
-    let scale: f32 = 2.0; // cada quadrado na "câmera" vale por quantos pixels na janela do computador?
+    let scale: f32 = 1.0; // cada quadrado na "câmera" vale por quantos pixels na janela do computador?
 
     // imagem de 320x180 (em 16:9) (isso é o número de colunas e linhas na grade)
     let image_width: u32 = 960;

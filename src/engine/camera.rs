@@ -1,33 +1,18 @@
 use std::f32::INFINITY;
-use std::process::exit;
 use super::Ray;
 use super::Scene;
 use super::shapes::Material;
 use super::shapes::Shape;
 use crate::utils::Vec3;
-use crate::utils::vec_to_color;
 use sdl2::pixels::Color;
-use sdl2::rect::Point;
+use sdl2::rect::Rect;
+use sdl2::surface::Surface;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use std::thread;
 use std::sync::mpsc;
 use std::sync::Arc;
 use num_cpus;
-
-fn save_vec8_as_ppm (pixels: &Vec<u8>, w: i32, h: i32, name: i32) -> Result<(), Box<dyn std::error::Error>> {
-    let mut output = String::new(); // string que guarda o output
-    output += &format!("P3\n{w} {h}\n255\n"); // "header" do ppm
-
-    for i in (0..pixels.len()).step_by(3) { // adiciona cada trio de pixels
-        output += &format!("{} {} {}\n", pixels[i], pixels[i+1], pixels[i+2])
-    }
-    let name = &format!("{name}output.ppm");
-    std::fs::write(name, output)?; // salva o arquivo.ppm
-
-    Ok(())
-}
-const DRAW_BUFFER_SIZE: usize = 5000;
 
 #[derive(Clone, PartialEq)]
 pub struct Camera {
@@ -49,13 +34,6 @@ impl Camera {
                 n_cols, n_rows, // número de colunas e linhas, basicamente a resolução da câmera.
             )
         }
-    }
-
-    #[inline]
-    // wrapper simples pra desenhar um pixel de cor <color> no ponto (px,py) de um canvas
-    fn draw_pixel(&self, canvas:&mut Canvas<Window>, px: i32, py: i32, color: Color) {
-        canvas.set_draw_color(color);
-        canvas.draw_point(Point::new(px,py)).unwrap();
     }
 
     // draws entire scene
@@ -85,11 +63,8 @@ impl Camera {
                 let pos = *pos;
                 let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
                 let mut mat: &Material;
-                let mut draw_buffer = Vec::with_capacity(DRAW_BUFFER_SIZE);
                 let mut cu: Vec<u8> = vec![0; num_pixels as usize];
                 let mut cu_counter = 0;
-                let mut send_counter = 0;
-                let mut counter = 0;
                 
                 for row in lower_bound..upper_bound { // TODO: thread_n
                     for col in 0..(viewport.cols as i32) {
@@ -139,34 +114,40 @@ impl Camera {
                                 ieye += idif + iesp;
                             }
                         }
-                        // println!("SENT PIXEL!!!");
-                        if send_counter > 0 { draw_buffer[counter] = (col, row, ieye.rgb_255()); }
-                        else { draw_buffer.push((col, row, ieye.rgb_255())); }
                             
                         cu[cu_counter] = (ieye.x * 255.0) as u8;
                         cu[cu_counter + 1] = (ieye.y * 255.0) as u8;
                         cu[cu_counter + 2] = (ieye.z * 255.0) as u8;
                         cu_counter += 3;
-
-                        counter += 1;
-                        if counter == DRAW_BUFFER_SIZE {
-                            counter = 0;
-                            send_counter += 1;
-                            transmitter.send(draw_buffer.clone()).unwrap();
-                        }
                     }
                 }
-                save_vec8_as_ppm(&cu, viewport.cols as i32, upper_bound-lower_bound, thread_n).unwrap();
-                transmitter.send(draw_buffer[0..counter].to_vec()).unwrap();
+                transmitter.send((thread_n, cu, upper_bound-lower_bound)).unwrap();
             });
         }
         drop(transmitter);
 
-        for buffer in receiver {
-            for pixel in buffer { self.draw_pixel(canvas, pixel.0, pixel.1, vec_to_color(pixel.2)) };
+        let mut final_buffer: Vec<u8> = Vec::new();
+        let mut buffers: Vec<Vec<u8>> = vec![Vec::new(); num_threads as usize - 1];
+        for message in receiver {
+            if message.0 == 0 { final_buffer = message.1; }
+            else { buffers[message.0 as usize - 1] = message.1 }
         }
-        exit(1);
+        for buffer in buffers { 
+            final_buffer.extend(buffer.iter());
+        }
         
+        // save_vec8_as_ppm(&final_buffer, viewport.cols as i32, viewport.rows as i32, 999).unwrap();
+
+        let surface = Surface::from_data(
+            &mut final_buffer,
+            viewport.cols, viewport.rows,
+            viewport.cols * 3, 
+            sdl2::pixels::PixelFormatEnum::RGB24
+        ).unwrap();
+
+        let texture_creator = canvas.texture_creator();
+        let texture_from_surface = texture_creator.create_texture_from_surface(surface).expect("oh my fucking god");
+        canvas.copy(&texture_from_surface, None, Some(Rect::new(0, 0, viewport.cols, viewport.rows))).unwrap();
         canvas.present();
     }
 }
