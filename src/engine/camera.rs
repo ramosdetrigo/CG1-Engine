@@ -133,7 +133,7 @@ impl Camera {
                         }
                     }
                 }
-                transmitter.send(draw_buffer).unwrap();
+                transmitter.send(draw_buffer[0..counter].to_vec()).unwrap();
             });
         }
         drop(transmitter);
