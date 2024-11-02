@@ -1,4 +1,5 @@
 use std::f32::INFINITY;
+use std::process::exit;
 use super::Ray;
 use super::Scene;
 use super::shapes::Material;
@@ -14,6 +15,18 @@ use std::sync::mpsc;
 use std::sync::Arc;
 use num_cpus;
 
+fn save_vec8_as_ppm (pixels: &Vec<u8>, w: i32, h: i32, name: i32) -> Result<(), Box<dyn std::error::Error>> {
+    let mut output = String::new(); // string que guarda o output
+    output += &format!("P3\n{w} {h}\n255\n"); // "header" do ppm
+
+    for i in (0..pixels.len()).step_by(3) { // adiciona cada trio de pixels
+        output += &format!("{} {} {}\n", pixels[i], pixels[i+1], pixels[i+2])
+    }
+    let name = &format!("{name}output.ppm");
+    std::fs::write(name, output)?; // salva o arquivo.ppm
+
+    Ok(())
+}
 const DRAW_BUFFER_SIZE: usize = 5000;
 
 #[derive(Clone, PartialEq)]
@@ -64,16 +77,21 @@ impl Camera {
             let transmitter = transmitter.clone();
             
             let chunk_size = (viewport.rows as f32) / (num_threads as f32);
+            let lower_bound = (chunk_size * (thread_n as f32)).round() as i32;
+            let upper_bound = (chunk_size * ((thread_n+1) as f32)).round() as i32;
+            let num_pixels = (upper_bound - lower_bound) * viewport.cols as i32 * 3;
             
             thread::spawn(move || {
                 let pos = *pos;
                 let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
                 let mut mat: &Material;
                 let mut draw_buffer = Vec::with_capacity(DRAW_BUFFER_SIZE);
+                let mut cu: Vec<u8> = vec![0; num_pixels as usize];
+                let mut cu_counter = 0;
                 let mut send_counter = 0;
                 let mut counter = 0;
                 
-                for row in ((chunk_size * (thread_n as f32)).round() as i32)..((chunk_size * ((thread_n+1) as f32)).round() as i32) { // TODO: thread_n
+                for row in lower_bound..upper_bound { // TODO: thread_n
                     for col in 0..(viewport.cols as i32) {
                         let dr = (((viewport.p00_coords) + (col as f32)*viewport.dx - (row as f32)*viewport.dy) - pos).normalize();
                         ray.dr = dr;
@@ -88,7 +106,7 @@ impl Camera {
                                 t = t_s;
                             }
                         }
-                        if shape.is_none() { continue; } // se o raio não colide com nenhum objeto, passa pro próximo pixel
+                        if shape.is_none() { cu_counter += 3; continue; } // se o raio não colide com nenhum objeto, passa pro próximo pixel
                         let shape = shape.unwrap();
                         mat = shape.material(); // material do objeto
                         let mut ieye = mat.k_amb * scene.ambient_light; // intensidade da luz que chega no olho do observador
@@ -125,6 +143,11 @@ impl Camera {
                         if send_counter > 0 { draw_buffer[counter] = (col, row, ieye.rgb_255()); }
                         else { draw_buffer.push((col, row, ieye.rgb_255())); }
                             
+                        cu[cu_counter] = (ieye.x * 255.0) as u8;
+                        cu[cu_counter + 1] = (ieye.y * 255.0) as u8;
+                        cu[cu_counter + 2] = (ieye.z * 255.0) as u8;
+                        cu_counter += 3;
+
                         counter += 1;
                         if counter == DRAW_BUFFER_SIZE {
                             counter = 0;
@@ -133,6 +156,7 @@ impl Camera {
                         }
                     }
                 }
+                save_vec8_as_ppm(&cu, viewport.cols as i32, upper_bound-lower_bound, thread_n).unwrap();
                 transmitter.send(draw_buffer[0..counter].to_vec()).unwrap();
             });
         }
@@ -141,6 +165,7 @@ impl Camera {
         for buffer in receiver {
             for pixel in buffer { self.draw_pixel(canvas, pixel.0, pixel.1, vec_to_color(pixel.2)) };
         }
+        exit(1);
         
         canvas.present();
     }
