@@ -14,6 +14,8 @@ use std::sync::mpsc;
 use std::sync::Arc;
 use num_cpus;
 
+const DRAW_BUFFER_SIZE: usize = 5000;
+
 #[derive(Clone, PartialEq)]
 pub struct Camera {
     pub pos: Vec3, // observador
@@ -67,7 +69,8 @@ impl Camera {
                 let pos = *pos;
                 let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
                 let mut mat: &Material;
-                let mut draw_buffer = Vec::with_capacity(10000);
+                let mut draw_buffer = Vec::with_capacity(DRAW_BUFFER_SIZE);
+                let mut send_counter = 0;
                 let mut counter = 0;
                 
                 for row in ((chunk_size * (thread_n as f32)).round() as i32)..((chunk_size * ((thread_n+1) as f32)).round() as i32) { // TODO: thread_n
@@ -119,12 +122,14 @@ impl Camera {
                             }
                         }
                         // println!("SENT PIXEL!!!");
-                        draw_buffer.push( (col, row, ieye.rgb_255()) );
+                        if send_counter > 0 { draw_buffer[counter] = (col, row, ieye.rgb_255()); }
+                        else { draw_buffer.push((col, row, ieye.rgb_255())); }
+                            
                         counter += 1;
-                        if counter == 10000 {
+                        if counter == DRAW_BUFFER_SIZE {
                             counter = 0;
+                            send_counter += 1;
                             transmitter.send(draw_buffer.clone()).unwrap();
-                            draw_buffer.clear();
                         }
                     }
                 }
