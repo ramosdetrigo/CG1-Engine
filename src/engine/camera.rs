@@ -10,7 +10,6 @@ use sdl2::surface::Surface;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use std::thread;
-use std::sync::mpsc;
 use std::sync::Arc;
 use num_cpus;
 
@@ -18,7 +17,8 @@ use num_cpus;
 pub struct Camera {
     pub pos: Vec3, // observador
     pub bg_color: Color,
-    viewport: Viewport // janela
+    viewport: Viewport, // janela
+    draw_buffer: Vec<u8>
 }
 
 impl Camera {
@@ -32,7 +32,8 @@ impl Camera {
                 Vec3::new(pos.x, pos.y, pos.z-viewport_distance), // posição da janela em relação ao observador (0, 0, -d)
                 viewport_w, viewport_h, // altura * largura da janela
                 n_cols, n_rows, // número de colunas e linhas, basicamente a resolução da câmera.
-            )
+            ),
+            draw_buffer: vec![0; (n_cols * n_rows * 3) as usize]
         }
     }
 
@@ -40,33 +41,32 @@ impl Camera {
     pub fn draw_scene(&mut self, canvas: &mut Canvas<Window>, scene: &Scene) {
         canvas.set_draw_color(self.bg_color);
         canvas.clear();
+        
+        let num_pixels = self.viewport.cols * self.viewport.rows * 3;
+        let num_threads = num_cpus::get() as u32 * 2;
+        // let mut ppm: Vec<u8> = vec![0; num_pixels as usize];
+        
         let scene = Arc::new(scene.clone());
         let viewport = Arc::new(self.viewport.clone());
         let pos = Arc::new(self.pos.clone());
-
         
-        let (transmitter, receiver) = mpsc::channel();
-
-        let num_threads = num_cpus::get() as i32 * 2;
-        for thread_n in 0..num_threads {
+        thread::scope(|s| {
+        let mut lower_bound = 0;
+        for ppm_slice in self.draw_buffer.chunks_mut((num_pixels/num_threads) as usize) {
             let scene = Arc::clone(&scene);
             let viewport = Arc::clone(&viewport);
             let pos = Arc::clone(&pos);
-            let transmitter = transmitter.clone();
+
+            let chunk_size = ppm_slice.len() / (viewport.cols as usize) / 3;
+            let upper_bound = lower_bound + chunk_size;
             
-            let chunk_size = (viewport.rows as f32) / (num_threads as f32);
-            let lower_bound = (chunk_size * (thread_n as f32)).round() as i32;
-            let upper_bound = (chunk_size * ((thread_n+1) as f32)).round() as i32;
-            let num_pixels = (upper_bound - lower_bound) * viewport.cols as i32 * 3;
-            
-            thread::spawn(move || {
+            s.spawn(move || {
                 let pos = *pos;
                 let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
                 let mut mat: &Material;
-                let mut cu: Vec<u8> = vec![0; num_pixels as usize];
-                let mut cu_counter = 0;
+                let mut rgb_counter = 0;
                 
-                for row in lower_bound..upper_bound { // TODO: thread_n
+                for row in lower_bound..upper_bound {
                     for col in 0..(viewport.cols as i32) {
                         let dr = (((viewport.p00_coords) + (col as f32)*viewport.dx - (row as f32)*viewport.dy) - pos).normalize();
                         ray.dr = dr;
@@ -81,7 +81,7 @@ impl Camera {
                                 t = t_s;
                             }
                         }
-                        if shape.is_none() { cu_counter += 3; continue; } // se o raio não colide com nenhum objeto, passa pro próximo pixel
+                        if shape.is_none() { rgb_counter += 3; continue; } // se o raio não colide com nenhum objeto, passa pro próximo pixel
                         let shape = shape.unwrap();
                         mat = shape.material(); // material do objeto
                         let mut ieye = mat.k_amb * scene.ambient_light; // intensidade da luz que chega no olho do observador
@@ -115,31 +115,22 @@ impl Camera {
                             }
                         }
                             
-                        cu[cu_counter] = (ieye.x * 255.0) as u8;
-                        cu[cu_counter + 1] = (ieye.y * 255.0) as u8;
-                        cu[cu_counter + 2] = (ieye.z * 255.0) as u8;
-                        cu_counter += 3;
+                        ppm_slice[rgb_counter] = (ieye.x * 255.0) as u8;
+                        ppm_slice[rgb_counter + 1] = (ieye.y * 255.0) as u8;
+                        ppm_slice[rgb_counter + 2] = (ieye.z * 255.0) as u8;
+                        rgb_counter += 3;
                     }
                 }
-                transmitter.send((thread_n, cu, upper_bound-lower_bound)).unwrap();
             });
-        }
-        drop(transmitter);
 
-        let mut final_buffer: Vec<u8> = Vec::new();
-        let mut buffers: Vec<Vec<u8>> = vec![Vec::new(); num_threads as usize - 1];
-        for message in receiver {
-            if message.0 == 0 { final_buffer = message.1; }
-            else { buffers[message.0 as usize - 1] = message.1 }
+            lower_bound += chunk_size;
         }
-        for buffer in buffers { 
-            final_buffer.extend(buffer.iter());
-        }
-        
+        });
+
         // save_vec8_as_ppm(&final_buffer, viewport.cols as i32, viewport.rows as i32, 999).unwrap();
 
         let surface = Surface::from_data(
-            &mut final_buffer,
+            &mut self.draw_buffer,
             viewport.cols, viewport.rows,
             viewport.cols * 3, 
             sdl2::pixels::PixelFormatEnum::RGB24
