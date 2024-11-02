@@ -8,6 +8,7 @@ pub struct Vec3 {
     pub z: f32
 }
 
+unsafe impl Send for Vec3 {}
 
 impl Vec3 {
     pub const NULL: Vec3 = Self { x: 0.0, y: 0.0, z: 0.0 };

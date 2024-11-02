@@ -1,5 +1,4 @@
 use std::f32::INFINITY;
-use std::vec;
 use super::Ray;
 use super::Scene;
 use super::shapes::Material;
@@ -11,6 +10,7 @@ use sdl2::rect::Point;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use std::thread;
+use std::sync::mpsc;
 use std::sync::Arc;
 use num_cpus;
 
@@ -51,20 +51,23 @@ impl Camera {
         let viewport = Arc::new(self.viewport.clone());
         let pos = Arc::new(self.pos.clone());
 
-        let mut handles = vec![];
+        
+        let (transmitter, receiver) = mpsc::channel();
+
         let num_threads = num_cpus::get() as i32;
         for thread_n in 0..num_threads {
             let scene = Arc::clone(&scene);
             let viewport = Arc::clone(&viewport);
             let pos = Arc::clone(&pos);
+            let transmitter = transmitter.clone();
             
             let chunk_size = (viewport.rows as f32) / (num_threads as f32);
             
-            let handle = thread::spawn(move || {
-                let mut draws: Vec<(i32, i32, Color)> = vec![];
+            thread::spawn(move || {
                 let pos = *pos;
                 let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
                 let mut mat: &Material;
+                let transmitter = transmitter.clone();
                 
                 for row in ((chunk_size * (thread_n as f32)).round() as i32)..((chunk_size * ((thread_n+1) as f32)).round() as i32) { // TODO: thread_n
                     for col in 0..(viewport.cols as i32) {
@@ -114,24 +117,19 @@ impl Camera {
                                 ieye += idif + iesp;
                             }
                         }
-
-                        draws.push( (col, row, vec_to_color(ieye.rgb_255())) );
+                        // println!("SENT PIXEL!!!");
+                        transmitter.send( (col, row, ieye.rgb_255()) ).unwrap();
                     }
                 }
-
-                draws
             });
-
-            handles.push(handle);
         }
+        drop(transmitter);
 
-        for handle in handles {
-            let result = handle.join().unwrap();
-            for pixel in result {
-                self.draw_pixel(canvas, pixel.0, pixel.1, pixel.2);
-            }
+        for pixel in receiver {
+            // println!("Got pixel!...");
+            self.draw_pixel(canvas, pixel.0, pixel.1, vec_to_color(pixel.2));
         }
-
+        
         canvas.present();
     }
 }
