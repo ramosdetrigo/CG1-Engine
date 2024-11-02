@@ -67,7 +67,8 @@ impl Camera {
                 let pos = *pos;
                 let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
                 let mut mat: &Material;
-                let transmitter = transmitter.clone();
+                let mut draw_buffer = Vec::with_capacity(10000);
+                let mut counter = 0;
                 
                 for row in ((chunk_size * (thread_n as f32)).round() as i32)..((chunk_size * ((thread_n+1) as f32)).round() as i32) { // TODO: thread_n
                     for col in 0..(viewport.cols as i32) {
@@ -118,16 +119,22 @@ impl Camera {
                             }
                         }
                         // println!("SENT PIXEL!!!");
-                        transmitter.send( (col, row, ieye.rgb_255()) ).unwrap();
+                        draw_buffer.push( (col, row, ieye.rgb_255()) );
+                        counter += 1;
+                        if counter == 10000 {
+                            counter = 0;
+                            transmitter.send(draw_buffer.clone()).unwrap();
+                            draw_buffer.clear();
+                        }
                     }
                 }
+                transmitter.send(draw_buffer).unwrap();
             });
         }
         drop(transmitter);
 
-        for pixel in receiver {
-            // println!("Got pixel!...");
-            self.draw_pixel(canvas, pixel.0, pixel.1, vec_to_color(pixel.2));
+        for buffer in receiver {
+            for pixel in buffer { self.draw_pixel(canvas, pixel.0, pixel.1, vec_to_color(pixel.2)) };
         }
         
         canvas.present();
