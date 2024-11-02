@@ -4,7 +4,6 @@ use super::Scene;
 use super::shapes::Material;
 use super::shapes::Shape;
 use crate::utils::Vec3;
-use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::surface::Surface;
 use sdl2::render::Canvas;
@@ -16,7 +15,7 @@ use num_cpus;
 #[derive(Clone, PartialEq)]
 pub struct Camera {
     pub pos: Vec3, // observador
-    pub bg_color: Color,
+    pub bg_color: Vec3,
     viewport: Viewport, // janela
     draw_buffer: Vec<u8>
 }
@@ -24,7 +23,7 @@ pub struct Camera {
 impl Camera {
     #[inline]
     #[must_use]
-    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f32, viewport_h: f32, viewport_distance: f32, bg_color: Color) -> Camera {
+    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f32, viewport_h: f32, viewport_distance: f32, bg_color: Vec3) -> Camera {
         Camera {
             pos: pos, // posição do observador
             bg_color: bg_color,
@@ -39,29 +38,25 @@ impl Camera {
 
     // draws entire scene
     pub fn draw_scene(&mut self, canvas: &mut Canvas<Window>, scene: &Scene) {
-        canvas.set_draw_color(self.bg_color);
-        canvas.clear();
-        
         let num_pixels = self.viewport.cols * self.viewport.rows * 3;
         let num_threads = num_cpus::get() as u32 * 2;
-        // let mut ppm: Vec<u8> = vec![0; num_pixels as usize];
         
-        let scene = Arc::new(scene.clone());
-        let viewport = Arc::new(self.viewport.clone());
-        let pos = Arc::new(self.pos.clone());
+        let bg_color = self.bg_color;
+        let scene = Arc::new(&scene);
+        let viewport = Arc::new(&self.viewport);
+        let pos = Arc::new(self.pos);
         
         thread::scope(|s| {
         let mut lower_bound = 0;
         for ppm_slice in self.draw_buffer.chunks_mut((num_pixels/num_threads) as usize) {
             let scene = Arc::clone(&scene);
             let viewport = Arc::clone(&viewport);
-            let pos = Arc::clone(&pos);
+            let pos = *Arc::clone(&pos);
 
             let chunk_size = ppm_slice.len() / (viewport.cols as usize) / 3;
             let upper_bound = lower_bound + chunk_size;
             
             s.spawn(move || {
-                let pos = *pos;
                 let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
                 let mut mat: &Material;
                 let mut rgb_counter = 0;
@@ -75,13 +70,19 @@ impl Camera {
                         let mut t = INFINITY;
                         for s in &scene.shapes {
                             let t_s = s.intersects(&ray);
-                            // se o objeto colid com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
+                            // se o objeto colide com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
                             if t_s > 0.0 && t_s < t {
                                 shape = Some(s);
                                 t = t_s;
                             }
                         }
-                        if shape.is_none() { rgb_counter += 3; continue; } // se o raio não colide com nenhum objeto, passa pro próximo pixel
+                        if shape.is_none() { // se o raio não colide com nenhum objeto, desenha a cor do background passa pro próximo pixel
+                            ppm_slice[rgb_counter] = bg_color.x as u8;
+                            ppm_slice[rgb_counter] = bg_color.y as u8;
+                            ppm_slice[rgb_counter] = bg_color.z as u8;
+                            rgb_counter += 3;
+                            continue;
+                        }
                         let shape = shape.unwrap();
                         mat = shape.material(); // material do objeto
                         let mut ieye = mat.k_amb * scene.ambient_light; // intensidade da luz que chega no olho do observador
@@ -105,7 +106,7 @@ impl Camera {
                                 let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
         
                                 let nl = n.dot(l); // normal escalar l
-                                let rv = r.dot(-dr); // r escalar l
+                                let rv = r.dot(-dr); // r escalar v
         
                                 // impede de desenhar a luz no "lado escuro da esfera"
                                 if nl > 0.0 { idif = mat.k_dif * nl * light.color * light.intensity }

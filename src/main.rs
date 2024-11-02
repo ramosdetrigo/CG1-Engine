@@ -9,7 +9,6 @@ use engine::shapes::Sphere;
 use engine::shapes::Shape;
 use engine::shapes::Plane;
 use utils::Vec3;
-use utils::vec_to_color;
 use sdl2::keyboard::Keycode;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
@@ -97,7 +96,7 @@ fn main() {
     let light3_intensity = 1.0;
     
     let ambient_light = Vec3::new(1.0, 1.0, 1.0);
-    let bg_color = vec_to_color(Vec3::new(0.0,0.0,0.0).rgb_255()); // cor do background
+    let bg_color = Vec3::new(0.0,0.0,0.0).rgb_255(); // cor do background
     
     let mut camera: Camera = Camera::new(
         p0, // a posição do observador (0,0,0)
