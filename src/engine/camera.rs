@@ -56,7 +56,7 @@ impl Camera {
         
         let (transmitter, receiver) = mpsc::channel();
 
-        let num_threads = num_cpus::get() as i32;
+        let num_threads = num_cpus::get() as i32 * 2;
         for thread_n in 0..num_threads {
             let scene = Arc::clone(&scene);
             let viewport = Arc::clone(&viewport);
