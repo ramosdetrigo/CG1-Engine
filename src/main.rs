@@ -38,7 +38,7 @@ fn main() {
     let p0 = Vec3::new(0.0, 0.0, 0.0); // posição do observador
     
     let aspect_ratio: f32 = 16.0/9.0; // aspect ratio que eu quero na imagem (16:9)
-    let scale: f32 = 1.0; // cada quadrado na "câmera" vale por quantos pixels na janela do computador?
+    let scale: f32 = 2.0; // cada quadrado na "câmera" vale por quantos pixels na janela do computador?
 
     // imagem de 320x180 (em 16:9) (isso é o número de colunas e linhas na grade)
     let image_width: u32 = 960;
@@ -48,19 +48,35 @@ fn main() {
     let viewport_height: f32 = viewport_width/aspect_ratio;
     let viewport_distance: f32 = 1.0; // janela a 1m de distância do observador
     
-    let sphere_radius = 1.0; // 1m de raio
-    let sphere_center = Vec3::new(p0.x, p0.y, p0.z - (viewport_distance + sphere_radius)); // centro da esfera (z negativo)
-
-    let plane_p0 = Vec3::new(0.0, -1.8, 0.0);
-    let plane_normal = Vec3::new(0.0, 1.0 ,0.0);
-    
-    let sphere_material = Material::new(
+    let sphere1_radius = 0.5; // 1m de raio
+    let sphere1_center = Vec3::new(-1.2, p0.y, p0.z - (viewport_distance + sphere1_radius)); // centro da esfera (z negativo)
+    let sphere1_material = Material::new(
         Vec3::new(0.1, 0.0, 0.0), // Ambient
         Vec3::new(0.7, 0.0, 0.0), // Diffuse
         Vec3::new(0.3, 0.3, 0.3), // Specular
         5.0, // e
     );
 
+    let sphere2_radius = 0.5; // 1m de raio
+    let sphere2_center = Vec3::new(0.0, p0.y, p0.z - (viewport_distance + sphere2_radius)); // centro da esfera (z negativo)
+    let sphere2_material = Material::new(
+        Vec3::new(0.0, 0.1, 0.0), // Ambient
+        Vec3::new(0.0, 0.7, 0.0), // Diffuse
+        Vec3::new(0.3, 0.3, 0.3), // Specular
+        5.0, // e
+    );
+
+    let sphere3_radius = 0.5; // 1m de raio
+    let sphere3_center = Vec3::new(1.2, p0.y, p0.z - (viewport_distance + sphere3_radius)); // centro da esfera (z negativo)
+    let sphere3_material = Material::new(
+        Vec3::new(0.0, 0.0, 0.1), // Ambient
+        Vec3::new(0.0, 0.0, 0.7), // Diffuse
+        Vec3::new(0.3, 0.3, 0.3), // Specular
+        5.0, // e
+    );
+    
+    let plane_p0 = Vec3::new(0.0, -1.8, 0.0);
+    let plane_normal = Vec3::new(0.0, 1.0 ,0.0);
     let plane_material = Material::new(
         Vec3::new(0.1, 0.1, 0.1), // Ambient
         Vec3::new(0.7, 0.7, 0.7), // Diffuse
@@ -72,7 +88,7 @@ fn main() {
     let light1_color = Vec3::new(1.0, 0.0, 0.0);
     let light1_intensity = 1.0;
 
-    let light2_pos = Vec3::new(0.0, 1.6, 0.0);
+    let light2_pos = Vec3::new(0.0, 0.8, 0.0);
     let light2_color = Vec3::new(0.0, 1.0, 0.0);
     let light2_intensity = 1.0;
 
@@ -91,7 +107,9 @@ fn main() {
         bg_color // cor do background
     );
 
-    let sphere = Sphere::new( sphere_center, sphere_radius, sphere_material );
+    let sphere1 = Sphere::new( sphere1_center, sphere1_radius, sphere1_material );
+    let sphere2 = Sphere::new( sphere2_center, sphere2_radius, sphere2_material );
+    let sphere3 = Sphere::new( sphere3_center, sphere3_radius, sphere3_material );
     let plane = Plane::new( plane_p0, plane_normal, plane_material );
     let light1 = Light::new( light1_pos, light1_color, light1_intensity ); 
     let light2 = Light::new( light2_pos, light2_color, light2_intensity );
@@ -99,7 +117,9 @@ fn main() {
     
     let mut scene = Scene::new(ambient_light);
     scene.add_shape(Shape::Plane(plane));
-    scene.add_shape(Shape::Sphere(sphere));
+    scene.add_shape(Shape::Sphere(sphere1));
+    scene.add_shape(Shape::Sphere(sphere2));
+    scene.add_shape(Shape::Sphere(sphere3));
     scene.add_light(light1);
     scene.add_light(light2);
     scene.add_light(light3);

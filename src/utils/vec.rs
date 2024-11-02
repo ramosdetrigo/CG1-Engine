@@ -26,7 +26,7 @@ impl Vec3 {
     #[inline]
     #[must_use]
     /// Retorna uma cópia do vetor normalizado
-    pub fn normalize(&self) -> Self { *self / self.length() }
+    pub fn normalize(self) -> Self { self / self.length() }
 
     #[inline]
     #[must_use]

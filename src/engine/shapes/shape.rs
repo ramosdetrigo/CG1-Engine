@@ -16,8 +16,8 @@ impl Shape {
     #[must_use]
     pub fn normal(&self, p: &Vec3) -> Vec3 {
         match self {
-            Self::Sphere(sphere) => { sphere.normal(p) }
-            Self::Plane(plane) => { plane.normal }
+            Self::Sphere(sphere) => sphere.normal(p),
+            Self::Plane(plane) => plane.normal,
         }
     }
 
@@ -25,8 +25,8 @@ impl Shape {
     #[must_use]
     pub fn material(&self) -> &Material {
         match self {
-            Self::Sphere(sphere) => { &sphere.material }
-            Self::Plane(plane) => { &plane.material }
+            Self::Sphere(sphere) => &sphere.material,
+            Self::Plane(plane) => &plane.material,
         }
     }
 
@@ -34,8 +34,8 @@ impl Shape {
     #[must_use]
     pub fn intersects(&self, r: &Ray) -> f32 {
         match self {
-            Self::Sphere(sphere) => { sphere.intersects(r) }
-            Self::Plane(plane) => { plane.intersects(r) }
+            Self::Sphere(sphere) => sphere.intersects(r),
+            Self::Plane(plane) => plane.intersects(r),
         }
     }
 }
