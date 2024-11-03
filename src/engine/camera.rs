@@ -1,8 +1,6 @@
 use std::f32::INFINITY;
-use super::Ray;
-use super::Scene;
-use super::shapes::Material;
-use super::shapes::Shape;
+use super::{Ray, Scene};
+use super::shapes::{Shape, Material};
 use crate::utils::Vec3;
 use sdl2::rect::Rect;
 use sdl2::surface::Surface;
@@ -10,7 +8,6 @@ use sdl2::render::Canvas;
 use sdl2::video::Window;
 use std::thread;
 use std::sync::Arc;
-use num_cpus;
 
 #[derive(Clone, PartialEq)]
 pub struct Camera {
@@ -44,23 +41,31 @@ impl Camera {
 
     /// Desenha uma cena em um canvas com base nas especificações da câmera
     pub fn draw_scene(&mut self, canvas: &mut Canvas<Window>, scene: &Scene) {
-        let num_pixels = self.viewport.cols * self.viewport.rows * 3;
-        let num_threads = num_cpus::get() as u32 * 2;
+        // Número de bytes no canvas (número de pixels * 3: RGB24)
+        let num_bytes = self.viewport.cols * self.viewport.rows * 3;
+        // Número de threads disponíveis * 2
+        // (Nos meus testes usar o dobro de threads disponíveis tende a aumentar a eficiência por algum motivo)
+        let num_threads = thread::available_parallelism().unwrap().get() as u32 * 2; 
         
-        let bg_color = self.bg_color;
-        let scene = Arc::new(&scene);
-        let viewport = Arc::new(&self.viewport);
-        let pos = Arc::new(self.pos);
+        // Referências thread-safe
+        let scene = Arc::new(&scene); // Cena
+        let viewport = Arc::new(&self.viewport); // Viewport da câmera
         
+        // Render multithread
+        // (A câmera tem um array de pixels em formato RGB24. A gente divide esse buffer pra várias threads
+        // e elas vão calcular os pixels em paralelo, acelerando o render.)
         thread::scope(|s| {
         let mut lower_bound = 0;
-        for ppm_slice in self.draw_buffer.chunks_mut((num_pixels/num_threads) as usize) {
+        for ppm_slice in self.draw_buffer.chunks_mut((num_bytes/num_threads) as usize) {
+            // Clona as referências pesadas e os vetores leves para serem movidos para outra thread
             let scene = Arc::clone(&scene);
             let viewport = Arc::clone(&viewport);
-            let pos = *Arc::clone(&pos);
+            let pos = self.pos;
+            let bg_color = self.bg_color;
 
-            let chunk_size = ppm_slice.len() / (viewport.cols as usize) / 3;
-            let upper_bound = lower_bound + chunk_size;
+            // Número de linhas que a thread vai desenhar (range lower_bound..upper_bound)
+            let num_rows = ppm_slice.len() / (viewport.cols as usize) / 3;
+            let upper_bound = lower_bound + num_rows;
             
             s.spawn(move || {
                 let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
@@ -72,17 +77,19 @@ impl Camera {
                         let dr = (((viewport.p00_coords) + (col as f32)*viewport.dx - (row as f32)*viewport.dy) - pos).normalize();
                         ray.dr = dr;
 
+                        // Obtém o objeto mais próximo a colidir com o raio
                         let mut shape: Option<&Shape> = None;
                         let mut t = INFINITY;
                         for s in &scene.shapes {
-                            let t_s = s.intersects(&ray);
+                            let t_candidate = s.intersects(&ray);
                             // se o objeto colide com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
-                            if t_s > 0.0 && t_s < t {
+                            if t_candidate > 0.0 && t_candidate < t {
                                 shape = Some(s);
-                                t = t_s;
+                                t = t_candidate;
                             }
                         }
-                        if shape.is_none() { // se o raio não colide com nenhum objeto, desenha a cor do background passa pro próximo pixel
+                        // se o raio não colide com nenhum objeto, desenha a cor do background e passa pro próximo pixel
+                        if shape.is_none() {
                             ppm_slice[rgb_counter] = bg_color.x as u8;
                             ppm_slice[rgb_counter] = bg_color.y as u8;
                             ppm_slice[rgb_counter] = bg_color.z as u8;
@@ -91,25 +98,36 @@ impl Camera {
                         }
                         let shape = shape.unwrap();
                         mat = shape.material(); // material do objeto
-                        let mut ieye = mat.k_amb * scene.ambient_light; // intensidade da luz que chega no olho do observador
+                        // intensidade da luz que chega no olho do observador (começa como só a luz ambiente)
+                        let mut ieye = mat.k_amb * scene.ambient_light;
                         let p_i = ray.at(t); // ponto de interseção
                         
+                        // Desenha o pixel acordo com a iluminação
                         for light in &scene.lights {
                             let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
                             let mut idif = Vec3::NULL; // cor vindo de reflexão difusa
                             let mut iesp = Vec3::NULL; // cor vindo de reflexão especular
                             let mut under_light = true;
         
-                            let light_ray = Ray::new(p_i, light.pos - p_i); // raio partindo de p_i até a posição da luz
+                            // raio partindo de p_i até o ponto de luz
+                            // (o dr não normalizado ajuda a checar se um objeto não está atrás do ponto de luz)
+                            let light_ray = Ray::new(p_i, light.pos - p_i);
+
+                            // Checar se o objeto está na sombra de algum outro objeto
                             for s in &scene.shapes {
                                 // Skipa o cálculo se a interseção for consigo mesmo, previne uns bugs de reflexão especular inclusive
+                                // (This is a problem for future me ! ;D)
                                 if s == shape { continue; }
+
                                 let tl = s.intersects(&light_ray);
-                                if tl < 1.0 && tl > 0.0001 { under_light = false; break; } // se tem um objeto ENTRE P_I E A LUZ 
+                                // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0001 < tl < 1.0))
+                                // 0.0001 previne problemas com floating point precision
+                                if tl < 1.0 && tl > 0.0001 { under_light = false; break; }
                             }
                             
+                            // Se o objeto não estiver na sombra...
                             if under_light {
-                                let n = shape.normal(&p_i); // vetor normal do objeto com o ponto p_i
+                                let n = shape.normal(p_i); // vetor normal do objeto com o ponto p_i
                                 let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
         
                                 let nl = n.dot(l); // normal escalar l
@@ -123,8 +141,10 @@ impl Camera {
                             }
                         }
                         
+                        // converte pra RGB24 
                         ieye = ieye.clamp(0.0, 1.0) * 255.0;
                         
+                        // salva o pixel no slice do buffer da câmera
                         ppm_slice[rgb_counter] = ieye.x as u8;
                         ppm_slice[rgb_counter + 1] = ieye.y as u8;
                         ppm_slice[rgb_counter + 2] = ieye.z as u8;
@@ -133,22 +153,22 @@ impl Camera {
                 }
             });
 
-            lower_bound += chunk_size;
+            lower_bound += num_rows;
         }
         });
 
-        // save_vec8_as_ppm(&final_buffer, viewport.cols as i32, viewport.rows as i32, 999).unwrap();
-
+        // Converte o buffer da câmera numa textura do SDL
         let surface = Surface::from_data(
             &mut self.draw_buffer,
             viewport.cols, viewport.rows,
             viewport.cols * 3, 
             sdl2::pixels::PixelFormatEnum::RGB24
         ).unwrap();
-
         let texture_creator = canvas.texture_creator();
-        let texture_from_surface = texture_creator.create_texture_from_surface(surface).expect("oh my fucking god");
+        let texture_from_surface = texture_creator.create_texture_from_surface(surface).unwrap();
+        // E desenha a textura no canvas
         canvas.copy(&texture_from_surface, None, Some(Rect::new(0, 0, viewport.cols, viewport.rows))).unwrap();
+
         canvas.present();
     }
 }

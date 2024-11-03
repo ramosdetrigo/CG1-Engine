@@ -25,7 +25,7 @@ impl Scene {
     }
 
     #[inline]
-    /// Adiciona uma luz na centa
+    /// Adiciona uma luz na cena
     pub fn add_light(&mut self, l: Light) {
         self.lights.push(l);
     }

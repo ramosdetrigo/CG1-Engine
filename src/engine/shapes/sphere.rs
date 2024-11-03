@@ -24,8 +24,8 @@ impl Sphere {
     #[inline]
     #[must_use]
     /// Retorna o vetor normal entre o centro da esfera e um ponto `p`
-    pub fn normal(&self, p: &Vec3) -> Vec3 {
-        (*p - self.center).normalize()
+    pub fn normal(&self, p: Vec3) -> Vec3 {
+        (p - self.center).normalize()
     }
 
     #[must_use]

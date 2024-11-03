@@ -15,7 +15,7 @@ impl Shape {
     #[inline]
     #[must_use]
     /// Retorna o vetor normal entre o objeto e um ponto P
-    pub fn normal(&self, p: &Vec3) -> Vec3 {
+    pub fn normal(&self, p: Vec3) -> Vec3 {
         match self {
             Self::Sphere(sphere) => sphere.normal(p),
             Self::Plane(plane) => plane.normal,

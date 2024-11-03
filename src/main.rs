@@ -1,36 +1,12 @@
 mod engine;
 mod utils;
 
-use engine::Camera;
-use engine::Light;
-use engine::Scene;
-use engine::shapes::Material;
-use engine::shapes::Sphere;
-use engine::shapes::Plane;
-use utils::Vec3;
-use sdl2::keyboard::Keycode;
-use sdl2::rect::Rect;
-use sdl2::render::Canvas;
-use sdl2::video::Window;
+use utils::{Vec3, save_canvas_as_ppm};
+use engine::{Camera, Light, Scene};
+use engine::shapes::{Material, Sphere, Plane};
 use sdl2::event::Event;
-use sdl2::pixels::PixelFormatEnum;
+use sdl2::keyboard::Keycode;
 use std::time::{Duration, Instant};
-
-// salva o canvas como uma imagem .ppm
-fn save_canvas_as_ppm (canvas: &Canvas<Window>) -> Result<(), Box<dyn std::error::Error>> {
-    let (w, h) = canvas.output_size()?;
-    let pixels: Vec<u8> = canvas.read_pixels(Rect::new(0,0,w,h), PixelFormatEnum::RGB24)?;
-    
-    let mut output = String::new(); // string que guarda o output
-    output += &format!("P3\n{w} {h}\n255\n"); // "header" do ppm
-
-    for i in (0..pixels.len()).step_by(3) { // adiciona cada trio de pixels
-        output += &format!("{} {} {}\n", pixels[i], pixels[i+1], pixels[i+2])
-    }
-    std::fs::write("output.ppm", output)?; // salva o arquivo.ppm
-
-    Ok(())
-}
 
 fn main() {
     let p0 = Vec3::new(0.0, 0.0, 0.0); // posição do observador

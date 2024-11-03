@@ -27,7 +27,7 @@ impl Vec3 {
     #[inline]
     #[must_use]
     /// Produto vetorial entre dois vetores
-    fn cross(&self, rhs: &Self) -> Self {
+    fn cross(&self, rhs: Self) -> Self {
         Self {
             x: self.y * rhs.z - self.z * rhs.y,
             y: self.z * rhs.x - self.x * rhs.z,
