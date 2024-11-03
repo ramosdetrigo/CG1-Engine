@@ -6,7 +6,6 @@ use engine::Light;
 use engine::Scene;
 use engine::shapes::Material;
 use engine::shapes::Sphere;
-use engine::shapes::Shape;
 use engine::shapes::Plane;
 use utils::Vec3;
 use sdl2::keyboard::Keycode;
@@ -37,9 +36,9 @@ fn main() {
     let p0 = Vec3::new(0.0, 0.0, 0.0); // posição do observador
     
     let aspect_ratio: f32 = 16.0/9.0; // aspect ratio que eu quero na imagem (16:9)
-    let scale: f32 = 1.0; // cada quadrado na "câmera" vale por quantos pixels na janela do computador?
+    let scale: f32 = 1.0; // escala: cada quadrado na "câmera" vale por quantos pixels na janela do computador?
 
-    // imagem de 320x180 (em 16:9) (isso é o número de colunas e linhas na grade)
+    // imagem de 960x540 (em 16:9) (isso é o número de colunas e linhas na grade)
     let image_width: u32 = 960;
     let image_height: u32 = ((image_width as f32)/aspect_ratio) as u32;
     // janela de 3.2m * 1.8m (em 16:9)
@@ -47,13 +46,24 @@ fn main() {
     let viewport_height: f32 = viewport_width/aspect_ratio;
     let viewport_distance: f32 = 1.0; // janela a 1m de distância do observador
     
+    let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
+    
+    let mut camera: Camera = Camera::new(
+        p0, // a posição do observador
+        image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
+        viewport_width, viewport_height, // tamanho da janela (em metros)
+        viewport_distance, // distância da janela até o observador (em metros)
+        bg_color // cor do background
+    );
+
+    // Definindo as propriedades de cada objeto
     let sphere1_radius = 0.5; // 1m de raio
     let sphere1_center = Vec3::new(-1.2, p0.y, p0.z - (viewport_distance + sphere1_radius)); // centro da esfera (z negativo)
     let sphere1_material = Material::new(
         Vec3::new(0.1, 0.0, 0.0), // Ambient
         Vec3::new(0.7, 0.0, 0.0), // Diffuse
         Vec3::new(0.3, 0.3, 0.3), // Specular
-        5.0, // e
+        500.0, // coeficiente de "brilho"
     );
 
     let sphere2_radius = 0.5; // 1m de raio
@@ -62,7 +72,7 @@ fn main() {
         Vec3::new(0.0, 0.1, 0.0), // Ambient
         Vec3::new(0.0, 0.7, 0.0), // Diffuse
         Vec3::new(0.3, 0.3, 0.3), // Specular
-        5.0, // e
+        500.0, // coeficiente de "brilho"
     );
 
     let sphere3_radius = 0.5; // 1m de raio
@@ -71,7 +81,7 @@ fn main() {
         Vec3::new(0.0, 0.0, 0.1), // Ambient
         Vec3::new(0.0, 0.0, 0.7), // Diffuse
         Vec3::new(0.3, 0.3, 0.3), // Specular
-        5.0, // e
+        500.0, // coeficiente de "brilho"
     );
     
     let plane_p0 = Vec3::new(0.0, -1.8, 0.0);
@@ -80,9 +90,10 @@ fn main() {
         Vec3::new(0.1, 0.1, 0.1), // Ambient
         Vec3::new(0.7, 0.7, 0.7), // Diffuse
         Vec3::new(0.3, 0.3, 0.3), // Specular
-        5.0, // e
+        3.0, // coeficiente de "brilho"
     );
     
+    // Definindo as propriedades das luzes
     let light1_pos = Vec3::new(-1.6, 0.8, 0.0);
     let light1_color = Vec3::new(1.0, 0.0, 0.0);
     let light1_intensity = 1.0;
@@ -95,30 +106,22 @@ fn main() {
     let light3_color = Vec3::new(0.0, 0.0, 1.0);
     let light3_intensity = 1.0;
     
-    let ambient_light = Vec3::new(1.0, 1.0, 1.0);
-    let bg_color = Vec3::new(0.0,0.0,0.0).rgb_255(); // cor do background
-    
-    let mut camera: Camera = Camera::new(
-        p0, // a posição do observador (0,0,0)
-        image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
-        viewport_width, viewport_height, // tamanho da janela (em metros)
-        viewport_distance, // distância da janela até o observador (em metros)
-        bg_color // cor do background
-    );
-
+    // Criando os objetos e as luzes
+    let plane = Plane::new( plane_p0, plane_normal, plane_material );
     let sphere1 = Sphere::new( sphere1_center, sphere1_radius, sphere1_material );
     let sphere2 = Sphere::new( sphere2_center, sphere2_radius, sphere2_material );
     let sphere3 = Sphere::new( sphere3_center, sphere3_radius, sphere3_material );
-    let plane = Plane::new( plane_p0, plane_normal, plane_material );
     let light1 = Light::new( light1_pos, light1_color, light1_intensity ); 
     let light2 = Light::new( light2_pos, light2_color, light2_intensity );
     let light3 = Light::new( light3_pos, light3_color, light3_intensity );
+    let ambient_light = Vec3::new(1.0, 1.0, 1.0); // Luz ambiente
     
+    // Adicionando os objetos na cena
     let mut scene = Scene::new(ambient_light);
-    scene.add_shape(Shape::Plane(plane));
-    scene.add_shape(Shape::Sphere(sphere1));
-    scene.add_shape(Shape::Sphere(sphere2));
-    scene.add_shape(Shape::Sphere(sphere3));
+    scene.add_shape(plane); // "Shape" é um enum com cada tipo de objeto
+    scene.add_shape(sphere1);
+    scene.add_shape(sphere2);
+    scene.add_shape(sphere3);
     scene.add_light(light1);
     scene.add_light(light2);
     scene.add_light(light3);
@@ -138,13 +141,12 @@ fn main() {
 
     camera.draw_scene(&mut canvas, &scene); // desenha a esfera na tela ;)
     save_canvas_as_ppm(&canvas).unwrap(); // salva o que foi desenhado no canvas como uma imagem .ppm
-    canvas.present(); // apresenta o canvas na tela do computador (isso também limpa o canvas)
     
     // main loop do programa
     let mut frame_count = 0; // contador de FPS no terminal
     let mut last_time = Instant::now();
     'running: loop {
-        // eventos de teclado mouse etc
+        // Seção de eventos e updates
         for event in event_pump.poll_iter() {
             match event {
                 // esc pra sair do programa
@@ -166,15 +168,15 @@ fn main() {
             }
         }
 
+        // Seção de draw
         camera.draw_scene(&mut canvas, &scene);
-        canvas.present(); // joga o que foi desenhado no canvas na janela do computador (isso também limpa o canvas)
         
+        // Contador de FPS
         frame_count += 1;
         if last_time.elapsed() >= Duration::new(1, 0) {
             println!("FPS: {frame_count}"); // printa o número de frames desenhados no último segundo (FPS)
             frame_count = 0;
             last_time = Instant::now();
-            // println!("{:?}", scene.light.pos);
         }
     }
 }

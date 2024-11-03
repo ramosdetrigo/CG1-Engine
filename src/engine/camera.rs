@@ -23,10 +23,16 @@ pub struct Camera {
 impl Camera {
     #[inline]
     #[must_use]
+    /// Cria uma nova câmera. \
+    /// `pos`: posição da câmera na cena
+    /// `n_cols`, `n_rows`: resolução X,Y da câmera (colunas e linhas no viewport) \
+    /// `viewport_w`, `viewport_h`: Tamanho do viewport em metros \
+    /// `viewport_distance`: Distância do viewport até o observador \
+    /// `bg_color` : Cor do background
     pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f32, viewport_h: f32, viewport_distance: f32, bg_color: Vec3) -> Camera {
         Camera {
             pos: pos, // posição do observador
-            bg_color: bg_color,
+            bg_color: bg_color.clamp(0.0, 1.0) * 255.0,
             viewport: Viewport::new(
                 Vec3::new(pos.x, pos.y, pos.z-viewport_distance), // posição da janela em relação ao observador (0, 0, -d)
                 viewport_w, viewport_h, // altura * largura da janela
@@ -36,7 +42,7 @@ impl Camera {
         }
     }
 
-    // draws entire scene
+    /// Desenha uma cena em um canvas com base nas especificações da câmera
     pub fn draw_scene(&mut self, canvas: &mut Canvas<Window>, scene: &Scene) {
         let num_pixels = self.viewport.cols * self.viewport.rows * 3;
         let num_threads = num_cpus::get() as u32 * 2;
@@ -96,6 +102,7 @@ impl Camera {
         
                             let light_ray = Ray::new(p_i, light.pos - p_i); // raio partindo de p_i até a posição da luz
                             for s in &scene.shapes {
+                                // Skipa o cálculo se a interseção for consigo mesmo, previne uns bugs de reflexão especular inclusive
                                 if s == shape { continue; }
                                 let tl = s.intersects(&light_ray);
                                 if tl < 1.0 && tl > 0.0001 { under_light = false; break; } // se tem um objeto ENTRE P_I E A LUZ 
@@ -115,10 +122,12 @@ impl Camera {
                                 ieye += idif + iesp;
                             }
                         }
-                            
-                        ppm_slice[rgb_counter] = (ieye.x * 255.0) as u8;
-                        ppm_slice[rgb_counter + 1] = (ieye.y * 255.0) as u8;
-                        ppm_slice[rgb_counter + 2] = (ieye.z * 255.0) as u8;
+                        
+                        ieye = ieye.clamp(0.0, 1.0) * 255.0;
+                        
+                        ppm_slice[rgb_counter] = ieye.x as u8;
+                        ppm_slice[rgb_counter + 1] = ieye.y as u8;
+                        ppm_slice[rgb_counter + 2] = ieye.z as u8;
                         rgb_counter += 3;
                     }
                 }
@@ -146,20 +155,33 @@ impl Camera {
 
 
 #[derive(Clone, PartialEq)]
-// Janela através a qual o observador vai olhar
+/// Janela através a qual o observador vai olhar \
+/// `pos`: posição do Viewport (por enquanto vai estar em p0 - (0,0,d)) \
+/// `width`, `height`: largura x altura da janela (em metros) \
+/// `cols`, `rows`: número de colunas e linhas da grade (praticamente a resolução) \
+/// `dx`, `dy`: tamanho x e y de cada quadrado \
+/// `top_left_coords`: coordenadas da quina superior esquerda do frame \
+/// `p00_coords`: coordenadas do quadrado 0,0 do frame
 struct Viewport {
-    pub pos: Vec3, // posição do Viewport (vai sempre estar em p0 - (0,0,d))
-    pub width: f32, pub height: f32, // largura x altura do quadro (em metros)
-    pub cols: u32, pub rows: u32, // número de colunas e linhas do quadro (praticamente a resolução)
+    pub pos: Vec3, 
+    pub width: f32, pub height: f32,
+    pub cols: u32, pub rows: u32,
 
-    pub dx: Vec3, pub dy: Vec3, // tamanho x e y de cada quadrado
-    pub top_left_coords: Vec3, // coordenadas da quina superior esquerda do frame
-    pub p00_coords: Vec3 // coordenadas do quadrado 0,0 do frame
+    pub dx: Vec3, pub dy: Vec3,
+    pub top_left_coords: Vec3,
+    pub p00_coords: Vec3
 }
 
 impl Viewport { 
     #[inline]
     #[must_use]
+    /// Cria um novo viewport. \
+    /// `pos`: posição do Viewport (por enquanto vai estar em p0 - (0,0,d)) \
+    /// `width`, `height`: largura x altura da janela (em metros) \
+    /// `cols`, `rows`: número de colunas e linhas da grade (praticamente a resolução) \
+    /// `dx`, `dy`: tamanho x e y de cada quadrado \
+    /// `top_left_coords`: coordenadas da quina superior esquerda do frame \
+    /// `p00_coords`: coordenadas do quadrado 0,0 do frame
     pub fn new(pos: Vec3, width: f32, height: f32, cols: u32, rows: u32) -> Viewport {
         let top_left_coords: Vec3 = Vec3::new(pos.x - width/2.0, pos.y + height/2.0, pos.z);
         let dx = Vec3::new(width/(cols as f32), 0.0, 0.0);

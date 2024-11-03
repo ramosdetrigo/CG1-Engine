@@ -1,10 +1,11 @@
 use std::f32::NEG_INFINITY;
-
 use super::Material;
-use crate::utils::Vec3;
+use super::Shape;
 use super::super::Ray;
+use crate::utils::Vec3;
 
 #[derive(Clone, PartialEq)]
+/// Esfera de centro `center`, raio `radius`, e material `material`.
 pub struct Sphere {
     pub center: Vec3, // Ponto x,y,z do centro da esfera
     pub radius: f32, // Raio da esfera
@@ -14,17 +15,22 @@ pub struct Sphere {
 impl Sphere {
     #[inline]
     #[must_use]
-    pub fn new(center: Vec3, radius: f32, material: Material) -> Self {
-        Self { center, radius, material, }
+    /// Cria uma nova esfera de centro `center`, raio `radius`, e material `material`. \
+    /// (Encapsulada em um enum Shape)
+    pub fn new(center: Vec3, radius: f32, material: Material) -> Shape {
+        Shape::Sphere( Self { center, radius, material, })
     }
 
     #[inline]
     #[must_use]
+    /// Retorna o vetor normal entre o centro da esfera e um ponto `p`
     pub fn normal(&self, p: &Vec3) -> Vec3 {
         (*p - self.center).normalize()
     }
 
     #[must_use]
+    /// Retorna o ponto de interseção (de distância positiva) mais próximo entre uma esfera e um raio `r` \
+    /// (`-INFINITY` se não há interseção)
     pub fn intersects(&self, r: &Ray) -> f32 {
         // Se existe um t real tal que R(t) pertence à borda da esfera, houve colisão.
         // Resolvendo a equação da esfera obtemos uma equação quadrática,
