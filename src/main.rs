@@ -11,16 +11,16 @@ use std::time::{Duration, Instant};
 fn main() {
     let p0 = Vec3::new(0.0, 0.0, 0.0); // posição do observador
     
-    let aspect_ratio: f32 = 16.0/9.0; // aspect ratio que eu quero na imagem (16:9)
-    let scale: f32 = 1.0; // escala: cada quadrado na "câmera" vale por quantos pixels na janela do computador?
+    let aspect_ratio: f32 = 16.0/9.0; // aspect ratio que eu quero
+    let scale: f32 = 1.0; // escala: cada quadrado na "janela" vale por quantos pixels na janela do computador?
 
-    // imagem de 960x540 (em 16:9) (isso é o número de colunas e linhas na grade)
+    // Resolução da imagem (isso é o número de colunas e linhas na grade)
     let image_width: u32 = 1920;
     let image_height: u32 = ((image_width as f32)/aspect_ratio) as u32;
-    // janela de 3.2m * 1.8m (em 16:9)
+    // Tamanho da janela (em metros)
     let viewport_width: f32 = 3.2;
     let viewport_height: f32 = viewport_width/aspect_ratio;
-    let viewport_distance: f32 = 1.0; // janela a 1m de distância do observador
+    let viewport_distance: f32 = 1.0; // distância da janela até o observador
     
     let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
     
@@ -60,12 +60,21 @@ fn main() {
         500.0, 
     );
     
-    let plane_p0 = Vec3::new(0.0, -1.8, 0.0);
-    let plane_normal = Vec3::new(0.0, 1.0 ,0.0);
-    let plane_material = Material::new(
+    let plane1_p0 = Vec3::new(0.0, -0.5, 0.0); // Ponto conhecido do plano
+    let plane1_normal = Vec3::new(0.0, 1.0 ,0.0); // Normal do plano
+    let plane1_material = Material::new(
         Vec3::new(0.1, 0.1, 0.1), 
-        Vec3::new(0.7, 0.7, 0.7), 
-        Vec3::new(0.3, 0.3, 0.3), 
+        Vec3::new(0.4, 0.4, 0.4), 
+        Vec3::new(0.0, 0.0, 0.0), 
+        3.0, 
+    );
+
+    let plane2_p0 = Vec3::new(0.0, 0.0, -5.0); // Ponto conhecido do plano
+    let plane2_normal = Vec3::new(0.0, 0.0 ,1.0); // Normal do plano
+    let plane2_material = Material::new(
+        Vec3::new(0.05, 0.05, 0.1), 
+        Vec3::new(0.1, 0.1, 0.3), 
+        Vec3::new(0.0, 0.0, 0.0), 
         3.0, 
     );
     
@@ -83,7 +92,8 @@ fn main() {
     let light3_intensity = 1.0;
     
     // Criando os objetos e as luzes
-    let plane = Plane::new( plane_p0, plane_normal, plane_material );
+    let plane1 = Plane::new( plane1_p0, plane1_normal, plane1_material );
+    let plane2 = Plane::new( plane2_p0, plane2_normal, plane2_material );
     let sphere1 = Sphere::new( sphere1_center, sphere1_radius, sphere1_material );
     let sphere2 = Sphere::new( sphere2_center, sphere2_radius, sphere2_material );
     let sphere3 = Sphere::new( sphere3_center, sphere3_radius, sphere3_material );
@@ -94,7 +104,8 @@ fn main() {
     
     // Adicionando os objetos na cena
     let mut scene = Scene::new(ambient_light);
-    scene.add_shape(plane);
+    scene.add_shape(plane1);
+    scene.add_shape(plane2);
     scene.add_shape(sphere1);
     scene.add_shape(sphere2);
     scene.add_shape(sphere3);
