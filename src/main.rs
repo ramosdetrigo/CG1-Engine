@@ -15,7 +15,7 @@ fn main() {
     let scale: f32 = 1.0; // escala: cada quadrado na "janela" vale por quantos pixels na janela do computador?
 
     // Resolução da imagem (isso é o número de colunas e linhas na grade)
-    let image_width: u32 = 1920;
+    let image_width: u32 = 960;
     let image_height: u32 = ((image_width as f32)/aspect_ratio) as u32;
     // Tamanho da janela (em metros)
     let viewport_width: f32 = 3.2;
