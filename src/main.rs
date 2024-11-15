@@ -146,8 +146,8 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::S), .. } => { scene.lights[0].pos.y -= 0.1; }
                 // espaço pra salvar a imagem atual do canvas como .ppm
                 Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => {
-                    camera.draw_scene(&mut canvas, &scene);
-                    save_canvas_as_ppm(&canvas).unwrap();
+                    println!("Calc time: {:.2}", camera.calc_time);
+                    println!("Draw time: {:.2}", camera.draw_time);
                 }
                 _ => {}
             }

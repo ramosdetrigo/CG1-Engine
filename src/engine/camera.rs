@@ -8,10 +8,13 @@ use sdl2::render::Texture;
 use sdl2::video::{Window, WindowContext};
 use std::thread;
 use std::sync::Arc;
+use std::time::Instant;
 
 pub struct Camera <'a> {
     pub pos: Vec3, // observador
     pub bg_color: Vec3,
+    pub draw_time: f32,
+    pub calc_time: f32,
     texture: Texture<'a>,
     viewport: Viewport, // janela
     draw_buffer: Vec<u8>
@@ -40,7 +43,8 @@ impl <'a> Camera <'a> {
                 viewport_w, viewport_h, // altura * largura da janela
                 n_cols, n_rows, // número de colunas e linhas, basicamente a resolução da câmera.
             ),
-            draw_buffer: vec![0; (n_cols * n_rows * 3) as usize]
+            draw_buffer: vec![0; (n_cols * n_rows * 3) as usize],
+            draw_time: 0.0, calc_time: 0.0
         }
     }
 
@@ -59,6 +63,7 @@ impl <'a> Camera <'a> {
         // Render multithread
         // (A câmera tem um array de pixels em formato RGB24. A gente divide esse buffer pra várias threads
         // e elas vão calcular os pixels em paralelo, acelerando o render.)
+        let calculation_time = Instant::now();
         thread::scope(|s| {
         let mut lower_bound = 0;
         for ppm_slice in self.draw_buffer.chunks_mut((num_bytes/num_threads) as usize) {
@@ -151,12 +156,13 @@ impl <'a> Camera <'a> {
             lower_bound += pixel_count;
         }
         });
+        self.calc_time += calculation_time.elapsed().as_secs_f32();
 
+        let draw_time = Instant::now();
         self.texture.update(None, &self.draw_buffer, (viewport.cols*3) as usize).unwrap();
-        // E desenha a textura no canvas
         canvas.copy(&self.texture, None, Some(Rect::new(0, 0, viewport.cols, viewport.rows))).unwrap();
-
         canvas.present();
+        self.draw_time += draw_time.elapsed().as_secs_f32();
     }
 }
 
