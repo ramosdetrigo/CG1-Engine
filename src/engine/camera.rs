@@ -28,7 +28,7 @@ impl <'a> Camera <'a> {
     /// `bg_color` : Cor do background
     pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f32, viewport_h: f32, viewport_distance: f32, bg_color: Vec3, texture_creator: &'a TextureCreator<WindowContext>) -> Camera <'a> {
         Camera {
-            pos: pos, // posição do observador
+            pos, // posição do observador
             bg_color: bg_color.clamp(0.0, 1.0) * 255.0,
             texture: texture_creator.create_texture(
                 sdl2::pixels::PixelFormatEnum::RGB24,
@@ -68,97 +68,87 @@ impl <'a> Camera <'a> {
             let pos = self.pos;
             let bg_color = self.bg_color;
 
-            // Número de linhas que a thread vai desenhar (range lower_bound..upper_bound)
-            let num_rows = ppm_slice.len() / (viewport.cols as usize) / 3;
-            let upper_bound = lower_bound + num_rows;
+            // Número de pixels que a thread vai desenhar
+            let pixel_count = ppm_slice.len() / 3;
             
             s.spawn(move || {
-                let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 "atirado" na direção d
+                let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 na direção d
                 let mut mat: &Material;
                 let mut rgb_counter = 0;
                 
-                for row in lower_bound..upper_bound {
-                    for col in 0..(viewport.cols as i32) {
-                        let dr = (((viewport.p00_coords) + (col as f32)*viewport.dx - (row as f32)*viewport.dy) - pos).normalize();
-                        ray.dr = dr;
+                for pixel in 0..pixel_count {
+                    let row = (lower_bound + pixel) / (viewport.cols as usize);
+                    let col = (lower_bound + pixel) % (viewport.cols as usize);
+                    let dr = (((viewport.p00_coords) + (col as f32)*viewport.dx - (row as f32)*viewport.dy) - pos).normalize();
+                    ray.dr = dr;
 
-                        // Obtém o objeto mais próximo a colidir com o raio
-                        let mut shape: Option<&Shape> = None;
-                        let mut t = INFINITY;
-                        for s in &scene.shapes {
-                            let t_candidate = s.intersects(&ray);
-                            // se o objeto colide com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
-                            if t_candidate > 0.0 && t_candidate < t {
-                                shape = Some(s);
-                                t = t_candidate;
-                            }
+                    // Obtém o objeto mais próximo a colidir com o raio
+                    let mut shape: Option<&Shape> = None;
+                    let mut t = INFINITY;
+                    for s in &scene.shapes {
+                        let t_candidate = s.intersects(&ray);
+                        // se o objeto colide com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
+                        if t_candidate > 0.0 && t_candidate < t {
+                            shape = Some(s);
+                            t = t_candidate;
                         }
-                        // se o raio não colide com nenhum objeto, desenha a cor do background e passa pro próximo pixel
-                        if shape.is_none() {
-                            ppm_slice[rgb_counter] = bg_color.x as u8;
-                            ppm_slice[rgb_counter] = bg_color.y as u8;
-                            ppm_slice[rgb_counter] = bg_color.z as u8;
-                            rgb_counter += 3;
-                            continue;
-                        }
-                        let shape = shape.unwrap();
-                        mat = shape.material(); // material do objeto
-                        // intensidade da luz que chega no olho do observador (começa como só a luz ambiente)
-                        let mut ieye = mat.k_amb * scene.ambient_light;
-                        let p_i = ray.at(t); // ponto de interseção
-                        
-                        // Desenha o pixel acordo com a iluminação
-                        for light in &scene.lights {
-                            let l = (light.pos - p_i).normalize(); // vetor apontando na direção da luz
-                            let mut idif = Vec3::NULL; // cor vindo de reflexão difusa
-                            let mut iesp = Vec3::NULL; // cor vindo de reflexão especular
-                            let mut under_light = true;
-        
-                            // raio partindo de p_i até o ponto de luz
-                            // (o dr não normalizado ajuda a checar se um objeto não está atrás do ponto de luz)
-                            let light_ray = Ray::new(p_i, light.pos - p_i);
-
-                            // Checar se o objeto está na sombra de algum outro objeto
-                            for s in &scene.shapes {
-                                // Skipa o cálculo se a interseção for consigo mesmo, previne uns bugs de reflexão especular inclusive
-                                // (This is a problem for future me ! ;D)
-                                if s == shape { continue; }
-
-                                let tl = s.intersects(&light_ray);
-                                // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0001 < tl < 1.0))
-                                // 0.0001 previne problemas com floating point precision
-                                if tl < 1.0 && tl > 0.0001 { under_light = false; break; }
-                            }
-                            
-                            // Se o objeto não estiver na sombra...
-                            if under_light {
-                                let n = shape.normal(p_i); // vetor normal do objeto com o ponto p_i
-                                let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
-        
-                                let nl = n.dot(l); // normal escalar l
-                                let rv = r.dot(-dr); // r escalar v
-        
-                                // impede de desenhar a luz no "lado escuro da esfera"
-                                if nl > 0.0 { idif = mat.k_dif * nl * light.color * light.intensity }
-                                if rv > 0.0 { iesp = mat.k_esp * rv.powf(mat.e) * light.color * light.intensity }
-                                
-                                ieye += idif + iesp;
-                            }
-                        }
-                        
-                        // converte pra RGB24 
-                        ieye = ieye.clamp(0.0, 1.0) * 255.0;
-                        
-                        // salva o pixel no slice do buffer da câmera
-                        ppm_slice[rgb_counter] = ieye.x as u8;
-                        ppm_slice[rgb_counter + 1] = ieye.y as u8;
-                        ppm_slice[rgb_counter + 2] = ieye.z as u8;
-                        rgb_counter += 3;
                     }
+                    // se o raio não colide com nenhum objeto, desenha a cor do background e passa pro próximo pixel
+                    if shape.is_none() {
+                        ppm_slice[rgb_counter] = bg_color.x as u8;
+                        ppm_slice[rgb_counter] = bg_color.y as u8;
+                        ppm_slice[rgb_counter] = bg_color.z as u8;
+                        rgb_counter += 3;
+                        continue;
+                    }
+                    let shape = shape.unwrap();
+                    mat = shape.material(); // material do objeto
+                    
+                    // Calcula a cor do pixel de acordo com a iluminação
+                    // intensidade da luz que chega no olho do observador (começa com a luz ambiente)
+                    let mut ieye = mat.k_amb * scene.ambient_light;
+                    let p_i = ray.at(t); // ponto de interseção
+                    'lights: for light in &scene.lights {
+                        let light_ray = Ray::new(p_i, light.pos - p_i); // raio partindo de p_i até o ponto de luz
+
+                        // Checar se o objeto está na sombra de algum outro objeto
+                        for s in &scene.shapes {
+                            let tl = s.intersects(&light_ray);
+                            // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0001 < tl < 1.0))
+                            // 0.0001 previne problemas com floating point precision
+                            if tl < 1.0 && tl > 0.0001 { continue 'lights; }
+                        }
+                        
+                        let l = light_ray.dr.normalize(); // vetor apontando na direção da luz
+                        let mut idif = Vec3::NULL; // cor vindo de reflexão difusa
+                        let mut iesp = Vec3::NULL; // cor vindo de reflexão especular
+                        
+                        // Se o objeto não estiver na sombra...
+                        let n = shape.normal(p_i); // vetor normal do objeto com o ponto p_i
+                        let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
+
+                        let nl = n.dot(l); // normal escalar l
+                        let rv = r.dot(-dr); // r escalar v
+
+                        // impede de desenhar a luz no "lado escuro da esfera"
+                        if nl > 0.0 { idif = mat.k_dif * nl * light.color * light.intensity }
+                        if rv > 0.0 { iesp = mat.k_esp * rv.powf(mat.e) * light.color * light.intensity }
+                        
+                        ieye += idif + iesp;
+                    }
+                    
+                    // converte pra RGB24
+                    ieye = ieye.clamp(0.0, 1.0) * 255.0;
+                    
+                    // salva o pixel no buffer da câmera
+                    ppm_slice[rgb_counter] = ieye.x as u8;
+                    ppm_slice[rgb_counter + 1] = ieye.y as u8;
+                    ppm_slice[rgb_counter + 2] = ieye.z as u8;
+                    rgb_counter += 3;
                 }
             });
 
-            lower_bound += num_rows;
+            lower_bound += pixel_count;
         }
         });
 

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use super::shapes::Shape;
 use super::Light;
 use crate::utils::Vec3;
@@ -13,8 +14,15 @@ pub struct Scene {
 impl Scene {
     #[inline]
     #[must_use]
-    /// Cria uma nova cena com luz ambiente definida
-    pub fn new(ambient_light: Vec3) -> Scene {
+    /// Cria uma nova cena
+    pub fn new(shapes: Vec<Shape>, lights: Vec<Light>, ambient_light: Vec3) -> Scene {
+        Scene { shapes, lights, ambient_light }
+    }
+
+    #[inline]
+    #[must_use]
+    /// Cria uma nova cena vazia com luz ambiente definida
+    pub fn new_empty(ambient_light: Vec3) -> Scene {
         Scene { shapes: Vec::new(), lights: Vec::new(), ambient_light }
     }
 
