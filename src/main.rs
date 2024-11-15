@@ -23,14 +23,6 @@ fn main() {
     let viewport_distance: f32 = 1.0; // distância da janela até o observador
     
     let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
-    
-    let mut camera: Camera = Camera::new(
-        p0, // a posição do observador
-        image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
-        viewport_width, viewport_height, // tamanho da janela (em metros)
-        viewport_distance, // distância da janela até o observador (em metros)
-        bg_color // cor do background
-    );
 
     // Definindo as propriedades de cada objeto
     let sphere1_radius = 0.5; // Raio em metros
@@ -125,6 +117,16 @@ fn main() {
         .unwrap();
     let mut canvas = window.into_canvas().build().unwrap(); // o canvas que a gente vai usar pra desenhar
     canvas.set_logical_size(image_width, image_height).unwrap(); // pra fazer upscaling do canvas
+
+    let tc = &canvas.texture_creator();
+    let mut camera: Camera = Camera::new(
+        p0, // a posição do observador
+        image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
+        viewport_width, viewport_height, // tamanho da janela (em metros)
+        viewport_distance, // distância da janela até o observador (em metros)
+        bg_color, // cor do background
+        tc    
+    );
 
     camera.draw_scene(&mut canvas, &scene); // desenha a esfera na tela ;)
     save_canvas_as_ppm(&canvas).unwrap(); // salva o que foi desenhado no canvas como uma imagem .ppm

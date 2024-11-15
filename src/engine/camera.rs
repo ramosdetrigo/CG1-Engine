@@ -3,21 +3,21 @@ use super::{Ray, Scene};
 use super::shapes::{Shape, Material};
 use crate::utils::Vec3;
 use sdl2::rect::Rect;
-use sdl2::surface::Surface;
-use sdl2::render::Canvas;
-use sdl2::video::Window;
+use sdl2::render::{Canvas, TextureCreator};
+use sdl2::render::Texture;
+use sdl2::video::{Window, WindowContext};
 use std::thread;
 use std::sync::Arc;
 
-#[derive(Clone, PartialEq)]
-pub struct Camera {
+pub struct Camera <'a> {
     pub pos: Vec3, // observador
     pub bg_color: Vec3,
+    texture: Texture<'a>,
     viewport: Viewport, // janela
     draw_buffer: Vec<u8>
 }
 
-impl Camera {
+impl <'a> Camera <'a> {
     #[inline]
     #[must_use]
     /// Cria uma nova câmera. \
@@ -26,10 +26,15 @@ impl Camera {
     /// `viewport_w`, `viewport_h`: Tamanho do viewport em metros \
     /// `viewport_distance`: Distância do viewport até o observador \
     /// `bg_color` : Cor do background
-    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f32, viewport_h: f32, viewport_distance: f32, bg_color: Vec3) -> Camera {
+    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f32, viewport_h: f32, viewport_distance: f32, bg_color: Vec3, texture_creator: &'a TextureCreator<WindowContext>) -> Camera <'a> {
         Camera {
             pos: pos, // posição do observador
             bg_color: bg_color.clamp(0.0, 1.0) * 255.0,
+            texture: texture_creator.create_texture(
+                sdl2::pixels::PixelFormatEnum::RGB24,
+                sdl2::render::TextureAccess::Streaming,
+                n_cols, n_rows
+            ).unwrap(),
             viewport: Viewport::new(
                 Vec3::new(pos.x, pos.y, pos.z-viewport_distance), // posição da janela em relação ao observador (0, 0, -d)
                 viewport_w, viewport_h, // altura * largura da janela
@@ -157,17 +162,9 @@ impl Camera {
         }
         });
 
-        // Converte o buffer da câmera numa textura do SDL
-        let surface = Surface::from_data(
-            &mut self.draw_buffer,
-            viewport.cols, viewport.rows,
-            viewport.cols * 3, 
-            sdl2::pixels::PixelFormatEnum::RGB24
-        ).unwrap();
-        let texture_creator = canvas.texture_creator();
-        let texture_from_surface = texture_creator.create_texture_from_surface(surface).unwrap();
+        self.texture.update(None, &self.draw_buffer, (viewport.cols*3) as usize).unwrap();
         // E desenha a textura no canvas
-        canvas.copy(&texture_from_surface, None, Some(Rect::new(0, 0, viewport.cols, viewport.rows))).unwrap();
+        canvas.copy(&self.texture, None, Some(Rect::new(0, 0, viewport.cols, viewport.rows))).unwrap();
 
         canvas.present();
     }
