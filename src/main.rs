@@ -112,11 +112,11 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { scene.lights[0].pos.z += 0.1; }
                 Event::KeyDown { keycode: Some(Keycode::W), .. } => { scene.lights[0].pos.y += 0.1; }
                 Event::KeyDown { keycode: Some(Keycode::S), .. } => { scene.lights[0].pos.y -= 0.1; }
-                // espaço pra salvar a imagem atual do canvas como .ppm
-                Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => {
-                    camera.draw_scene_to_canvas(&scene, &mut canvas);
-                    save_canvas_as_ppm(&canvas).unwrap();
-                }
+                // // espaço pra salvar a imagem atual do canvas como .ppm
+                // Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => {
+                //     camera.draw_scene_to_canvas(&scene, &mut canvas);
+                //     save_canvas_as_ppm(&canvas).unwrap();
+                // }
                 _ => {}
             }
         }
