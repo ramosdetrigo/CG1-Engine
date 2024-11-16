@@ -1,4 +1,3 @@
-use std::f32::NEG_INFINITY;
 use super::Material;
 use super::Shape;
 use super::super::Ray;
@@ -44,18 +43,17 @@ impl Sphere {
         // delta = b² - 4ac
         let v: Vec3 = self.center - r.origin;
         let a: f32 = r.dr.length_squared();
-        let b: f32 = -2.0 * r.dr.dot(v);
+        let b: f32 = r.dr.dot(v); // TODO: Explicar otimização
         let c: f32 = v.length_squared() - self.radius*self.radius;
-        let delta: f32 = b*b - 4.0*a*c;
+        let delta: f32 = b*b - a*c;
         
-        // se o delta é positivo e != 0 (não apenas tangencia a esfera), houve colisão
-        if delta > 0.0 {
-            let t1 = (-b + delta.sqrt()) / (2.0*a);
-            let t2 = (-b - delta.sqrt()) / (2.0*a);
-            let min_t = if t2 < 0.0 || t1 < t2 {t1} else {t2}; // mínimo positivo
-            return min_t;
+        // se o delta é positivo, houve colisão
+        if delta >= 0.0 {
+            let t1 = (b + delta.sqrt()) / a;
+            let t2 = (b - delta.sqrt()) / a;
+            if t2 < 0.0 || t1 < t2 {t1} else {t2} // mínimo positivo
         } else {
-            return NEG_INFINITY;
+            f32::NEG_INFINITY
         }
     }
 }

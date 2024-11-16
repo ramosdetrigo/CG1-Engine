@@ -1,4 +1,3 @@
-use std::f32::INFINITY;
 use super::{Ray, Scene};
 use super::shapes::{Shape, Material};
 use crate::utils::Vec3;
@@ -12,9 +11,10 @@ use std::sync::Arc;
 pub struct Camera <'a> {
     pub pos: Vec3, // observador
     pub bg_color: Vec3,
+    pub canvas: Canvas<Window>,
     texture: Texture<'a>,
+    draw_buffer: Vec<u8>,
     viewport: Viewport, // janela
-    draw_buffer: Vec<u8>
 }
 
 impl <'a> Camera <'a> {
@@ -25,27 +25,35 @@ impl <'a> Camera <'a> {
     /// `n_cols`, `n_rows`: resolução X,Y da câmera (colunas e linhas no viewport) \
     /// `viewport_w`, `viewport_h`: Tamanho do viewport em metros \
     /// `viewport_distance`: Distância do viewport até o observador \
-    /// `bg_color` : Cor do background
-    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f32, viewport_h: f32, viewport_distance: f32, bg_color: Vec3, texture_creator: &'a TextureCreator<WindowContext>) -> Camera <'a> {
+    /// `bg_color`: Cor do background
+    /// `texture_creator`: TextureCreator para criar a textura interna de buffer da câmera
+    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f32, viewport_h: f32, viewport_distance: f32, bg_color: Vec3, canvas: Canvas<Window>, texture_creator: &'a TextureCreator<WindowContext>) -> Camera <'a> {
+        let texture = texture_creator.create_texture(
+            sdl2::pixels::PixelFormatEnum::RGB24,
+            sdl2::render::TextureAccess::Streaming,
+            n_cols, n_rows
+        ).unwrap();
+        
         Camera {
+            canvas,
+            texture,
+
             pos, // posição do observador
             bg_color: bg_color.clamp(0.0, 1.0) * 255.0,
-            texture: texture_creator.create_texture(
-                sdl2::pixels::PixelFormatEnum::RGB24,
-                sdl2::render::TextureAccess::Streaming,
-                n_cols, n_rows
-            ).unwrap(),
+
+            
+            draw_buffer: vec![0; (n_cols * n_rows * 3) as usize],
+
             viewport: Viewport::new(
                 Vec3::new(pos.x, pos.y, pos.z-viewport_distance), // posição da janela em relação ao observador (0, 0, -d)
                 viewport_w, viewport_h, // altura * largura da janela
                 n_cols, n_rows, // número de colunas e linhas, basicamente a resolução da câmera.
             ),
-            draw_buffer: vec![0; (n_cols * n_rows * 3) as usize]
         }
     }
 
     /// Desenha uma cena em um canvas com base nas especificações da câmera
-    pub fn draw_scene(&mut self, canvas: &mut Canvas<Window>, scene: &Scene) {
+    pub fn draw_scene(&mut self, scene: &Scene) {
         // Número de bytes no canvas (número de pixels * 3: RGB24)
         let num_bytes = self.viewport.cols * self.viewport.rows * 3;
         // Número de threads disponíveis * 2
@@ -59,8 +67,9 @@ impl <'a> Camera <'a> {
         // Render multithread
         // (A câmera tem um array de pixels em formato RGB24. A gente divide esse buffer pra várias threads
         // e elas vão calcular os pixels em paralelo, acelerando o render.)
-        thread::scope(|s| {
+        thread::scope(|s| { // COMEÇO_RENDER_MULTITHREAD
         let mut lower_bound = 0;
+        // Divide o array de buffer em chunks de tamanhos iguais pras threads
         for ppm_slice in self.draw_buffer.chunks_mut((num_bytes/num_threads) as usize) {
             // Clona as referências pesadas e os vetores leves para serem movidos para outra thread
             let scene = Arc::clone(&scene);
@@ -84,7 +93,7 @@ impl <'a> Camera <'a> {
 
                     // Obtém o objeto mais próximo a colidir com o raio
                     let mut shape: Option<&Shape> = None;
-                    let mut t = INFINITY;
+                    let mut t = f32::INFINITY;
                     for s in &scene.shapes {
                         let t_candidate = s.intersects(&ray);
                         // se o objeto colide com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
@@ -109,32 +118,26 @@ impl <'a> Camera <'a> {
                     let mut ieye = mat.k_amb * scene.ambient_light;
                     let p_i = ray.at(t); // ponto de interseção
                     'lights: for light in &scene.lights {
-                        let light_ray = Ray::new(p_i, light.pos - p_i); // raio partindo de p_i até o ponto de luz
-
                         // Checar se o objeto está na sombra de algum outro objeto
+                        let light_ray = Ray::new(p_i, light.pos - p_i); // raio partindo de p_i até o ponto de luz
                         for s in &scene.shapes {
                             let tl = s.intersects(&light_ray);
                             // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0001 < tl < 1.0))
                             // 0.0001 previne problemas com floating point precision
-                            if tl < 1.0 && tl > 0.0001 { continue 'lights; }
+                            if 0.0001 < tl && tl < 1.0 { continue 'lights; }
                         }
                         
-                        let l = light_ray.dr.normalize(); // vetor apontando na direção da luz
-                        let mut idif = Vec3::NULL; // cor vindo de reflexão difusa
-                        let mut iesp = Vec3::NULL; // cor vindo de reflexão especular
-                        
                         // Se o objeto não estiver na sombra...
+                        let l = light_ray.dr.normalize(); // vetor unitário apontando na direção da luz
+                        
                         let n = shape.normal(p_i); // vetor normal do objeto com o ponto p_i
-                        let r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
-
+                        let r = 2.0 * l.dot(n)*n - l; // vetor l refletido na normal
                         let nl = n.dot(l); // normal escalar l
                         let rv = r.dot(-dr); // r escalar v
 
-                        // impede de desenhar a luz no "lado escuro da esfera"
-                        if nl > 0.0 { idif = mat.k_dif * nl * light.color * light.intensity }
-                        if rv > 0.0 { iesp = mat.k_esp * rv.powf(mat.e) * light.color * light.intensity }
-                        
-                        ieye += idif + iesp;
+                        // O check > 0.0 previne o bug de iluminação no "lado escuro da esfera"
+                        if nl > 0.0 { ieye += mat.k_dif * nl * light.intensity; } // Reflexão difusa
+                        if rv > 0.0 { ieye += mat.k_esp * rv.powf(mat.e) * light.intensity } // Reflexão especular
                     }
                     
                     // converte pra RGB24
@@ -150,13 +153,11 @@ impl <'a> Camera <'a> {
 
             lower_bound += pixel_count;
         }
-        });
+        }); // FIM_RENDER_MULTITHREAD
 
         self.texture.update(None, &self.draw_buffer, (viewport.cols*3) as usize).unwrap();
-        // E desenha a textura no canvas
-        canvas.copy(&self.texture, None, Some(Rect::new(0, 0, viewport.cols, viewport.rows))).unwrap();
-
-        canvas.present();
+        self.canvas.copy(&self.texture, None, Some(Rect::new(0, 0, viewport.cols, viewport.rows))).unwrap();
+        self.canvas.present();
     }
 }
 

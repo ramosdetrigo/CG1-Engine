@@ -112,19 +112,19 @@ fn main() {
         .unwrap();
     let mut canvas = window.into_canvas().build().unwrap(); // o canvas que a gente vai usar pra desenhar
     canvas.set_logical_size(image_width, image_height).unwrap(); // pra fazer upscaling do canvas
-
     let tc = &canvas.texture_creator();
+
     let mut camera: Camera = Camera::new(
         p0, // a posição do observador
         image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
         viewport_width, viewport_height, // tamanho da janela (em metros)
         viewport_distance, // distância da janela até o observador (em metros)
         bg_color, // cor do background
-        tc    
+        canvas, tc
     );
 
-    camera.draw_scene(&mut canvas, &scene); // desenha a esfera na tela ;)
-    save_canvas_as_ppm(&canvas).unwrap(); // salva o que foi desenhado no canvas como uma imagem .ppm
+    camera.draw_scene(&scene); // desenha a esfera na tela ;)
+    save_canvas_as_ppm(&camera.canvas).unwrap(); // salva o que foi desenhado no canvas como uma imagem .ppm
     
     
     // main loop do programa
@@ -146,15 +146,15 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::S), .. } => { scene.lights[0].pos.y -= 0.1; }
                 // espaço pra salvar a imagem atual do canvas como .ppm
                 Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => {
-                    camera.draw_scene(&mut canvas, &scene);
-                    save_canvas_as_ppm(&canvas).unwrap();
+                    camera.draw_scene(&scene);
+                    save_canvas_as_ppm(&camera.canvas).unwrap();
                 }
                 _ => {}
             }
         }
 
         // Seção de draw
-        camera.draw_scene(&mut canvas, &scene);
+        camera.draw_scene(&scene);
         
         // Contador de FPS
         frame_count += 1;

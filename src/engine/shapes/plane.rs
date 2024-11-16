@@ -1,4 +1,3 @@
-use std::f32::NEG_INFINITY;
 use super::Material;
 use super::Shape;
 use super::super::Ray;
@@ -35,7 +34,7 @@ impl Plane {
         // se não, retorna o resultado da fórmula.
         let top = self.normal.dot(r.origin - self.pc);
         let bottom = self.normal.dot(r.dr);
-        if bottom == 0.0 { return NEG_INFINITY }
+        if bottom == 0.0 { return f32::NEG_INFINITY }
         -top/bottom
     }
 }
