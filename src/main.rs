@@ -25,79 +25,49 @@ fn main() {
 
     // Definindo as propriedades de cada objeto
     let sphere1_radius = 0.5; // Raio em metros
-    let sphere1_center = Vec3::new(-1.2, p0.y, p0.z - (viewport_distance + sphere1_radius)); // Coords. centro da esfera (metros)
+    let sphere1_center = Vec3::new(0.0, 0.0, p0.z - (1.0 + sphere1_radius)); // Coords. centro da esfera (metros)
     let sphere1_material = Material::new(
-        Vec3::new(0.1, 0.0, 0.0), // Ambient
-        Vec3::new(0.7, 0.0, 0.0), // Diffuse
-        Vec3::new(0.3, 0.3, 0.3), // Specular
-        500.0, // coeficiente de "brilho" ou "polimento"
-    );
-
-    let sphere2_radius = 0.5;
-    let sphere2_center = Vec3::new(0.0, p0.y, p0.z - (viewport_distance + sphere2_radius));
-    let sphere2_material = Material::new(
-        Vec3::new(0.0, 0.1, 0.0),
-        Vec3::new(0.0, 0.7, 0.0), 
-        Vec3::new(0.3, 0.3, 0.3), 
-        500.0,
-    );
-
-    let sphere3_radius = 0.5;
-    let sphere3_center = Vec3::new(1.2, p0.y, p0.z - (viewport_distance + sphere3_radius));
-    let sphere3_material = Material::new(
-        Vec3::new(0.0, 0.0, 0.1), 
-        Vec3::new(0.0, 0.0, 0.7), 
-        Vec3::new(0.3, 0.3, 0.3), 
-        500.0, 
+        Vec3::new(0.7, 0.2, 0.2), // Ambient
+        Vec3::new(0.7, 0.2, 0.2), // Diffuse
+        Vec3::new(0.7, 0.2, 0.2), // Specular
+        10.0, // coeficiente de "brilho" ou "polimento"
     );
     
     let plane1_pc = Vec3::new(0.0, -0.5, 0.0); // Ponto conhecido do plano
     let plane1_normal = Vec3::new(0.0, 1.0 ,0.0); // Normal do plano
     let plane1_material = Material::new(
-        Vec3::new(0.1, 0.1, 0.1), 
-        Vec3::new(0.4, 0.4, 0.4), 
-        Vec3::new(0.0, 0.0, 0.0), 
+        Vec3::all(0.4),
+        Vec3::all(0.4),
+        Vec3::all(0.0),
         3.0, 
     );
 
     let plane2_pc = Vec3::new(0.0, 0.0, -5.0); // Ponto conhecido do plano
     let plane2_normal = Vec3::new(0.0, 0.0 ,1.0); // Normal do plano
     let plane2_material = Material::new(
-        Vec3::new(0.05, 0.05, 0.1), 
-        Vec3::new(0.1, 0.1, 0.3), 
-        Vec3::new(0.0, 0.0, 0.0), 
+        Vec3::new(0.4, 0.4, 0.7),
+        Vec3::new(0.4, 0.4, 0.7),
+        Vec3::all(0.0),
         3.0, 
     );
     
     // Definindo as propriedades das luzes
-    let light1_pos = Vec3::new(-1.6, 0.8, 0.0);
-    let light1_color = Vec3::new(1.0, 0.0, 0.0);
+    let light1_pos = Vec3::new(0.0, 0.8, 0.0);
+    let light1_color = Vec3::new(1.0, 1.0, 1.0);
     let light1_intensity = 1.0;
-
-    let light2_pos = Vec3::new(0.0, 0.8, 0.0);
-    let light2_color = Vec3::new(0.0, 1.0, 0.0);
-    let light2_intensity = 1.0;
-
-    let light3_pos = Vec3::new(1.6, 0.8, 0.0);
-    let light3_color = Vec3::new(0.0, 0.0, 1.0);
-    let light3_intensity = 1.0;
     
     // Criando os objetos e as luzes
     let shapes = vec![
         Plane::new( plane1_pc, plane1_normal, plane1_material ),
         Plane::new( plane2_pc, plane2_normal, plane2_material ),
         Sphere::new( sphere1_center, sphere1_radius, sphere1_material ),
-        Sphere::new( sphere2_center, sphere2_radius, sphere2_material ),
-        Sphere::new( sphere3_center, sphere3_radius, sphere3_material ),
     ];
 
     let lights = vec![
         Light::new( light1_pos, light1_color, light1_intensity ),
-        Light::new( light2_pos, light2_color, light2_intensity ),
-        Light::new( light3_pos, light3_color, light3_intensity ),
     ];
 
-    let ambient_light = Vec3::new(1.0, 1.0, 1.0); // Luz ambiente
+    let ambient_light = Vec3::new(0.3, 0.3, 0.3); // Luz ambiente
     let mut scene = Scene::new(shapes, lights, ambient_light);
 
     // Inicializando SDL
@@ -112,7 +82,6 @@ fn main() {
         .unwrap();
     let mut canvas = window.into_canvas().build().unwrap(); // o canvas que a gente vai usar pra desenhar
     canvas.set_logical_size(image_width, image_height).unwrap(); // pra fazer upscaling do canvas
-    let tc = &canvas.texture_creator();
 
     let mut camera: Camera = Camera::new(
         p0, // a posição do observador
@@ -120,11 +89,10 @@ fn main() {
         viewport_width, viewport_height, // tamanho da janela (em metros)
         viewport_distance, // distância da janela até o observador (em metros)
         bg_color, // cor do background
-        canvas, tc
     );
 
-    camera.draw_scene(&scene); // desenha a esfera na tela ;)
-    save_canvas_as_ppm(&camera.canvas).unwrap(); // salva o que foi desenhado no canvas como uma imagem .ppm
+    camera.draw_scene_to_canvas(&scene, &mut canvas); // desenha a esfera na tela ;)
+    save_canvas_as_ppm(&canvas).unwrap(); // salva o que foi desenhado no canvas como uma imagem .ppm
     
     
     // main loop do programa
@@ -146,15 +114,15 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::S), .. } => { scene.lights[0].pos.y -= 0.1; }
                 // espaço pra salvar a imagem atual do canvas como .ppm
                 Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => {
-                    camera.draw_scene(&scene);
-                    save_canvas_as_ppm(&camera.canvas).unwrap();
+                    camera.draw_scene_to_canvas(&scene, &mut canvas);
+                    save_canvas_as_ppm(&canvas).unwrap();
                 }
                 _ => {}
             }
         }
 
         // Seção de draw
-        camera.draw_scene(&scene);
+        camera.draw_scene_to_canvas(&scene, &mut canvas);
         
         // Contador de FPS
         frame_count += 1;

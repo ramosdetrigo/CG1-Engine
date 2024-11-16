@@ -21,6 +21,11 @@ impl Vec3 {
 
     #[inline]
     #[must_use]
+    /// Constructor x=y=z
+    pub fn all(a: f32) -> Self { Self {x:a, y:a, z:a} }
+
+    #[inline]
+    #[must_use]
     /// Produto escalar entre dois vetores
     pub fn dot(&self, rhs: Self) -> f32 { self.x*rhs.x + self.y*rhs.y + self.z*rhs.z }
 
