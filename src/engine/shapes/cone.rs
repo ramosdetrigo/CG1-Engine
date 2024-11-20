@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::engine::Ray;
 use crate::utils::{Matrix3, Vec3};
 use super::{Material, Shape};
@@ -52,7 +53,13 @@ impl Cone {
                 if cbe.dot(self.dc) > 0.0
                 && cbe.length() < self.h {
                     t = t1;
-                    n = (m*cbp).normalize();
+
+                    let p = r.at(t);
+                    let pv = self.v-p;
+                    let m_pv = Matrix3::I - pv.projection_matrix();
+
+                    let n_tmp = (m_pv*self.dc).normalize();
+                    n = n_tmp * -n_tmp.dot(r.dr).signum();
                 }
             }
 
@@ -63,7 +70,13 @@ impl Cone {
                 if cbe.dot(self.dc) > 0.0
                 && cbe.length() < self.h {
                     t = t2;
-                    n = (m*cbp).normalize();
+                    
+                    let p = r.at(t);
+                    let pv = self.v-p;
+                    let m_pv = Matrix3::I - pv.projection_matrix();
+
+                    let n_tmp = (m_pv*self.dc).normalize();
+                    n = n_tmp * -n_tmp.dot(r.dr).signum();
                 }
             }
         }

@@ -1,6 +1,6 @@
 use crate::utils::Vec3;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 /// Material de um objeto. \
 /// `k_amb`: Coeficiente de reflexão de luz ambiente \
 /// `k_dif`: Coeficiente de reflexão difusa \

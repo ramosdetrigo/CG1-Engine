@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use super::Material;
 use super::Shape;
 use super::super::Ray;
@@ -18,7 +19,7 @@ impl Plane {
     /// Cria um novo plano baseado num ponto `pc` com vetor normal `normal`, de material `material`. \
     /// (Encapsulado em um enum Shape)
     pub fn new(pc: Vec3, normal: Vec3, material: Material ) -> Shape {
-        Shape::Plane( Self { pc, normal, material } )
+        Shape::Plane( Self { pc, normal: normal.normalize(), material } )
     }
 
     #[inline]

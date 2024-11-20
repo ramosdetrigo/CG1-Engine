@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use super::Material;
 use super::Shape;
 use super::super::Ray;

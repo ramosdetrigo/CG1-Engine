@@ -10,8 +10,8 @@ use std::sync::Arc;
 pub struct Camera {
     pub pos: Vec3, // observador
     pub bg_color: Vec3,
-    draw_buffer: Vec<u8>,
     viewport: Viewport, // janela
+    draw_buffer: Vec<u8>,
 }
 
 impl Camera {
