@@ -30,7 +30,7 @@ impl Camera {
             bg_color: bg_color.clamp(0.0, 1.0) * 255.0,
 
             
-            draw_buffer: vec![0; (n_cols * n_rows * 4) as usize],
+            draw_buffer: vec![0; (n_cols * n_rows * 3) as usize],
 
             viewport: Viewport::new(
                 Vec3::new(pos.x, pos.y, pos.z-viewport_distance), // posição da janela em relação ao observador (0, 0, -d)
@@ -42,12 +42,10 @@ impl Camera {
 
     /// Desenha uma cena em um canvas com base nas especificações da câmera
     pub fn draw_scene_to_canvas(&mut self, scene: &Scene, canvas: &mut Canvas<Window>) {
-        // Número de bytes no canvas (número de pixels * 4: RGB888)
-        // RGB888 é mais um "xxRRGGBB". o primeiro byte é ignorado.
-        // Mas, por algum motivo, ele tá agindo como "BBGGRRxx". NÃO SEI o pq, mas o programa roda mais rápido usando 888 ao invés de 24.
-        let num_bytes = self.viewport.cols * self.viewport.rows * 4;
-        // Número de threads disponíveis * 2
-        // (Nos meus testes usar o dobro de threads disponíveis tende a aumentar a eficiência por algum motivo)
+        // Número de bytes no canvas (número de pixels * 3: RGB24)
+        let num_bytes = self.viewport.cols * self.viewport.rows * 3;
+        // Número de threads disponíveis * 3
+        // (Nos meus testes usar o triplo de threads disponíveis tende a aumentar a eficiência por algum motivo)
         let num_threads = thread::available_parallelism().unwrap().get() as u32 * 3; 
         
         // Referências thread-safe
@@ -55,7 +53,7 @@ impl Camera {
         let viewport = Arc::new(&self.viewport); // Viewport da câmera
         
         // Render multithread
-        // (A câmera tem um array de pixels em formato RGB888. A gente divide esse buffer pra várias threads
+        // (A câmera tem um array de pixels em formato RGB24. A gente divide esse buffer pra várias threads
         // e elas vão calcular os pixels em paralelo, acelerando o render.)
         thread::scope(|s| { // COMEÇO_RENDER_MULTITHREAD
         let mut lower_bound = 0;
@@ -68,7 +66,7 @@ impl Camera {
             let bg_color = self.bg_color;
 
             // Número de pixels que a thread vai desenhar
-            let pixel_count = ppm_slice.len() / 4;
+            let pixel_count = ppm_slice.len() / 3;
             
             s.spawn(move || {
                 let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 na direção d
@@ -94,10 +92,10 @@ impl Camera {
                     }
                     // se o raio não colide com nenhum objeto, desenha a cor do background e passa pro próximo pixel
                     if shape.is_none() {
-                        ppm_slice[rgb_counter] = bg_color.z as u8;
+                        ppm_slice[rgb_counter] = bg_color.x as u8;
                         ppm_slice[rgb_counter + 1] = bg_color.y as u8;
-                        ppm_slice[rgb_counter + 2] = bg_color.x as u8;
-                        rgb_counter += 4;
+                        ppm_slice[rgb_counter + 2] = bg_color.z as u8;
+                        rgb_counter += 3;
                         continue;
                     }
                     let shape = shape.unwrap();
@@ -133,12 +131,11 @@ impl Camera {
                     // converte pra range de u8, etc.
                     ieye = ieye.clamp(0.0, 1.0) * 255.0;
                     
-                    // salva o pixel no buffer da câmera (eu não sei pq o .z e .x estão trocados.)
-                    // usar RGB888 ao invés de RGB24 quebrou o cálculo, mas fez rodar mais rápido (???)
-                    ppm_slice[rgb_counter] = ieye.z as u8;
+                    // salva o pixel no buffer da câmera
+                    ppm_slice[rgb_counter] = ieye.x as u8;
                     ppm_slice[rgb_counter + 1] = ieye.y as u8;
-                    ppm_slice[rgb_counter + 2] = ieye.x as u8;
-                    rgb_counter += 4;
+                    ppm_slice[rgb_counter + 2] = ieye.z as u8;
+                    rgb_counter += 3;
                 }
             });
 
@@ -148,12 +145,11 @@ impl Camera {
 
         let texture_creator = canvas.texture_creator();
         let mut texture = texture_creator.create_texture(
-            // sdl2::pixels::PixelFormatEnum::RGB24,
-            None, // defaults to RGB888
+            sdl2::pixels::PixelFormatEnum::RGB24,
             sdl2::render::TextureAccess::Static,
             viewport.cols, viewport.rows
         ).unwrap();
-        texture.update(None, &self.draw_buffer, (viewport.cols * 4) as usize).unwrap();
+        texture.update(None, &self.draw_buffer, (viewport.cols * 3) as usize).unwrap();
         canvas.copy(&texture, None, Some(Rect::new(0, 0, viewport.cols, viewport.rows))).unwrap();
         canvas.present();
     }
