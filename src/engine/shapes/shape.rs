@@ -12,11 +12,12 @@ pub enum Shape {
 }
 
 impl Shape {
+    // TODO: Normal dentro da esfera//de baixo do plano não são calculadas corretamente.
     #[inline]
     #[must_use]
     /// Retorna o vetor normal entre o objeto e um ponto P
     pub fn normal(&self, p: Vec3) -> Vec3 {
-        match self { // TODO: Normal dentro da esfera//de baixo do plano?
+        match self {
             Self::Sphere(sphere) => sphere.normal(p),
             Self::Plane(plane) => plane.normal,
         }
