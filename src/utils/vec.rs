@@ -1,5 +1,6 @@
 // Classes Vec2, Vec3, Vec4
 use std::ops::{Add, Mul, Div, Sub, Neg, AddAssign};
+use super::Matrix3;
 
 /// Vetor 3D x,y,z (f32)
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -14,7 +15,7 @@ unsafe impl Send for Vec3 {}
 impl Vec3 {
     pub const NULL: Vec3 = Self { x: 0.0, y: 0.0, z: 0.0 };
 
-    #[inline]
+    #[inline(always)]
     #[must_use]
     /// Constructor
     pub fn new(x: f32, y: f32, z: f32) -> Self { Self {x, y, z} }
@@ -86,6 +87,26 @@ impl Vec3 {
             y: self.y * 255.0,
             z: self.z * 255.0
         }
+    }
+    
+    #[inline]
+    #[must_use]
+    pub fn by_transpost(&self, rhs: Self) -> Matrix3 {
+        Matrix3::new(
+            [[self.x*rhs.x, self.x*rhs.y, self.x*rhs.z],
+             [self.y*rhs.x, self.y*rhs.y, self.y*rhs.z],
+             [self.z*rhs.x, self.z*rhs.y, self.z*rhs.z]]
+        )
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn projection_matrix(&self) -> Matrix3 {
+        Matrix3::new(
+            [[self.x*self.x, self.x*self.y, self.x*self.z],
+             [self.y*self.x, self.y*self.y, self.y*self.z],
+             [self.z*self.x, self.z*self.y, self.z*self.z]]
+        )
     }
 }
 

@@ -82,12 +82,14 @@ impl Camera {
                     // Obtém o objeto mais próximo a colidir com o raio
                     let mut shape: Option<&Shape> = None;
                     let mut t = f32::INFINITY;
+                    let mut n = Vec3::NULL;
                     for s in &scene.shapes {
-                        let t_candidate = s.intersects(&ray);
+                        let (t_candidate, n_candidate) = s.intersects(&ray);
                         // se o objeto colide com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
                         if t_candidate > 0.0 && t_candidate < t {
                             shape = Some(s);
                             t = t_candidate;
+                            n = n_candidate;
                         }
                     }
                     // se o raio não colide com nenhum objeto, desenha a cor do background e passa pro próximo pixel
@@ -113,7 +115,7 @@ impl Camera {
                             // está atrás de uma esfera. Não sei ajeitar ainda.
                             if s == shape { continue; }
 
-                            let tl = s.intersects(&light_ray);
+                            let tl = s.intersects(&light_ray).0;
                             // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0 < tl < 1.0))
                             // 0.0000001 previne problemas com floating point precision
                             if 0.0000001 < tl && tl < 1.0 { continue 'lights; }
@@ -121,8 +123,7 @@ impl Camera {
                         
                         // Se o objeto não estiver na sombra...
                         let l = light_ray.dr.normalize(); // vetor unitário apontando na direção da luz
-                        
-                        let n = shape.normal(p_i); // vetor normal do objeto com o ponto p_i
+                    
                         let r = 2.0 * l.dot(n)*n - l; // vetor l refletido na normal
                         let nl = n.dot(l); // normal escalar l
                         let rv = r.dot(-dr); // r escalar v

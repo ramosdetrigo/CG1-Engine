@@ -20,17 +20,10 @@ impl Sphere {
         Shape::Sphere( Self { center, radius, material, })
     }
 
-    #[inline]
-    #[must_use]
-    /// Retorna o vetor normal entre o centro da esfera e um ponto `p`
-    pub fn normal(&self, p: Vec3) -> Vec3 {
-        (p - self.center).normalize()
-    }
-
     #[must_use]
     /// Retorna o ponto de interseção (de distância positiva) mais próximo entre uma esfera e um raio `r` \
     /// (`-INFINITY` se não há interseção)
-    pub fn intersects(&self, r: &Ray) -> f32 {
+    pub fn intersects(&self, r: &Ray) -> (f32, Vec3) {
         // Se existe um t real tal que R(t) pertence à borda da esfera, houve colisão.
         // Resolvendo a equação da esfera obtemos uma equação quadrática,
         // então só precisamos saber se o delta é positivo.
@@ -51,9 +44,13 @@ impl Sphere {
         if delta >= 0.0 {
             let t1 = (b + delta.sqrt()) / a;
             let t2 = (b - delta.sqrt()) / a;
-            if t2 < 0.0 || t1 < t2 {t1} else {t2} // mínimo positivo
+            if t2 < 0.0 || t1 < t2 {
+                (t1, (r.at(t1) - self.center).normalize())
+            } else {
+                (t2, (r.at(t2) - self.center).normalize())
+            } // mínimo positivo
         } else {
-            f32::NEG_INFINITY
+            (f32::NEG_INFINITY, Vec3::NULL)
         }
     }
 }

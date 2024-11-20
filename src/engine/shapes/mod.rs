@@ -6,3 +6,5 @@ mod sphere;
 pub use sphere::Sphere;
 mod plane;
 pub use plane::Plane;
+mod cilinder;
+pub use cilinder::Cilinder;

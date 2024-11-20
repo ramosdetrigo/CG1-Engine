@@ -1,10 +1,13 @@
 #![allow(dead_code)]
 mod vec;
-pub use vec::Vec3;
+mod matrix;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
+
+pub use vec::Vec3;
+pub use matrix::Matrix3;
 
 #[inline]
 /// Converte um vetor 3D em um objeto Color do SDL
