@@ -1,7 +1,9 @@
+#![allow(dead_code)]
 use super::Material;
 use super::Sphere;
 use super::Plane;
 use super::Cilinder;
+use super::Cone;
 use super::super::Ray;
 use crate::utils::Vec3;
 
@@ -10,7 +12,8 @@ use crate::utils::Vec3;
 pub enum Shape {
     Sphere(Sphere),
     Plane(Plane),
-    Cilinder(Cilinder)
+    Cilinder(Cilinder),
+    Cone(Cone)
 }
 
 impl Shape {
@@ -22,6 +25,7 @@ impl Shape {
             Self::Sphere(sphere) => &sphere.material,
             Self::Plane(plane) => &plane.material,
             Self::Cilinder(cilinder) => &cilinder.material,
+            Self::Cone(cone) => &cone.material,
         }
     }
 
@@ -35,6 +39,7 @@ impl Shape {
             Self::Sphere(sphere) => sphere.intersects(r),
             Self::Plane(plane) => plane.intersects(r),
             Self::Cilinder(cilinder) => cilinder.intersects(r),
+            Self::Cone(cone) => cone.intersects(r),
         }
     }
 }

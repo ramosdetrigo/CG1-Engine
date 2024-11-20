@@ -1,8 +1,6 @@
-use core::f32;
-
+#![allow(dead_code)]
 use crate::engine::Ray;
 use crate::utils::{Matrix3, Vec3};
-
 use super::{Material, Shape};
 
 #[derive(Clone, PartialEq)]
@@ -34,12 +32,12 @@ impl Cilinder {
         let mdr = m*r.dr;
         let ms = m*s;
 
-        let a = mdr.dot(mdr);
+        let a = mdr.length_squared();
         let b = 2.0 * mdr.dot(ms);
-        let c = ms.dot(ms) - self.r*self.r;
+        let c = ms.length_squared() - self.r*self.r;
         let delta = b*b - 4.0*a*c;
 
-        if delta > 0.0 {
+        if delta >= 0.0 {
             let t1 = (-b + delta.sqrt()) / (2.0*a);
             let t2 = (-b - delta.sqrt()) / (2.0*a);
 

@@ -3,13 +3,13 @@ mod utils;
 
 use utils::{Vec3, save_canvas_as_ppm};
 use engine::{Camera, Light, Scene};
-use engine::shapes::{Material, Sphere, Plane, Cilinder};
+use engine::shapes::{Material, Sphere, Plane, Cilinder, Cone};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::time::{Duration, Instant};
 
 fn main() {
-    let p0 = Vec3::new(0.0, 0.4, 0.2); // posição do observador
+    let p0 = Vec3::new(0.0, 0.0, 0.0); // posição do observador
     
     let aspect_ratio: f32 = 16.0/9.0; // aspect ratio que eu quero
     let scale: f32 = 1.0; // escala: cada quadrado na "janela" vale por quantos pixels na janela do computador?
@@ -24,21 +24,12 @@ fn main() {
     let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
 
     // Definindo as propriedades de cada objeto
-    let sphere1_radius = 0.45; // Raio em metros
-    let sphere1_center = Vec3::new(-1.55, -0.05, p0.z -1.75); // Coords. centro da esfera (metros)
+    let sphere1_radius = 0.65; // Raio em metros
+    let sphere1_center = Vec3::new(-0.0, 1.41, p0.z -2.75); // Coords. centro da esfera (metros)
     let sphere1_material = Material::new(
         Vec3::new(0.7, 0.2, 0.2), // Ambient
         Vec3::new(0.7, 0.2, 0.2), // Diffuse
         Vec3::new(0.7, 0.2, 0.2), // Specular
-        10.0, // coeficiente de "brilho" ou "polimento"
-    );
-
-    let sphere2_radius = 0.45; // Raio em metros
-    let sphere2_center = Vec3::new(1.55, -0.05, p0.z -1.75); // Coords. centro da esfera (metros)
-    let sphere2_material = Material::new(
-        Vec3::new(0.2, 0.7, 0.2), // Ambient
-        Vec3::new(0.2, 0.7, 0.2), // Diffuse
-        Vec3::new(0.2, 0.7, 0.2), // Specular
         10.0, // coeficiente de "brilho" ou "polimento"
     );
     
@@ -51,7 +42,7 @@ fn main() {
         3.0, 
     );
 
-    let plane2_pc = Vec3::new(0.0, 0.0, -5.0); // Ponto conhecido do plano
+    let plane2_pc = Vec3::new(0.0, 0.0, -3.5); // Ponto conhecido do plano
     let plane2_normal = Vec3::new(0.0, 0.0 ,1.0); // Normal do plano
     let plane2_material = Material::new(
         Vec3::new(0.4, 0.4, 0.7),
@@ -60,16 +51,40 @@ fn main() {
         3.0, 
     );
 
-    let cilinder_cb = Vec3::new(-0.3, 0.25, -1.5);
-    let cilinder_dc = Vec3::new(1.0, 1.0, 1.0);
-    let cilinder_r = 0.33;
-    let cilinder_h = 1.0;
-    let cilinder_material = Material::new(
+    let cilinder1_cb = Vec3::new(1.85, -0.5, -3.0);
+    let cilinder1_dc = Vec3::new(0.0, 1.0, 0.0);
+    let cilinder1_r = 0.5;
+    let cilinder1_h = 1.4;
+    let cilinder1_material = Material::new(
         Vec3::new(0.2, 0.2, 0.9), // Ambient
         Vec3::new(0.2, 0.2, 0.9), // Diffuse
         Vec3::new(0.2, 0.2, 0.9), // Specular
         150.0, // coeficiente de "brilho" ou "polimento"
     );
+
+    let cilinder2_cb = Vec3::new(-1.85, -0.5, -3.0);
+    let cilinder2_dc = Vec3::new(0.0, 1.0, 0.0);
+    let cilinder2_r = 0.5;
+    let cilinder2_h = 1.4;
+    let cilinder2_material = Material::new(
+        Vec3::new(0.2, 0.2, 0.9), // Ambient
+        Vec3::new(0.2, 0.2, 0.9), // Diffuse
+        Vec3::new(0.2, 0.2, 0.9), // Specular
+        150.0, // coeficiente de "brilho" ou "polimento"
+    );
+
+    let cone1_cb = Vec3::new(0.0, -0.5, p0.z -2.75);
+    let cone1_dc = Vec3::new(0.0, 1.0, 0.0);
+    let cone1_r = 0.65;
+    let cone1_h = 1.26;
+    let cone1_material = Material::new(
+        Vec3::new(0.2, 0.9, 0.2), // Ambient
+        Vec3::new(0.2, 0.9, 0.2), // Diffuse
+        Vec3::new(0.2, 0.9, 0.2), // Specular
+        150.0, // coeficiente de "brilho" ou "polimento"
+    );
+
+    
     
     // Definindo as propriedades das luzes
     let light1_pos = Vec3::new(0.0, 0.8, 0.0);
@@ -80,9 +95,10 @@ fn main() {
     let shapes = vec![
         Plane::new( plane1_pc, plane1_normal, plane1_material ),
         Plane::new( plane2_pc, plane2_normal, plane2_material ),
+        Cilinder::new( cilinder2_r, cilinder2_h, cilinder2_cb, cilinder2_dc, cilinder2_material ),
         Sphere::new( sphere1_center, sphere1_radius, sphere1_material ),
-        Sphere::new( sphere2_center, sphere2_radius, sphere2_material ),
-        Cilinder::new( cilinder_r, cilinder_h, cilinder_cb, cilinder_dc, cilinder_material )
+        Cone::new( cone1_r, cone1_h, cone1_cb, cone1_dc, cone1_material ),
+        Cilinder::new( cilinder1_r, cilinder1_h, cilinder1_cb, cilinder1_dc, cilinder1_material ),
     ];
 
     let lights = vec![
