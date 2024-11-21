@@ -46,9 +46,11 @@ impl Sphere {
             let t1 = (b + delta.sqrt()) / a;
             let t2 = (b - delta.sqrt()) / a;
             if t2 < 0.0 || t1 < t2 {
-                (t1, (r.at(t1) - self.center).normalize())
+                let n = (r.at(t2) - self.center).normalize();
+                (t1, n * -n.dot(r.dr).signum())
             } else {
-                (t2, (r.at(t2) - self.center).normalize())
+                let n = (r.at(t2) - self.center).normalize();
+                (t2, n * -n.dot(r.dr).signum())
             } // mínimo positivo
         } else {
             (f32::NEG_INFINITY, Vec3::NULL)

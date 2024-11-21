@@ -6,10 +6,9 @@ use utils::save_canvas_as_ppm;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::time::{Duration, Instant};
-use scenes::*;
 
 fn main() {
-    let (mut scene, mut camera, window_width, window_height) = beach();
+    let (mut scene, mut camera, window_width, window_height) = scenes::cone_test();
     let scale = 1.0;
 
     // Inicializando SDL

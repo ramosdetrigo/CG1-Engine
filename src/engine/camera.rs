@@ -111,14 +111,13 @@ impl Camera {
                         // Checar se o objeto está na sombra de algum outro objeto
                         let light_ray = Ray::new(p_i, light.pos - p_i); // raio partindo de p_i até o ponto de luz
                         for s in &scene.shapes {
-                            // Tem alguns problemas de iluminação na detecção de colisão consigo mesmo quando a luz
-                            // está atrás de uma esfera. Não sei ajeitar ainda.
+                            // Tem alguns problemas de iluminação com detecção de colisão consigo mesmo. Não sei ajeitar ainda.
                             if s == shape { continue; }
 
                             let tl = s.intersects(&light_ray).0;
                             // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0 < tl < 1.0))
-                            // 0.0000001 previne problemas com floating point precision
-                            if 0.0000001 < tl && tl < 1.0 { continue 'lights; }
+                            // 0.0001 previne problemas com floating point precision
+                            if 0.0001 < tl && tl < 1.0 { continue 'lights; }
                         }
                         
                         // Se o objeto não estiver na sombra...
