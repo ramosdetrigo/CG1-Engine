@@ -8,15 +8,16 @@ pub struct Cone {
     pub r: f32, pub h: f32,
     pub cb: Vec3, pub v: Vec3,
     pub dc: Vec3,
-    pub material: Material
+    pub material: Material,
+    pub has_base: bool
 }
 
 impl Cone {
     #[inline]
     #[must_use]
-    pub fn new(r: f32, h: f32, cb: Vec3, mut dc: Vec3, material: Material) -> Shape {
+    pub fn new(r: f32, h: f32, cb: Vec3, mut dc: Vec3, material: Material, has_base: bool) -> Shape {
         dc = dc.normalize();
-        Shape::Cone( Self { r, h, cb, v: cb + dc*h, dc, material } )
+        Shape::Cone( Self { r, h, cb, v: cb + dc*h, dc, material, has_base } )
     }
 
     #[must_use]
@@ -55,8 +56,8 @@ impl Cone {
                     t = t1;
 
                     let p = r.at(t);
-                    let pv = self.v-p;
-                    let m_pv = Matrix3::I - pv.projection_matrix();
+                    let pv = (self.v-p).normalize();
+                    let m_pv = pv.orth_projection_matrix();
 
                     let n_tmp = (m_pv*self.dc).normalize();
                     n = n_tmp * -n_tmp.dot(r.dr).signum();
@@ -70,9 +71,9 @@ impl Cone {
                 if cbe.dot(self.dc) > 0.0
                 && cbe.length() < self.h {
                     t = t2;
-                    
+
                     let p = r.at(t);
-                    let pv = self.v-p;
+                    let pv = (self.v-p).normalize();
                     let m_pv = Matrix3::I - pv.projection_matrix();
 
                     let n_tmp = (m_pv*self.dc).normalize();
@@ -82,15 +83,17 @@ impl Cone {
         }
 
         // Check plano da base do cone
-        let bottom = r.dr.dot(-self.dc);
-        if bottom != 0.0 {
-            let t_base = -(r.origin - self.cb).dot(-self.dc) / bottom;
-            
-            if t_base >= 0.0
-            && t_base < t
-            && (r.at(t_base) - self.cb).length() <= self.r {
-                t = t_base;
-                n = self.dc * -self.dc.dot(r.dr).signum();
+        if self.has_base {
+            let bottom = r.dr.dot(-self.dc);
+            if bottom != 0.0 {
+                let t_base = -(r.origin - self.cb).dot(-self.dc) / bottom;
+                
+                if t_base >= 0.0
+                && t_base < t
+                && (r.at(t_base) - self.cb).length() <= self.r {
+                    t = t_base;
+                    n = self.dc * -self.dc.dot(r.dr).signum();
+                }
             }
         }
 

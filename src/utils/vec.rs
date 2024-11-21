@@ -108,6 +108,14 @@ impl Vec3 {
              [self.z*self.x, self.z*self.y, self.z*self.z]]
         )
     }
+
+    pub fn orth_projection_matrix(&self) -> Matrix3 {
+        Matrix3::I - Matrix3::new(
+            [[self.x*self.x, self.x*self.y, self.x*self.z],
+             [self.y*self.x, self.y*self.y, self.y*self.z],
+             [self.z*self.x, self.z*self.y, self.z*self.z]]
+        )
+    }
 }
 
 impl Add<Vec3> for Vec3 {

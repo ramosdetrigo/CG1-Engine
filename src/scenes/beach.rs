@@ -100,6 +100,7 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
     let reye_center = Vec3::new(-1.0+nose_radius*2.0, nose_cb.y+reye_radius, nose_cb.z-reye_radius);
 
     let umbrella_direction = Vec3::new(0.2, 1.0, 0.0);
+    let umbrella_top_height = 0.1;
 
     let umbrella_pole_material = Material::new(
         Vec3::all(0.5),
@@ -108,7 +109,7 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
         20.0
     );
     let umbrella_pole_radius = 0.05;
-    let umbrella_pole_height = 2.1;
+    let umbrella_pole_height = 2.1+umbrella_top_height;
     let umbrella_pole_cb = Vec3::new(0.25, -0.55, -2.5);
 
     let umbrella_top_material = Material::new(
@@ -118,8 +119,7 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
         3.0
     );
     let umbrella_top_radius = 1.0;
-    let umbrella_top_height = 0.1;
-    let umbrella_top_cb = umbrella_pole_cb + umbrella_direction*umbrella_pole_height;
+    let umbrella_top_cb = umbrella_pole_cb + umbrella_direction*(umbrella_pole_height-umbrella_top_height-0.1);
 
 
     // Definindo as propriedades das luzes
@@ -137,17 +137,17 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
         Sphere::new( snowball2_center, snowball2_radius, snowball_material ), // ball2
         Sphere::new( snowball3_center, snowball3_radius, snowball_material ), // ball3
 
-        Cilinder::new( hat_base_radius, hat_base_height, hat_base_cb, hat_direction, hat_material ), // hat base
-        Cilinder::new( hat_body_radius, hat_body_height, hat_body_cb, hat_direction, hat_material ), // hat body
-        Cilinder::new( hat_ribbon_radius, hat_ribbon_height, hat_ribbon_cb, hat_direction, hat_ribbon_material ), // hat ribbon
+        Cilinder::new( hat_base_radius, hat_base_height, hat_base_cb, hat_direction, hat_material, true, true ), // hat base
+        Cilinder::new( hat_body_radius, hat_body_height, hat_body_cb, hat_direction, hat_material, true, true ), // hat body
+        Cilinder::new( hat_ribbon_radius, hat_ribbon_height, hat_ribbon_cb, hat_direction, hat_ribbon_material, true, true ), // hat ribbon
 
-        Cone::new( nose_radius, nose_height, nose_cb, nose_direction, nose_material ), // nose
+        Cone::new( nose_radius, nose_height, nose_cb, nose_direction, nose_material, true ), // nose
         
         Sphere::new( leye_center, leye_radius, eye_material ), // left eye
         Sphere::new( reye_center, reye_radius, eye_material ), // right eye
 
-        Cilinder::new( umbrella_pole_radius, umbrella_pole_height, umbrella_pole_cb, umbrella_direction, umbrella_pole_material ),
-        Cone::new( umbrella_top_radius, umbrella_top_height, umbrella_top_cb, umbrella_direction, umbrella_top_material ),
+        Cilinder::new( umbrella_pole_radius, umbrella_pole_height, umbrella_pole_cb, umbrella_direction, umbrella_pole_material, true, true ),
+        Cone::new( umbrella_top_radius, umbrella_top_height, umbrella_top_cb, umbrella_direction, umbrella_top_material, false ),
     ];
 
     let lights = vec![

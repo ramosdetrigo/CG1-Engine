@@ -8,15 +8,17 @@ pub struct Cilinder {
     pub r: f32, pub h: f32,
     pub cb: Vec3, pub ct: Vec3,
     pub dc: Vec3,
-    pub material: Material
+    pub material: Material,
+    pub has_base: bool,
+    pub has_tampa: bool
 }
 
 impl Cilinder {
     #[inline]
     #[must_use]
-    pub fn new(r: f32, h: f32, cb: Vec3, mut dc: Vec3, material: Material) -> Shape {
+    pub fn new(r: f32, h: f32, cb: Vec3, mut dc: Vec3, material: Material, has_base: bool, has_tampa: bool) -> Shape {
         dc = dc.normalize();
-        Shape::Cilinder( Cilinder {r, h, cb, dc, ct:cb + h*dc, material} )
+        Shape::Cilinder( Cilinder {r, h, cb, dc, ct:cb + h*dc, material, has_base, has_tampa} )
     }
 
     #[must_use]
@@ -65,8 +67,9 @@ impl Cilinder {
         }
         
         // Check plano do topo do cilindro
-        let bottom = r.dr.dot(self.dc);
-        if bottom != 0.0 {
+        if self.has_tampa {
+            let bottom = r.dr.dot(self.dc);
+            if bottom != 0.0 {
             let t_tampa = -(r.origin - self.ct).dot(self.dc) / bottom;
             
             if t_tampa >= 0.0
@@ -76,17 +79,20 @@ impl Cilinder {
                 n = self.dc * -self.dc.dot(r.dr).signum();
             }
         }
+        }
 
         // Check plano da base do cilindro
-        let bottom = r.dr.dot(-self.dc);
-        if bottom != 0.0 {
-            let t_base = -(r.origin - self.cb).dot(-self.dc) / bottom;
-            
-            if t_base >= 0.0
-            && t_base < t
-            && (r.at(t_base) - self.cb).length() <= self.r {
-                t = t_base;
-                n = self.dc * -self.dc.dot(r.dr).signum();
+        if self.has_base {
+            let bottom = r.dr.dot(-self.dc);
+            if bottom != 0.0 {
+                let t_base = -(r.origin - self.cb).dot(-self.dc) / bottom;
+                
+                if t_base >= 0.0
+                && t_base < t
+                && (r.at(t_base) - self.cb).length() <= self.r {
+                    t = t_base;
+                    n = self.dc * -self.dc.dot(r.dr).signum();
+                }
             }
         }
         
