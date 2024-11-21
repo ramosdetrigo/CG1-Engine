@@ -51,16 +51,14 @@ impl Cone {
                 let cbp = r.at(t1) - self.cb;
                 let cbe = q*cbp;
 
-                if cbe.dot(self.dc) > 0.0
-                && cbe.length() < self.h {
+                if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
                     t = t1;
 
                     let p = r.at(t);
                     let pv = (self.v-p).normalize();
                     let m_pv = pv.orth_projection_matrix();
 
-                    let n_tmp = (m_pv*self.dc).normalize();
-                    n = n_tmp * -n_tmp.dot(r.dr).signum();
+                    n = (m_pv*self.dc).normalize();
                 }
             }
 
@@ -68,16 +66,14 @@ impl Cone {
                 let cbp = r.at(t2) - self.cb;
                 let cbe = q*cbp;
 
-                if cbe.dot(self.dc) > 0.0
-                && cbe.length() < self.h {
+                if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
                     t = t2;
 
                     let p = r.at(t);
                     let pv = (self.v-p).normalize();
                     let m_pv = Matrix3::I - pv.projection_matrix();
 
-                    let n_tmp = (m_pv*self.dc).normalize();
-                    n = n_tmp * -n_tmp.dot(r.dr).signum();
+                    n = (m_pv*self.dc).normalize();
                 }
             }
         }
@@ -92,12 +88,12 @@ impl Cone {
                 && t_base < t
                 && (r.at(t_base) - self.cb).length() <= self.r {
                     t = t_base;
-                    n = self.dc * -self.dc.dot(r.dr).signum();
+                    n = self.dc;
                 }
             }
         }
 
         if t == f32::INFINITY { t = -t; }
-        (t, n)
+        (t, n * -n.dot(r.dr).signum())
     }
 }

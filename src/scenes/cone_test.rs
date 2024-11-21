@@ -2,7 +2,7 @@ use crate::engine::{Camera, Scene, Light};
 use crate::utils::Vec3;
 use crate::engine::shapes::{Material, Sphere, Plane, Cilinder, Cone};
 
-pub fn cones() -> (Scene, Camera, u32, u32) {
+pub fn cone_test() -> (Scene, Camera, u32, u32) {
     let p0 = Vec3::new(0.0, 0.0, 0.0); // posição do observador
     
     let aspect_ratio: f32 = 16.0/9.0; // aspect ratio que eu quero

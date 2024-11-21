@@ -47,8 +47,7 @@ impl Cilinder {
                 let cbp = r.at(t1) - self.cb;
                 let cbe = q*cbp;
 
-                if cbe.dot(self.dc) > 0.0
-                && cbe.length() < self.h {
+                if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
                     t = t1;
                     n = (m*cbp).normalize();
                 }
@@ -58,8 +57,7 @@ impl Cilinder {
                 let cbp = r.at(t2) - self.cb;
                 let cbe = q*cbp;
 
-                if cbe.dot(self.dc) > 0.0
-                && cbe.length() < self.h {
+                if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
                     t = t2;
                     n = (m*cbp).normalize();
                 }
@@ -76,7 +74,7 @@ impl Cilinder {
             && t_tampa < t
             && (r.at(t_tampa) - self.ct).length() <= self.r {
                 t = t_tampa;
-                n = self.dc * -self.dc.dot(r.dr).signum();
+                n = self.dc;
             }
         }
         }
@@ -91,12 +89,12 @@ impl Cilinder {
                 && t_base < t
                 && (r.at(t_base) - self.cb).length() <= self.r {
                     t = t_base;
-                    n = self.dc * -self.dc.dot(r.dr).signum();
+                    n = self.dc;
                 }
             }
         }
         
         if t == f32::INFINITY { t = -t }
-        (t, n)
+        (t, n * -n.dot(r.dr).signum())
     }
 }
