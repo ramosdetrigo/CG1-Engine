@@ -1,6 +1,4 @@
 #include <iostream>
-#include <sstream>
-#include <typeinfo>
 #include <cmath>
 #include <chrono>
 #include <SDL.h>
@@ -19,38 +17,67 @@ using namespace std;
 int main() {
     Vec3 p0 = Vec3(0,0,0);
     
-    float aspect_ratio = 16.0/9.0;
-    float viewport_width = 3.2;
-    float viewport_height = viewport_width/aspect_ratio;
-    float viewport_distance = 1.0;
+    double aspect_ratio = 16.0/9.0;
+    double viewport_width = 3.2;
+    double viewport_height = viewport_width/aspect_ratio;
+    double viewport_distance = 1.0;
     int image_width = 960;
     int image_height = image_width/aspect_ratio;
 
-    float sphere_radius = 1.0;
+    double sphere_radius = 1.0;
     Vec3 sphere_center = Vec3(0,0, -(viewport_distance + sphere_radius));
 
     Vec3 plane_p0 = Vec3(0.0, -1.8, 0.0);
     Vec3 plane_normal = Vec3(0.0, 1.0, 0.0);
 
-    Vec3 sphere_color = Vec3(1.0, 0.0, 0.0);
-    Vec3 plane_color = Vec3(0.0, 1.0, 0.0);
+    Vec3 plane2_p0 = Vec3(0.0, 0.0, -6.0);
+    Vec3 plane2_normal = Vec3(0.0, 0.0, 1.0);
     
     Vec3 bg_color = Vec3(0.0, 0.0, 0.0);
-    Material m1 = Material(sphere_color);
-    Material m2 = Material(plane_color);
+    Material mat_sphere = Material(
+        Vec3(0.7, 0.2, 0.2),
+        Vec3(0.7, 0.2, 0.2),
+        Vec3(0.7, 0.2, 0.2),
+        10
+    );
+    Material mat_p1 = Material(
+        Vec3(0.2, 0.7, 0.2),
+        Vec3(0.2, 0.7, 0.2),
+        Vec3(0.0, 0.0, 0.0),
+        1
+    );
+    Material mat_p2 = Material(
+        Vec3(0.3, 0.3, 0.7),
+        Vec3(0.3, 0.3, 0.7),
+        Vec3(0.0, 0.0, 0.0),
+        1
+    );
 
-    Sphere* sphere = new Sphere(sphere_center, sphere_radius, m1);
-    Plane* plane = new Plane(plane_p0, plane_normal, m2);
+    Sphere* sphere = new Sphere(sphere_center, sphere_radius, mat_sphere);
+    Plane* plane = new Plane(plane_p0, plane_normal, mat_p1);
+    Plane* plane2 = new Plane(plane2_p0, plane2_normal, mat_p2);
 
-    Light light = Light(Vec3(-0.8, 0.8, 0.0), Vec3(1.0, 1.0, 1.0), 1.0);
-    Vec3 ambient_light = Vec3(1.0, 1.0, 1.0);
+    Light light1 = Light(
+        Vec3(-0.8, 0.8, 0.0),
+        Vec3(1.0, 0.0, 0.0),
+        0.7
+    );
+    Light light2 = Light(
+        Vec3(0.8, 0.8, 0.0),
+        Vec3(0.0, 0.0, 1.0),
+        0.7
+    );
 
-    Camera camera = Camera(p0, viewport_width, viewport_height, image_width, image_height, viewport_distance, bg_color, ambient_light);
+    Vec3 ambient_light = Vec3(0.3, 0.3, 0.3);
 
-    Scene scene = Scene();
-    scene.add_object(plane);
+    Camera camera = Camera(p0, viewport_width, viewport_height, image_width, image_height, viewport_distance, bg_color);
+
+    Scene scene = Scene(ambient_light);
     scene.add_object(sphere);
-    scene.add_light(light);
+    scene.add_object(plane);
+    scene.add_object(plane2);
+    scene.add_light(light1);
+    scene.add_light(light2);
 
     // SDL init
     if (SDL_Init(SDL_INIT_VIDEO) != 0) { printf("SDL_Init Error: %s\n", SDL_GetError()); return 1; }

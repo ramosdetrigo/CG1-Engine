@@ -11,45 +11,69 @@ class Camera {
     public:
         Vec3 pos, bg_color;
         Camera () : pos(Vec3()), bg_color(Vec3(1.0, 1.0, 1.0)), viewport(Viewport()) {}
-        Camera (Vec3 pos, float width, float height, float cols, float rows, float viewport_distance, Vec3 bg_color, Vec3 ambient_light) :
+        Camera (Vec3 pos, double width, double height, double cols, double rows, double viewport_distance, Vec3 bg_color) :
             pos(pos), bg_color(bg_color), viewport(Viewport(Vec3(pos.x, pos.y, pos.z - viewport_distance), width, height, cols, rows)) {}
 
         void draw_scene(SDL_Renderer* renderer, Scene scene) {
             SDL_SetRenderDrawColor(renderer, bg_color.x, bg_color.y, bg_color.z, 1.0);
             SDL_RenderClear(renderer);
-            Light light = scene.lights.front();
-            for (Shape* s : scene.objects) {
-                
-                for (int row = 0; row < viewport.rows; row++) {
-                    for (int col = 0; col < viewport.cols; col++ ) {
-                        Vec3 dr = ((viewport.p00 + viewport.dx * col - viewport.dy * row) - pos).normalize();
-                        Ray r = Ray(pos, dr);
+            Light light = scene.lights.front(); // pegando só a primeira luz por enquanto...              
 
-                        auto [intersects, t1, t2] = s->intersects(r);
-                        if (intersects && (t1 > 0.0 || t2 > 0.0)) {
-                            float min_t = ((t2 < 0.0) || (t1 < t2)) ? t1 : t2;
-                            Vec3 p_intersect = r.at(min_t);
-                            Vec3 l = (light.pos - p_intersect).normalize(); // vetor apontando na direção da luz
-                            Vec3 n = s->get_normal(p_intersect);
-                            Vec3 r = (2.0 * (l.dot(n)))*n - l; // vetor l refletido na normal
+            for (int row = 0; row < viewport.rows; row++) { // cada linha
+                for (int col = 0; col < viewport.cols; col++ ) { // cada coluna
+                    // vetor direção pro quadrado do frame
+                    Vec3 dr = ((viewport.p00 + viewport.dx * col - viewport.dy * row) - pos).normalize();
+                    Ray r = Ray(pos, dr); // nosso raio
 
-                            float nl = n.dot(l);
-                            float rl = r.dot(l);
-                            if (nl < 0.0) { nl = 0.0; rl = 0.0; }
-                            if (rl < 0.0) { rl = 0.0; }
+                    // pega o objeto mais próximo na cena
+                    auto [closest_shape, t] = scene.get_closest_object(r);
 
-                            Vec3 iamb = s->mat.k_ambient * scene.ambient_light * s->mat.color;
-                            Vec3 idif = s->mat.k_diffuse * nl * s->mat.color * light.color;
-                            Vec3 iesp = s->mat.k_specular * pow(rl, s->mat.e) * light.color;
+                    // se ele não estiver atrás da câmera, calcula aS luzes (mas testa pra sombra antes né etc.)
+                    if (t > 0.0) {
+                        Vec3 p_intersect = r.at(t); // Ponto de interseção do raio com o objeto
+                        Vec3 ieye = Vec3(0.0, 0.0, 0.0);
+                        
+                        // Testa todas as luzes da cena
+                        for (Light light : scene.lights) {
+                            // Check da sombra
+                            bool na_sombra = false;
+                            // Raio do ponto de interseção até a luz (não normaliza o vetor direção)
+                            Ray raio_p_luz = Ray(p_intersect, light.pos - p_intersect);
+                            // testa pra todos os objetos da cena pra ver se eles tão na frente da luz.
+                            for (Shape* s_test : scene.objects) {
+                                // distância do ponto de interseção até o ponto de luz
+                                double distance = s_test->intersects(raio_p_luz);
 
-                            Vec3 ieye = iamb + idif + iesp;
+                                // 0.0001 evita problemas de precisão double
+                                // isso checa se o objeto está ENTRE a interseção e o raio de luz
+                                if (distance >= 0.0001 && distance <= 1.0) {
+                                    na_sombra = true; // se sim, o objeto q a gente ia desenhar tá na sombra.
+                                    break;
+                                }
+                            }
 
-                            draw_pixel(renderer, col, row, ieye.clamp(0.0, 1.0).rgb_255());
+                            Vec3 l = (light.pos - p_intersect).normalize(); // Vetor apontando na direção da luz
+                            Vec3 n = closest_shape->get_normal(p_intersect); // Vetor normal
+                            Vec3 r = (2.0 * (l.dot(n)))*n - l; // Vetor l refletido na normal
+                            Vec3 v = -dr; // Vetor apontando na direção do observador
+
+                            double nl = n.dot(l); // N escalar L
+                            double rv = r.dot(v); // R escalar V
+                            if (nl < 0.0 || na_sombra) { nl = 0.0; }
+                            if (rv < 0.0 || na_sombra) { rv = 0.0; }
+
+                            Vec3 iamb = closest_shape->mat.k_ambient * scene.ambient_light;
+                            Vec3 idif = closest_shape->mat.k_diffuse * nl * light.color;
+                            Vec3 iesp = closest_shape->mat.k_specular * pow(rv, closest_shape->mat.e) * light.color;
+
+                            ieye = ieye + iamb + idif + iesp;
                         }
+
+                        draw_pixel(renderer, col, row, ieye.clamp(0.0, 1.0).rgb_255());
                     }
                 }
-
             }
+
             SDL_RenderPresent(renderer);
         }
     
@@ -62,13 +86,13 @@ class Camera {
         class Viewport {
         public:
             Vec3 pos, dx, dy, top_left, p00;
-            float width, height;
+            double width, height;
             int cols, rows;
             
             Viewport () {
                 Vec3 pos = Vec3(0.0, 0.0, -1.0);
-                float width = 1.0; float height = 1.0;
-                float cols = 256; float rows = 256;
+                double width = 1.0; double height = 1.0;
+                double cols = 256; double rows = 256;
 
                 Vec3 dx = Vec3(width/cols, 0.0, 0.0);
                 Vec3 dy = Vec3(0.0, height/cols, 0.0);
@@ -80,7 +104,7 @@ class Camera {
                 this->cols = cols; this->rows = rows;
             }
 
-            Viewport (Vec3 pos, float width, float height, float cols, float rows) {
+            Viewport (Vec3 pos, double width, double height, double cols, double rows) {
                 Vec3 dx = Vec3(width/cols, 0.0, 0.0);
                 Vec3 dy = Vec3(0.0, height/rows, 0.0);
                 Vec3 top_left = Vec3(pos.x - width/2.0, pos.y + height/2.0, pos.z);

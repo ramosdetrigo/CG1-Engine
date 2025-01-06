@@ -2,6 +2,7 @@
 #define PLANE_H
 
 #include "shape.h"
+#include <cmath>
 
 class Plane : public Shape {
     public:
@@ -11,11 +12,12 @@ class Plane : public Shape {
         Plane (Vec3 p0, Vec3 normal, Material mat): p0(p0), normal(normal), Shape(mat) {}
         
         inline Vec3 get_normal(Vec3 p) override { return normal; }
-        tuple<bool, float, float> intersects(Ray r) override {
-            float top = normal.dot(r.origin - p0);
-            float bottom = normal.dot(r.dr);
-            if (bottom == 0.0) { return make_tuple(false, -1.0, -INFINITY); }
-            return make_tuple(true, - top/bottom, -INFINITY);
+
+        double intersects(Ray r) override {
+            double top = normal.dot(r.origin - p0);
+            double bottom = normal.dot(r.dr);
+            if (bottom == 0.0) { return -INFINITY; }
+            return -top/bottom;
         }
 };
 

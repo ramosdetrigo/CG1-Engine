@@ -2,6 +2,7 @@
 #define RAY_H
 
 #include <tuple>
+#include "../utils/vec3.h"
 
 class Ray {
     public:
@@ -10,7 +11,7 @@ class Ray {
         Ray () : origin(Vec3()), dr(Vec3(1.0, 0.0, 0.0)) {};
         Ray (Vec3 origin, Vec3 direction): origin(origin), dr(direction) {};
 
-        Vec3 at(float t) { return origin + dr*t; }
+        Vec3 at(double t) { return origin + dr*t; }
 };
 
 #endif
