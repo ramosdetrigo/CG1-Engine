@@ -8,7 +8,7 @@ use sdl2::keyboard::Keycode;
 use std::time::{Duration, Instant};
 
 fn main() {
-    let (mut scene, mut camera, window_width, window_height) = scenes::cone_test();
+    let (mut scene, mut camera, window_width, window_height) = scenes::sphere_test();
     let scale = 1.0;
 
     // Inicializando SDL
