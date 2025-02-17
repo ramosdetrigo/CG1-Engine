@@ -16,13 +16,19 @@ pub struct Cilinder {
 impl Cilinder {
     #[inline]
     #[must_use]
-    pub fn new(r: f64, h: f64, cb: Vec3, mut dc: Vec3, material: Material, has_base: bool, has_tampa: bool) -> Shape {
+    pub fn new(r: f64, h: f64, cb: Vec3, mut dc: Vec3, material: Material, has_base: bool, has_tampa: bool) -> Box<dyn Shape> {
         dc = dc.normalize();
-        Shape::Cilinder( Cilinder {r, h, cb, dc, ct:cb + h*dc, material, has_base, has_tampa} )
+        Box::new(Cilinder {r, h, cb, dc, ct:cb + h*dc, material, has_base, has_tampa})
+    }
+}
+
+impl Shape for Cilinder {
+    fn material(&self) -> &Material {
+        &self.material
     }
 
     #[must_use]
-    pub fn intersects(&self, r: &Ray) -> (f64, Vec3) {
+    fn intersects(&self, r: &Ray) -> (f64, Vec3) {
         let mut t = f64::INFINITY;
         let mut n = Vec3::NULL;
 
