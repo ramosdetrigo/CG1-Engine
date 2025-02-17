@@ -15,13 +15,15 @@ pub struct Cone {
 impl Cone {
     #[inline]
     #[must_use]
-    pub fn new(r: f64, h: f64, cb: Vec3, mut dc: Vec3, material: Material, has_base: bool) -> Shape {
+    pub fn new(r: f64, h: f64, cb: Vec3, mut dc: Vec3, material: Material, has_base: bool) -> Box<dyn Shape> {
         dc = dc.normalize();
-        Shape::Cone( Self { r, h, cb, v: cb + dc*h, dc, material, has_base } )
+        Box::new( Self { r, h, cb, v: cb + dc*h, dc, material, has_base } )
     }
+}
 
+impl Shape for Cone {
     #[must_use]
-    pub fn intersects(&self, r: &Ray) -> (f64, Vec3) {
+    fn intersects(&self, r: &Ray) -> (f64, Vec3) {
         let mut t = f64::INFINITY;
         let mut n = Vec3::NULL;
 
@@ -96,4 +98,6 @@ impl Cone {
         if t == f64::INFINITY { t = -t; }
         (t, n * -n.dot(r.dr).signum())
     }
+
+    fn material(&self) -> &Material { &self.material }
 }

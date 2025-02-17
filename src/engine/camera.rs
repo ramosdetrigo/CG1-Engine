@@ -1,10 +1,11 @@
+#![allow(dead_code)]
 use super::{Ray, Scene};
 use super::shapes::{Shape, Material};
 use crate::utils::Vec3;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
-use std::thread;
+use std::{ptr, thread};
 use std::sync::Arc;
 
 pub struct Camera {
@@ -80,7 +81,7 @@ impl Camera {
                     ray.dr = dr;
 
                     // Obtém o objeto mais próximo a colidir com o raio
-                    let mut shape: Option<&Shape> = None;
+                    let mut shape: Option<&Box<dyn Shape>> = None;
                     let mut t = f64::INFINITY;
                     let mut n = Vec3::NULL;
                     for s in &scene.shapes {
@@ -112,7 +113,7 @@ impl Camera {
                         let light_ray = Ray::new(p_i, light.pos - p_i); // raio partindo de p_i até o ponto de luz
                         for s in &scene.shapes {
                             // Tem alguns problemas de iluminação com detecção de colisão consigo mesmo. Não sei ajeitar ainda.
-                            if s == shape { continue; }
+                            if ptr::eq(s, shape) { continue; }
 
                             let tl = s.intersects(&light_ray).0;
                             // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0 < tl < 1.0))
@@ -156,6 +157,17 @@ impl Camera {
         texture.update(None, &self.draw_buffer, (viewport.cols * 3) as usize).unwrap();
         canvas.copy(&texture, None, Some(Rect::new(0, 0, viewport.cols, viewport.rows))).unwrap();
         canvas.present();
+    }
+
+    pub fn set_position(&mut self, pos: Vec3) {
+        let add = pos - self.pos;
+        self.pos = pos;
+        self.viewport.add_position(add);
+    }
+
+    pub fn add_position(&mut self, add: Vec3) {
+        self.pos += add;
+        self.viewport.add_position(add);
     }
 }
 
@@ -202,5 +214,10 @@ impl Viewport {
             dx, dy,
             top_left_coords, p00_coords,
         }
+    }
+
+    pub fn add_position(&mut self, add: Vec3) {
+        self.top_left_coords += add;
+        self.p00_coords += add;
     }
 }

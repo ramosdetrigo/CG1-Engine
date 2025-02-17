@@ -18,15 +18,17 @@ impl Plane {
     #[must_use]
     /// Cria um novo plano baseado num ponto `pc` com vetor normal `normal`, de material `material`. \
     /// (Encapsulado em um enum Shape)
-    pub fn new(pc: Vec3, normal: Vec3, material: Material ) -> Shape {
-        Shape::Plane( Self { pc, normal: normal.normalize(), material } )
+    pub fn new(pc: Vec3, normal: Vec3, material: Material ) -> Box<dyn Shape> {
+        Box::new( Self { pc, normal: normal.normalize(), material } )
     }
+}
 
+impl Shape for Plane {
     #[inline]
     #[must_use]
     /// Retorna o ponto de interseção (de distância positiva) mais próximo entre um plano e um raio `r` \
     /// (`-INFINITY` se não há interseção)
-    pub fn intersects(&self, r: &Ray) -> (f64, Vec3) {
+    fn intersects(&self, r: &Ray) -> (f64, Vec3) {
         // Fórmula: n * (p - pc) = 0
         // n * (R(t) - pc) = 0
         // t = - n.dot(r.origin - pc) / n.dot(r.dr)
@@ -38,4 +40,6 @@ impl Plane {
         if bottom == 0.0 { return (f64::NEG_INFINITY, Vec3::NULL) }
         (-top/bottom, self.normal * -self.normal.dot(r.dr).signum())
     }
+
+    fn material(&self) -> &Material { &self.material }
 }

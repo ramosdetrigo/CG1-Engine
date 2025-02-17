@@ -3,10 +3,10 @@ use super::shapes::Shape;
 use super::Light;
 use crate::utils::Vec3;
 
-#[derive(Clone, PartialEq)]
+// #[derive(Clone, PartialEq)]
 /// Armazena objetos e luzes com uma luz ambiente pré-definida
 pub struct Scene {
-    pub shapes: Vec<Shape>,
+    pub shapes: Vec<Box<dyn Shape>>,
     pub lights: Vec<Light>,
     pub ambient_light: Vec3
 }
@@ -15,7 +15,7 @@ impl Scene {
     #[inline]
     #[must_use]
     /// Cria uma nova cena
-    pub fn new(shapes: Vec<Shape>, lights: Vec<Light>, ambient_light: Vec3) -> Scene {
+    pub fn new(shapes: Vec<Box<dyn Shape>>, lights: Vec<Light>, ambient_light: Vec3) -> Scene {
         Scene { shapes, lights, ambient_light }
     }
 
@@ -28,7 +28,7 @@ impl Scene {
 
     #[inline]
     /// Adiciona um objeto na cena
-    pub fn add_shape(&mut self, s: Shape) {
+    pub fn add_shape(&mut self, s: Box<dyn Shape>) {
         self.shapes.push(s);
     }
 
