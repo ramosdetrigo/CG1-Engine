@@ -1,13 +1,18 @@
 #![allow(dead_code)]
-mod vec;
-mod matrix;
+mod vec3;
+mod matrix3;
+mod vec4;
+mod matrix4;
+mod transform;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 
-pub use vec::Vec3;
-pub use matrix::Matrix3;
+pub use vec3::Vec3;
+pub use vec4::Vec4;
+pub use matrix3::Matrix3;
+pub use matrix4::Matrix4;
 
 #[inline]
 /// Converte um vetor 3D em um objeto Color do SDL
@@ -18,7 +23,7 @@ pub fn vec_to_color(v: Vec3) -> Color {
 #[inline]
 /// Converte um objeto Color do SDL em um vetor 3D
 pub fn color_to_vec(c: Color) -> Vec3 {
-    Vec3::new(c.r as f32, c.g as f32, c.b as f32)
+    Vec3::new(c.r as f64, c.g as f64, c.b as f64)
 }
 
 // salva o canvas como uma imagem .ppm

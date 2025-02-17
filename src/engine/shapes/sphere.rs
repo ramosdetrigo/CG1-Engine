@@ -8,7 +8,7 @@ use crate::utils::Vec3;
 /// Esfera de centro `center`, raio `radius`, e material `material`.
 pub struct Sphere {
     pub center: Vec3, // Ponto x,y,z do centro da esfera
-    pub radius: f32, // Raio da esfera
+    pub radius: f64, // Raio da esfera
     pub material: Material, // Cor da esfera
 }
 
@@ -17,14 +17,14 @@ impl Sphere {
     #[must_use]
     /// Cria uma nova esfera de centro `center`, raio `radius`, e material `material`. \
     /// (Encapsulada em um enum Shape)
-    pub fn new(center: Vec3, radius: f32, material: Material) -> Shape {
+    pub fn new(center: Vec3, radius: f64, material: Material) -> Shape {
         Shape::Sphere( Self { center, radius, material, })
     }
 
     #[must_use]
     /// Retorna o ponto de interseção (de distância positiva) mais próximo entre uma esfera e um raio `r` \
     /// (`-INFINITY` se não há interseção)
-    pub fn intersects(&self, r: &Ray) -> (f32, Vec3) {
+    pub fn intersects(&self, r: &Ray) -> (f64, Vec3) {
         // Se existe um t real tal que R(t) pertence à borda da esfera, houve colisão.
         // Resolvendo a equação da esfera obtemos uma equação quadrática,
         // então só precisamos saber se o delta é positivo.
@@ -36,10 +36,10 @@ impl Sphere {
         // c = v*v - r²
         // delta = b² - 4ac
         let v: Vec3 = self.center - r.origin;
-        let a: f32 = r.dr.length_squared();
-        let b: f32 = r.dr.dot(v); // TODO: Explicar otimização
-        let c: f32 = v.length_squared() - self.radius*self.radius;
-        let delta: f32 = b*b - a*c;
+        let a: f64 = r.dr.length_squared();
+        let b: f64 = r.dr.dot(v); // TODO: Explicar otimização
+        let c: f64 = v.length_squared() - self.radius*self.radius;
+        let delta: f64 = b*b - a*c;
         
         // se o delta é positivo, houve colisão
         if delta >= 0.0 {
@@ -53,7 +53,7 @@ impl Sphere {
                 (t2, n * -n.dot(r.dr).signum())
             } // mínimo positivo
         } else {
-            (f32::NEG_INFINITY, Vec3::NULL)
+            (f64::NEG_INFINITY, Vec3::NULL)
         }
     }
 }

@@ -5,7 +5,7 @@ use super::{Material, Shape};
 
 #[derive(Clone, PartialEq)]
 pub struct Cilinder {
-    pub r: f32, pub h: f32,
+    pub r: f64, pub h: f64,
     pub cb: Vec3, pub ct: Vec3,
     pub dc: Vec3,
     pub material: Material,
@@ -16,14 +16,14 @@ pub struct Cilinder {
 impl Cilinder {
     #[inline]
     #[must_use]
-    pub fn new(r: f32, h: f32, cb: Vec3, mut dc: Vec3, material: Material, has_base: bool, has_tampa: bool) -> Shape {
+    pub fn new(r: f64, h: f64, cb: Vec3, mut dc: Vec3, material: Material, has_base: bool, has_tampa: bool) -> Shape {
         dc = dc.normalize();
         Shape::Cilinder( Cilinder {r, h, cb, dc, ct:cb + h*dc, material, has_base, has_tampa} )
     }
 
     #[must_use]
-    pub fn intersects(&self, r: &Ray) -> (f32, Vec3) {
-        let mut t = f32::INFINITY;
+    pub fn intersects(&self, r: &Ray) -> (f64, Vec3) {
+        let mut t = f64::INFINITY;
         let mut n = Vec3::NULL;
 
         // Check superfície cilíndrica
@@ -94,7 +94,7 @@ impl Cilinder {
             }
         }
         
-        if t == f32::INFINITY { t = -t }
+        if t == f64::INFINITY { t = -t }
         (t, n * -n.dot(r.dr).signum())
     }
 }

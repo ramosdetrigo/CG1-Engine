@@ -16,11 +16,12 @@ fn main() {
     let video_subsystem = sdl_context.video().unwrap();
     let mut event_pump = sdl_context.event_pump().unwrap(); // cuida dos eventos como teclado mouse etc.
     let window = video_subsystem // a janela do computador em si
-        .window("CG1 - engine", ((window_width as f32)*scale) as u32, ((window_height as f32)*scale) as u32)
+        .window("CG1 - engine", ((window_width as f64)*scale) as u32, ((window_height as f64)*scale) as u32)
         .position_centered()
         .opengl()
         .build()
         .unwrap();
+
     let mut canvas = window.into_canvas().build().unwrap(); // o canvas que a gente vai usar pra desenhar
     canvas.set_logical_size(window_width, window_height).unwrap(); // pra fazer upscaling do canvas
 
@@ -44,11 +45,6 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { scene.lights[0].pos.z += 0.1; }
                 Event::KeyDown { keycode: Some(Keycode::W), .. } => { scene.lights[0].pos.y += 0.1; }
                 Event::KeyDown { keycode: Some(Keycode::S), .. } => { scene.lights[0].pos.y -= 0.1; }
-                // // espaço pra salvar a imagem atual do canvas como .ppm
-                // Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => {
-                //     camera.draw_scene_to_canvas(&scene, &mut canvas);
-                //     save_canvas_as_ppm(&canvas).unwrap();
-                // }
                 _ => {}
             }
         }

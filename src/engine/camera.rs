@@ -24,7 +24,7 @@ impl Camera {
     /// `viewport_distance`: Distância do viewport até o observador \
     /// `bg_color`: Cor do background
     /// `texture_creator`: TextureCreator para criar a textura interna de buffer da câmera
-    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f32, viewport_h: f32, viewport_distance: f32, bg_color: Vec3) -> Camera {     
+    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f64, viewport_h: f64, viewport_distance: f64, bg_color: Vec3) -> Camera {     
         Camera {
             pos, // posição do observador
             bg_color: bg_color.clamp(0.0, 1.0) * 255.0,
@@ -76,12 +76,12 @@ impl Camera {
                 for pixel in 0..pixel_count {
                     let row = (lower_bound + pixel) / (viewport.cols as usize);
                     let col = (lower_bound + pixel) % (viewport.cols as usize);
-                    let dr = (((viewport.p00_coords) + (col as f32)*viewport.dx - (row as f32)*viewport.dy) - pos).normalize();
+                    let dr = (((viewport.p00_coords) + (col as f64)*viewport.dx - (row as f64)*viewport.dy) - pos).normalize();
                     ray.dr = dr;
 
                     // Obtém o objeto mais próximo a colidir com o raio
                     let mut shape: Option<&Shape> = None;
-                    let mut t = f32::INFINITY;
+                    let mut t = f64::INFINITY;
                     let mut n = Vec3::NULL;
                     for s in &scene.shapes {
                         let (t_candidate, n_candidate) = s.intersects(&ray);
@@ -170,7 +170,7 @@ impl Camera {
 /// `p00_coords`: coordenadas do quadrado 0,0 do frame
 struct Viewport {
     pub pos: Vec3, 
-    pub width: f32, pub height: f32,
+    pub width: f64, pub height: f64,
     pub cols: u32, pub rows: u32,
 
     pub dx: Vec3, pub dy: Vec3,
@@ -188,10 +188,10 @@ impl Viewport {
     /// `dx`, `dy`: tamanho x e y de cada quadrado \
     /// `top_left_coords`: coordenadas da quina superior esquerda do frame \
     /// `p00_coords`: coordenadas do quadrado 0,0 do frame
-    pub fn new(pos: Vec3, width: f32, height: f32, cols: u32, rows: u32) -> Viewport {
+    pub fn new(pos: Vec3, width: f64, height: f64, cols: u32, rows: u32) -> Viewport {
         let top_left_coords: Vec3 = Vec3::new(pos.x - width/2.0, pos.y + height/2.0, pos.z);
-        let dx = Vec3::new(width/(cols as f32), 0.0, 0.0);
-        let dy = Vec3::new(0.0, height/(rows as f32), 0.0);
+        let dx = Vec3::new(width/(cols as f64), 0.0, 0.0);
+        let dy = Vec3::new(0.0, height/(rows as f64), 0.0);
         let p00_coords: Vec3 = top_left_coords + dx/2.0 - dy/2.0;
         
         Viewport {

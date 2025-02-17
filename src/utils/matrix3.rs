@@ -3,7 +3,7 @@ use super::Vec3;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Matrix3 {
-    m: [[f32; 3]; 3]
+    m: [[f64; 3]; 3]
 }
 
 impl Matrix3 {
@@ -16,7 +16,7 @@ impl Matrix3 {
 
     #[inline(always)]
     #[must_use]
-    pub fn new(m: [[f32; 3]; 3]) -> Self { Self { m } }
+    pub fn new(m: [[f64; 3]; 3]) -> Self { Self { m } }
 }
 
 // Matrix + Matrix
@@ -86,10 +86,10 @@ impl Mul<Vec3> for Matrix3 {
 }
 
 // Matrix * n
-impl Mul<f32> for Matrix3 {
+impl Mul<f64> for Matrix3 {
     type Output = Self;
 
-    fn mul(self, rhs: f32) -> Self::Output {
+    fn mul(self, rhs: f64) -> Self::Output {
         Self {
             m: [[self.m[0][0] * rhs, self.m[0][1] * rhs, self.m[0][2] * rhs],
                 [self.m[1][0] * rhs, self.m[1][1] * rhs, self.m[1][2] * rhs],
@@ -99,10 +99,10 @@ impl Mul<f32> for Matrix3 {
 }
 
 // Matrix / n
-impl Div<f32> for Matrix3 {
+impl Div<f64> for Matrix3 {
     type Output = Self;
 
-    fn div(self, rhs: f32) -> Self::Output {
+    fn div(self, rhs: f64) -> Self::Output {
         Self {
             m: [[self.m[0][0] / rhs, self.m[0][1] / rhs, self.m[0][2] / rhs],
                 [self.m[1][0] / rhs, self.m[1][1] / rhs, self.m[1][2] / rhs],
@@ -126,7 +126,7 @@ impl Neg for Matrix3 {
 
 // Matrix[l]
 impl Deref for Matrix3 {
-    type Target = [[f32; 3]; 3];
+    type Target = [[f64; 3]; 3];
 
     fn deref(&self) -> &Self::Target {
         &self.m

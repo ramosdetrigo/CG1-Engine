@@ -5,14 +5,14 @@ use crate::engine::shapes::{Material, Sphere, Plane, Cilinder, Cone};
 pub fn cilinder_test() -> (Scene, Camera, u32, u32) {
     let p0 = Vec3::new(0.0, 0.4, 0.2); // posição do observador
     
-    let aspect_ratio: f32 = 16.0/9.0; // aspect ratio que eu quero
+    let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
     
     let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
-    let image_height: u32 = ((image_width as f32)/aspect_ratio) as u32;
+    let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
     
-    let viewport_width: f32 = 0.032; // Tamanho da janela (em metros)
-    let viewport_height: f32 = viewport_width/aspect_ratio;
-    let viewport_distance: f32 = 0.01; // distância da janela até o observador
+    let viewport_width: f64 = 0.032; // Tamanho da janela (em metros)
+    let viewport_height: f64 = viewport_width/aspect_ratio;
+    let viewport_distance: f64 = 0.01; // distância da janela até o observador
     
     let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
     

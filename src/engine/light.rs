@@ -12,7 +12,7 @@ impl Light {
     #[inline]
     #[must_use]
     /// Cria uma luz com posição `pos`, cor `color`, e intensidade `intensity`.
-    pub fn new(pos: Vec3, color: Vec3, intensity: f32) -> Light {
+    pub fn new(pos: Vec3, color: Vec3, intensity: f64) -> Light {
         Light { pos, intensity: color*intensity }
     }
 }

@@ -10,7 +10,7 @@ pub struct Material {
     pub k_amb: Vec3,
     pub k_dif: Vec3,
     pub k_esp: Vec3,
-    pub e: f32,
+    pub e: f64,
 }
 
 impl Material {
@@ -21,7 +21,7 @@ impl Material {
     /// `k_dif`: Coeficiente de reflexão difusa \
     /// `k_esp`: Coeficiente de reflexão especular \
     /// `e`: Coeficiente de "brilho" ou "polimento"
-    pub fn new(k_amb: Vec3, k_dif: Vec3, k_esp: Vec3, e: f32) -> Self {
+    pub fn new(k_amb: Vec3, k_dif: Vec3, k_esp: Vec3, e: f64) -> Self {
         Self{ k_amb, k_dif, k_esp, e }
     }
 }

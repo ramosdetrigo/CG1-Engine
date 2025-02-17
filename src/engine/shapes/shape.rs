@@ -34,7 +34,7 @@ impl Shape {
     #[must_use]
     /// Retorna o ponto de interseção (de distância positiva) mais próximo entre um objeto e um raio `r` \
     /// (`-INFINITY` se não há interseção)
-    pub fn intersects(&self, r: &Ray) -> (f32, Vec3) {
+    pub fn intersects(&self, r: &Ray) -> (f64, Vec3) {
         match self {
             Self::Sphere(sphere) => sphere.intersects(r),
             Self::Plane(plane) => plane.intersects(r),

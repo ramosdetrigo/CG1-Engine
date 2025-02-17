@@ -2,12 +2,12 @@
 use std::ops::{Add, Mul, Div, Sub, Neg, AddAssign};
 use super::Matrix3;
 
-/// Vetor 3D x,y,z (f32)
+/// Vetor 3D x,y,z (f64)
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Vec3 {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32
+    pub x: f64,
+    pub y: f64,
+    pub z: f64
 }
 
 unsafe impl Send for Vec3 {}
@@ -18,17 +18,17 @@ impl Vec3 {
     #[inline(always)]
     #[must_use]
     /// Constructor
-    pub fn new(x: f32, y: f32, z: f32) -> Self { Self {x, y, z} }
+    pub fn new(x: f64, y: f64, z: f64) -> Self { Self {x, y, z} }
 
     #[inline]
     #[must_use]
     /// Constructor x=y=z
-    pub fn all(a: f32) -> Self { Self {x:a, y:a, z:a} }
+    pub fn all(a: f64) -> Self { Self {x:a, y:a, z:a} }
 
     #[inline]
     #[must_use]
     /// Produto escalar entre dois vetores
-    pub fn dot(&self, rhs: Self) -> f32 { self.x*rhs.x + self.y*rhs.y + self.z*rhs.z }
+    pub fn dot(&self, rhs: Self) -> f64 { self.x*rhs.x + self.y*rhs.y + self.z*rhs.z }
 
     #[inline]
     #[must_use]
@@ -49,17 +49,17 @@ impl Vec3 {
     #[inline]
     #[must_use]
     /// Retorna o tamanho do vetor ao quadrado
-    pub fn length_squared(&self) -> f32 { self.x*self.x + self.y*self.y + self.z*self.z }
+    pub fn length_squared(&self) -> f64 { self.x*self.x + self.y*self.y + self.z*self.z }
 
     #[inline]
     #[must_use]
     /// Retorna o tamanho do vetor
-    pub fn length(&self) -> f32 { (self.x*self.x + self.y*self.y + self.z*self.z).sqrt() }
+    pub fn length(&self) -> f64 { (self.x*self.x + self.y*self.y + self.z*self.z).sqrt() }
 
     #[inline]
     #[must_use]
     /// Retorna o vetor com cada elemento restrito entre um intervalo [min, max]
-    pub fn clamp(&self, min: f32, max: f32) -> Self {
+    pub fn clamp(&self, min: f64, max: f64) -> Self {
         Self {
             x: self.x.clamp(min, max),
             y: self.y.clamp(min, max),
@@ -147,10 +147,10 @@ impl Sub<Vec3> for Vec3 {
     }
 }
 
-impl Mul<f32> for Vec3 {
+impl Mul<f64> for Vec3 {
     type Output = Self;
     #[inline]
-    fn mul(self, rhs: f32) -> Self {
+    fn mul(self, rhs: f64) -> Self {
         Self {
             x: self.x * rhs,
             y: self.y * rhs,
@@ -159,7 +159,7 @@ impl Mul<f32> for Vec3 {
     }
 }
 
-impl Mul<Vec3> for f32 {
+impl Mul<Vec3> for f64 {
     type Output = Vec3;
     #[inline]
     fn mul(self, rhs: Vec3) -> Vec3 {
@@ -186,10 +186,10 @@ impl Mul<Vec3> for Vec3 {
     }
 }
 
-impl Div<f32> for Vec3 {
+impl Div<f64> for Vec3 {
     type Output = Self;
     #[inline]
-    fn div(self, rhs: f32) -> Self {
+    fn div(self, rhs: f64) -> Self {
         Self {
             x: self.x / rhs,
             y: self.y / rhs,

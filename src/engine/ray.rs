@@ -20,7 +20,7 @@ impl Ray {
     /// retorna o ponto `P` em `R(t)` (se `dr` for normalizado, `t` é a distância entre a origem e `R(t)`)
     #[inline]
     #[must_use]
-    pub fn at(&self, t: f32) -> Vec3 {
+    pub fn at(&self, t: f64) -> Vec3 {
         self.origin + t*self.dr
     }
 }   
