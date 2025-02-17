@@ -119,6 +119,10 @@ impl Vec4 {
              [self.w * self.x, self.w * self.y, self.w * self.z, self.w * self.w]]
         )
     }
+
+    pub fn into_vec3(&self) -> Vec3 {
+        Vec3 { x: self.x, y: self.y, z: self.z }
+    }
 }
 
 impl Add<Vec4> for Vec4 {

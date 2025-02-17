@@ -2,6 +2,7 @@
 use super::Material;
 use super::Shape;
 use super::super::Ray;
+use crate::utils::Matrix4;
 use crate::utils::Vec3;
 use std::collections::HashSet;
 use std::hash::Hash;
@@ -112,6 +113,14 @@ impl Mesh {
         ];
 
         Self::new(triangles, material)
+    }
+
+    pub fn apply_transform(&mut self, transformation_matrix: Matrix4) {
+        for triangle in &mut self.triangles {
+            triangle.v0 = triangle.v0.transform(transformation_matrix);
+            triangle.v1 = triangle.v1.transform(transformation_matrix);
+            triangle.v2 = triangle.v2.transform(transformation_matrix);
+        }
     }
 
     pub fn scale(&mut self, scaling_vector: Vec3) {

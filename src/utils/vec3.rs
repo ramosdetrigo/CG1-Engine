@@ -1,7 +1,7 @@
 // Classes Vec2, Vec3, Vec4
 use std::ops::{Add, Mul, Div, Sub, Neg, AddAssign, MulAssign};
 use std::hash::{Hash, Hasher};
-use super::Matrix3;
+use super::{Matrix3, Matrix4, Vec4};
 
 /// Vetor 3D x,y,z (f64)
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -121,12 +121,32 @@ impl Vec3 {
         )
     }
 
+    #[inline]
+    #[must_use]
     pub fn orth_projection_matrix(&self) -> Matrix3 {
         Matrix3::I - Matrix3::new(
             [[self.x*self.x, self.x*self.y, self.x*self.z],
              [self.y*self.x, self.y*self.y, self.y*self.z],
              [self.z*self.x, self.z*self.y, self.z*self.z]]
         )
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn transform(&self, transformation_matrix: Matrix4) -> Vec3 {
+        ( transformation_matrix * self.into_vec4() )
+            .into_vec3()
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn into_vec4(&self) -> Vec4 {
+        Vec4 {
+            x: self.x,
+            y: self.y,
+            z: self.z,
+            w: 1.0
+        }
     }
 }
 

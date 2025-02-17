@@ -3,7 +3,7 @@ mod vec3;
 mod matrix3;
 mod vec4;
 mod matrix4;
-mod transform;
+pub mod transform;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;

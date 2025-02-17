@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use crate::engine::{Camera, Scene, Light};
 use crate::utils::Vec3;
+use crate::utils::transform::{self, translation_matrix};
 use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Triangle, Mesh};
 
 pub fn simple() -> (Scene, Camera, u32, u32) {
@@ -45,10 +46,11 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
         10.0, 
     );
     
-    // vértices de um cubo 1x1x1
     let mut cube = Mesh::cube(mesh1_material);
-    cube.translate(Vec3::new(-0.5, 0.0, -2.0));
-    cube.scale(Vec3::new(1.0, 0.1, 1.0));
+    let trans_matrix = transform::translation_matrix(-0.5, 0.0, -2.0)
+        * transform::shear_matrix_y_angle(0.2)
+        * transform::scale_matrix(1.0, 0.1, 1.0);
+    cube.apply_transform(trans_matrix);
     
     // Definindo as propriedades das luzes
     let light1_pos = Vec3::new(0.0, 0.8, 0.0);
