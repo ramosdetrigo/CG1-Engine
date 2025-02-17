@@ -17,7 +17,7 @@ pub trait Shape : Sync {
 
     // fn apply_transform(&mut self, transform: Transform);
 
-    // fn translate(&mut self, translation_vector: Vec3);
+    fn translate(&mut self, translation_vector: Vec3);
 
     // fn scale(&mut self, scaling_vector: Vec3);
 

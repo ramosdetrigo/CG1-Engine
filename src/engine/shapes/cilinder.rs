@@ -27,6 +27,11 @@ impl Shape for Cilinder {
         &self.material
     }
 
+    fn translate(&mut self, translation_vector: Vec3) {
+        self.cb += translation_vector;
+        self.ct += translation_vector;
+    }
+
     #[must_use]
     fn intersects(&self, r: &Ray) -> (f64, Vec3) {
         let mut t = f64::INFINITY;

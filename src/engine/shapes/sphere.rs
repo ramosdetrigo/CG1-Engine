@@ -59,6 +59,10 @@ impl Shape for Sphere {
         }
     }
 
+    fn translate(&mut self, translation_vector: Vec3) {
+        self.center += translation_vector;
+    }
+
     #[inline]
     #[must_use]
     fn material(&self) -> &Material { &self.material }

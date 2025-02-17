@@ -46,28 +46,28 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     );
     
     // vértices de um cubo 1x1x1
-    let v1 = Arc::new(Vec3::new(-0.5, 0.0, -2.0));
-    let v2 = Arc::new(Vec3::new(0.5, 0.0, -2.0));
-    let v3 = Arc::new(Vec3::new(-0.5, 1.0, -2.0));
-    let v4 = Arc::new(Vec3::new(0.5, 1.0, -2.0));
-    let v5 = Arc::new(Vec3::new(-0.5, 0.0, -1.0));
-    let v6 = Arc::new(Vec3::new(0.5, 0.0, -1.0));
-    let v7 = Arc::new(Vec3::new(-0.5, 1.0, -1.0));
-    let v8 = Arc::new(Vec3::new(0.5, 1.0, -1.0));
+    let v1 = Vec3::new(-0.5, 0.0, -2.0);
+    let v2 = Vec3::new(0.5, 0.0, -2.0);
+    let v3 = Vec3::new(-0.5, 1.0, -2.0);
+    let v4 = Vec3::new(0.5, 1.0, -2.0);
+    let v5 = Vec3::new(-0.5, 0.0, -1.0);
+    let v6 = Vec3::new(0.5, 0.0, -1.0);
+    let v7 = Vec3::new(-0.5, 1.0, -1.0);
+    let v8 = Vec3::new(0.5, 1.0, -1.0);
 
     let triangles = vec![
         // back
-        Triangle::new(v3.clone(), v2.clone(), v1.clone()), Triangle::new(v2.clone(), v3.clone(), v4.clone()),
+        Triangle::new(v3, v2, v1), Triangle::new(v2, v3, v4),
         // left
-        Triangle::new(v7.clone(), v3.clone(), v1.clone()), Triangle::new(v7.clone(), v1.clone(), v5.clone()),
+        Triangle::new(v7, v3, v1), Triangle::new(v7, v1, v5),
         // right
-        Triangle::new(v4.clone(), v6.clone(), v2.clone()), Triangle::new(v4.clone(), v8.clone(), v6.clone()),
+        Triangle::new(v4, v6, v2), Triangle::new(v4, v8, v6),
         // front
-        Triangle::new(v5.clone(), v6.clone(), v7.clone()), Triangle::new(v8.clone(), v7.clone(), v6.clone()),
+        Triangle::new(v5, v6, v7), Triangle::new(v8, v7, v6),
         // top
-        Triangle::new(v7.clone(), v4.clone(), v3.clone()), Triangle::new(v7.clone(), v8.clone(), v4.clone()),
+        Triangle::new(v7, v4, v3), Triangle::new(v7, v8, v4),
         // bottom
-        Triangle::new(v1.clone(), v2.clone(), v6.clone()), Triangle::new(v1.clone(), v6.clone(), v5.clone()),
+        Triangle::new(v1, v2, v6), Triangle::new(v1, v6, v5),
     ];
     
     // Definindo as propriedades das luzes
@@ -88,8 +88,6 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     
     let ambient_light = Vec3::new(0.3, 0.3, 0.3); // Luz ambiente
     let scene = Scene::new(shapes, lights, ambient_light);
-
-    
     
     let camera: Camera = Camera::new(
         p0, // a posição do observador

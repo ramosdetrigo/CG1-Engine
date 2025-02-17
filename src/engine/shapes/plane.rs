@@ -41,5 +41,9 @@ impl Shape for Plane {
         (-top/bottom, self.normal * -self.normal.dot(r.dr).signum())
     }
 
+    fn translate(&mut self, translation_vector: Vec3) {
+        self.pc += translation_vector;
+    }
+
     fn material(&self) -> &Material { &self.material }
 }
