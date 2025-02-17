@@ -10,3 +10,5 @@ mod cilinder;
 pub use cilinder::Cilinder;
 mod cone;
 pub use cone::Cone;
+mod mesh;
+pub use mesh::{Mesh, Triangle};
