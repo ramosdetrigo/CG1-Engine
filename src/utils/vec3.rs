@@ -1,5 +1,6 @@
 // Classes Vec2, Vec3, Vec4
 use std::ops::{Add, Mul, Div, Sub, Neg, AddAssign};
+use std::hash::{Hash, Hasher};
 use super::Matrix3;
 
 /// Vetor 3D x,y,z (f64)
@@ -9,6 +10,17 @@ pub struct Vec3 {
     pub y: f64,
     pub z: f64
 }
+
+impl Eq for Vec3 {}
+
+impl Hash for Vec3 {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.x.to_bits().hash(state);
+        self.y.to_bits().hash(state);
+        self.z.to_bits().hash(state);
+    }
+}
+
 
 unsafe impl Send for Vec3 {}
 

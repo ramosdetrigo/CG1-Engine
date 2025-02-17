@@ -1,9 +1,12 @@
+use std::collections::HashSet;
+use std::sync::Arc;
+
 use crate::engine::{Camera, Scene, Light};
 use crate::utils::Vec3;
-use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Triangle};
+use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Triangle, Mesh};
 
 pub fn simple() -> (Scene, Camera, u32, u32) {
-    let p0 = Vec3::new(0.0, 0.4, 0.2); // posição do observador
+    let p0 = Vec3::new(0.75, 1.4, 0.2); // posição do observador
     
     let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
     
@@ -35,15 +38,37 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     );
 
     // Definindo as propriedades de cada objeto
-    let t1v1 = Vec3::new(-0.5, 0.0, -1.0);
-    let t1v2 = Vec3::new(0.5, 0.0, -1.0);
-    let t1v3 = Vec3::new(0.0, 0.866025404, -1.0);
-    let tri1_material = Material::new(
+    let mesh1_material = Material::new(
         Vec3::new(0.3, 0.7, 0.3),
         Vec3::new(0.3, 0.7, 0.3),
         Vec3::new(0.3, 0.7, 0.3),
         10.0, 
     );
+    
+    // vértices de um cubo 1x1x1
+    let v1 = Arc::new(Vec3::new(-0.5, 0.0, -2.0));
+    let v2 = Arc::new(Vec3::new(0.5, 0.0, -2.0));
+    let v3 = Arc::new(Vec3::new(-0.5, 1.0, -2.0));
+    let v4 = Arc::new(Vec3::new(0.5, 1.0, -2.0));
+    let v5 = Arc::new(Vec3::new(-0.5, 0.0, -1.0));
+    let v6 = Arc::new(Vec3::new(0.5, 0.0, -1.0));
+    let v7 = Arc::new(Vec3::new(-0.5, 1.0, -1.0));
+    let v8 = Arc::new(Vec3::new(0.5, 1.0, -1.0));
+
+    let triangles = vec![
+        // back
+        Triangle::new(v3.clone(), v2.clone(), v1.clone()), Triangle::new(v2.clone(), v3.clone(), v4.clone()),
+        // left
+        Triangle::new(v7.clone(), v3.clone(), v1.clone()), Triangle::new(v7.clone(), v1.clone(), v5.clone()),
+        // right
+        Triangle::new(v4.clone(), v6.clone(), v2.clone()), Triangle::new(v4.clone(), v8.clone(), v6.clone()),
+        // front
+        Triangle::new(v5.clone(), v6.clone(), v7.clone()), Triangle::new(v8.clone(), v7.clone(), v6.clone()),
+        // top
+        Triangle::new(v7.clone(), v4.clone(), v3.clone()), Triangle::new(v7.clone(), v8.clone(), v4.clone()),
+        // bottom
+        Triangle::new(v1.clone(), v2.clone(), v6.clone()), Triangle::new(v1.clone(), v6.clone(), v5.clone()),
+    ];
     
     // Definindo as propriedades das luzes
     let light1_pos = Vec3::new(0.0, 0.8, 0.0);
@@ -54,7 +79,7 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     let shapes = vec![
         Plane::new( plane1_pc, plane1_normal, plane1_material ),
         Plane::new( plane2_pc, plane2_normal, plane2_material ),
-        Triangle::new(t1v1, t1v2, t1v3, tri1_material),
+        Mesh::new(triangles, mesh1_material),
     ];
     
     let lights = vec![
@@ -63,6 +88,8 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     
     let ambient_light = Vec3::new(0.3, 0.3, 0.3); // Luz ambiente
     let scene = Scene::new(shapes, lights, ambient_light);
+
+    
     
     let camera: Camera = Camera::new(
         p0, // a posição do observador
@@ -73,4 +100,4 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     );
 
     (scene, camera, image_width, image_height)
-}
+}   
