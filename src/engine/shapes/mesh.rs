@@ -70,17 +70,22 @@ impl Triangle {
 pub struct Mesh {
     triangles: Vec<Triangle>, // List of triangles
     material: Material,       // Material of the mesh
+    // TODO: CENTER OF THE MESH
 }
 
 impl Mesh {
     #[inline]
     #[must_use]
     /// Creates a new mesh from a list of triangles and a material.
-    pub fn new(triangles: Vec<Triangle>, material: Material) -> Box<dyn Shape> {
-        Box::new(Self { triangles, material })
+    pub fn new(triangles: Vec<Triangle>, material: Material) -> Mesh {
+        Self { triangles, material }
     }
 
-    pub fn cube(material: Material) -> Box<dyn Shape> {
+    pub fn into_shape(self) -> Box<dyn Shape> {
+        Box::new(self)
+    }
+
+    pub fn cube(material: Material) -> Mesh {
         // vértices de um cubo 1x1x1
         let v1 = Vec3::new(0.0, 0.0, 0.0);
         let v2 = Vec3::new(1.0, 0.0, 0.0);
@@ -107,6 +112,22 @@ impl Mesh {
         ];
 
         Self::new(triangles, material)
+    }
+
+    pub fn scale(&mut self, scaling_vector: Vec3) {
+        for triangle in &mut self.triangles {
+            triangle.v0 *= scaling_vector;
+            triangle.v1 *= scaling_vector;
+            triangle.v2 *= scaling_vector;
+        }
+    }
+
+    pub fn translate(&mut self, translation_vector: Vec3) {
+        for triangle in &mut self.triangles {
+            triangle.v0 += translation_vector;
+            triangle.v1 += translation_vector;
+            triangle.v2 += translation_vector;
+        }
     }
 }
 

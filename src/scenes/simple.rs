@@ -6,7 +6,7 @@ use crate::utils::Vec3;
 use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Triangle, Mesh};
 
 pub fn simple() -> (Scene, Camera, u32, u32) {
-    let p0 = Vec3::new(0.75, 1.4, 0.2); // posição do observador
+    let p0 = Vec3::new(0.0, 0.4, 0.2); // posição do observador
     
     let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
     
@@ -46,29 +46,9 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     );
     
     // vértices de um cubo 1x1x1
-    let v1 = Vec3::new(-0.5, 0.0, -2.0);
-    let v2 = Vec3::new(0.5, 0.0, -2.0);
-    let v3 = Vec3::new(-0.5, 1.0, -2.0);
-    let v4 = Vec3::new(0.5, 1.0, -2.0);
-    let v5 = Vec3::new(-0.5, 0.0, -1.0);
-    let v6 = Vec3::new(0.5, 0.0, -1.0);
-    let v7 = Vec3::new(-0.5, 1.0, -1.0);
-    let v8 = Vec3::new(0.5, 1.0, -1.0);
-
-    let triangles = vec![
-        // back
-        Triangle::new(v3, v2, v1), Triangle::new(v2, v3, v4),
-        // left
-        Triangle::new(v7, v3, v1), Triangle::new(v7, v1, v5),
-        // right
-        Triangle::new(v4, v6, v2), Triangle::new(v4, v8, v6),
-        // front
-        Triangle::new(v5, v6, v7), Triangle::new(v8, v7, v6),
-        // top
-        Triangle::new(v7, v4, v3), Triangle::new(v7, v8, v4),
-        // bottom
-        Triangle::new(v1, v2, v6), Triangle::new(v1, v6, v5),
-    ];
+    let mut cube = Mesh::cube(mesh1_material);
+    cube.translate(Vec3::new(-0.5, 0.0, -2.0));
+    cube.scale(Vec3::new(1.0, 0.1, 1.0));
     
     // Definindo as propriedades das luzes
     let light1_pos = Vec3::new(0.0, 0.8, 0.0);
@@ -79,7 +59,7 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     let shapes = vec![
         Plane::new( plane1_pc, plane1_normal, plane1_material ),
         Plane::new( plane2_pc, plane2_normal, plane2_material ),
-        Mesh::new(triangles, mesh1_material),
+        cube.into_shape()
     ];
     
     let lights = vec![

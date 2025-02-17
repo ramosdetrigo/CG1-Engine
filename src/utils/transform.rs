@@ -1,6 +1,13 @@
 #![allow(unused_imports)]
 use super::{matrix4, Matrix3, Matrix4, Vec3, Vec4};
 
+pub trait Transformable {
+    fn apply_transform(&mut self, transform: Matrix4);
+    fn translate(&mut self, translation_vector: Vec3);
+    fn scale();
+    fn rotate(&mut self, rotation_vector: Vec3);
+}
+
 pub fn translate_matrix(tx: f64, ty: f64, tz: f64) -> Matrix4 {
     Matrix4::new([
         [1.0, 0.0, 0.0, tx],

@@ -15,11 +15,7 @@ pub trait Shape : Sync {
     /// (`-INFINITY` se não há interseção)
     fn intersects(&self, r: &Ray) -> (f64, Vec3);
 
-    // fn apply_transform(&mut self, transform: Transform);
-
     fn translate(&mut self, translation_vector: Vec3);
-
-    // fn scale(&mut self, scaling_vector: Vec3);
 
     // fn rotate(&mut self, rotation_vector: Vec3);
 }

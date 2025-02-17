@@ -1,5 +1,5 @@
 // Classes Vec2, Vec3, Vec4
-use std::ops::{Add, Mul, Div, Sub, Neg, AddAssign};
+use std::ops::{Add, Mul, Div, Sub, Neg, AddAssign, MulAssign};
 use std::hash::{Hash, Hasher};
 use super::Matrix3;
 
@@ -195,6 +195,18 @@ impl Mul<Vec3> for Vec3 {
             y: self.y * rhs.y,
             z: self.z * rhs.z
         }
+    }
+}
+
+impl MulAssign<Vec3> for Vec3 {
+    #[inline]
+    /// Não é cross product. \
+    /// Isso só multiplica cada elemento do vetor à esquerda pelo elemento do vetor da direita. \
+    /// (use `.dot` para produto escalar e `.cross` para produto vetorial.)
+    fn mul_assign(&mut self, rhs: Vec3) {
+        self.x *= rhs.x;
+        self.y *= rhs.y;
+        self.z *= rhs.z
     }
 }
 
