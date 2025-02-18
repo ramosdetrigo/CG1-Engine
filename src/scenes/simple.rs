@@ -92,7 +92,7 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     pyramid.apply_transform(&trans_matrix2);
 
     println!("starting obj importing...");
-    let input = BufReader::new(File::open("teapot400.obj").unwrap());
+    let input = BufReader::new(File::open("suzanne.obj").unwrap());
     let model: Obj = obj::load_obj(input).unwrap();
 
     // model.vertices;
@@ -114,10 +114,10 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
 
     println!("imported {:} triangles!", teapot_triangles.len());
     let mut teapot = Mesh::new(teapot_triangles, Material::WHITE);
-    let teapot_trans = transform::rotation_around_axis(Vec3::Y, PI*0.5); // girar ao redor do eixo Y
-    teapot.apply_transform(&teapot_trans);
-    teapot.scale(Vec3::all(0.15));
-    teapot.translate(Vec3::new(0.0, 0.0, -2.0));
+    // let teapot_trans = transform::rotation_around_axis(Vec3::Y, PI*0.5); // girar ao redor do eixo Y
+    // teapot.apply_transform(&teapot_trans);
+    teapot.scale(Vec3::all(0.5));
+    teapot.translate(Vec3::new(0.0, 0.5, -2.0));
     println!("finished scaling!!");
     
     // Definindo as propriedades das luzes
