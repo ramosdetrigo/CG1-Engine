@@ -1,12 +1,4 @@
-#![allow(unused_imports)]
-use super::{matrix4, Matrix3, Matrix4, Vec3, Vec4};
-
-// pub trait Transformable {
-//     fn apply_transform(&mut self, transform: Matrix4);
-//     fn translate(&mut self, translation_vector: Vec3);
-//     fn scale();
-//     fn rotate(&mut self, rotation_vector: Vec3);
-// }
+use super::{Matrix4, Vec3};
 
 pub fn translation_matrix(tx: f64, ty: f64, tz: f64) -> Matrix4 {
     Matrix4::new([
@@ -54,7 +46,7 @@ pub fn shear_matrix_z(sh_xy: f64, sh_yx: f64) -> Matrix4 {
 }
 
 pub fn shear_matrix_x_angle(angle: f64) -> Matrix4 {
-    let sh_yz = angle.tan(); // Shear factor based on the angle for y-axis
+    let sh_yz = angle.tan(); // Shear factor based on the angle for x-axis
 
     Matrix4::new([
         [1.0, sh_yz, 0.0, 0.0],
@@ -65,7 +57,7 @@ pub fn shear_matrix_x_angle(angle: f64) -> Matrix4 {
 }
 
 pub fn shear_matrix_y_angle(angle: f64) -> Matrix4 {
-    let sh_xz = angle.tan(); // Shear factor based on the angle for x-axis
+    let sh_xz = angle.tan(); // Shear factor based on the angle for y-axis
 
     Matrix4::new([
         [1.0, 0.0, 0.0, 0.0],
@@ -76,12 +68,42 @@ pub fn shear_matrix_y_angle(angle: f64) -> Matrix4 {
 }
 
 pub fn shear_matrix_z_angle(angle: f64) -> Matrix4 {
-    let sh_xy = angle.tan(); // Shear factor based on the angle for x-axis
+    let sh_xy = angle.tan(); // Shear factor based on the angle for z-axis
 
     Matrix4::new([
         [1.0, 0.0, 0.0, 0.0],
         [0.0, 1.0, 0.0, 0.0],
         [sh_xy, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ])
+}
+
+pub fn rotation_around_axis(axis: Vec3, angle: f64) -> Matrix4 {
+    let axis = axis.normalize();
+    let (x, y, z) = (axis.x, axis.y, axis.z);
+    let cos_theta = angle.cos();
+    let sin_theta = angle.sin();
+    let one_minus_cos = 1.0 - cos_theta;
+
+    Matrix4::new([
+        [
+            cos_theta + x * x * one_minus_cos,
+            x * y * one_minus_cos - z * sin_theta,
+            x * z * one_minus_cos + y * sin_theta,
+            0.0,
+        ],
+        [
+            y * x * one_minus_cos + z * sin_theta,
+            cos_theta + y * y * one_minus_cos,
+            y * z * one_minus_cos - x * sin_theta,
+            0.0,
+        ],
+        [
+            z * x * one_minus_cos - y * sin_theta,
+            z * y * one_minus_cos + x * sin_theta,
+            cos_theta + z * z * one_minus_cos,
+            0.0,
+        ],
         [0.0, 0.0, 0.0, 1.0],
     ])
 }

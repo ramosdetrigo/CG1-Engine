@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::utils::Vec3;
 
 #[derive(Clone, Copy, PartialEq)]
@@ -14,6 +15,13 @@ pub struct Material {
 }
 
 impl Material {
+    pub const WHITE: Material = Material {
+        k_amb: Vec3::all(0.8),
+        k_dif: Vec3::all(0.8),
+        k_esp: Vec3::all(0.8),
+        e: 10.0,
+    };
+
     #[inline]
     #[must_use]
     /// Cria um novo material de um objeto. \

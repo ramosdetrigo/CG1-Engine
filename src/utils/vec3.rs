@@ -26,16 +26,19 @@ unsafe impl Send for Vec3 {}
 
 impl Vec3 {
     pub const NULL: Vec3 = Self { x: 0.0, y: 0.0, z: 0.0 };
+    pub const X: Vec3 = Self { x: 1.0, y: 0.0, z: 0.0 };
+    pub const Y: Vec3 = Self { x: 0.0, y: 1.0, z: 0.0 };
+    pub const Z: Vec3 = Self { x: 0.0, y: 0.0, z: 1.0 };
 
     #[inline(always)]
     #[must_use]
     /// Constructor
-    pub fn new(x: f64, y: f64, z: f64) -> Self { Self {x, y, z} }
+    pub const fn new(x: f64, y: f64, z: f64) -> Self { Self {x, y, z} }
 
     #[inline]
     #[must_use]
     /// Constructor x=y=z
-    pub fn all(a: f64) -> Self { Self {x:a, y:a, z:a} }
+    pub const fn all(a: f64) -> Self { Self {x:a, y:a, z:a} }
 
     #[inline]
     #[must_use]
