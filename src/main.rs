@@ -8,7 +8,7 @@ use sdl2::keyboard::Keycode;
 use std::time::{Duration, Instant};
 
 fn main() {
-    let (mut scene, mut camera, window_width, window_height) = scenes::beach();
+    let (mut scene, mut camera, window_width, window_height) = scenes::simple();
     let scale = 1.0;
 
     // Inicializando SDL
