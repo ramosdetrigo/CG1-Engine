@@ -12,4 +12,4 @@ pub use cilinder::Cilinder;
 mod cone;
 pub use cone::Cone;
 mod mesh;
-pub use mesh::{Triangle, Mesh};
+pub use mesh::Mesh;

@@ -8,14 +8,14 @@ use obj::{load_obj, Obj, Vertex};
 use crate::engine::{Camera, Scene, Light};
 use crate::utils::Vec3;
 use crate::utils::transform::{self, translation_matrix};
-use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Triangle, Mesh};
+use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Mesh};
 
 pub fn simple() -> (Scene, Camera, u32, u32) {
     let p0 = Vec3::new(0.0, 0.4, 0.2); // posição do observador
     
     let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
     
-    let image_width: u32 = 1920; // Resolução da imagem (número de colunas e linhas na grade)
+    let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
     let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
     
     let viewport_width: f64 = 0.032; // Tamanho da janela (em metros)
@@ -58,29 +58,31 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     );
     
     let mut cube = Mesh::cube(mesh1_material);
-    let trans_matrix1 = transform::translation_matrix(-1.5, 0.0, -2.0) // mover ele pro lugar q eu quero
-        * transform::translation_matrix(0.5, 0.5, 0.5) // desfazer a translação
+    let trans_matrix1 = transform::translation_matrix(-0.5, 0.0, -2.0) // mover ele pro lugar q eu quero
+        // * transform::translation_matrix(0.5, 0.5, 0.5) // desfazer a translação
         // * transform::rotation_around_axis(Vec3::X, PI*0.12) // girar ao redor do eixo X
-        * transform::rotation_around_axis(Vec3::Y, -PI*0.125) // girar ao redor do eixo Y
-        * transform::translation_matrix(-0.5, -0.5, -0.5) // centralizar o cubo no 0,0
-        // * transform::shear_matrix_y_angle(0.7) // shear é mó paia
-        // * transform::scale_matrix(1.0, 0.1, 1.0); // amassa o cubo (scale no eixo Y)
+        // * transform::rotation_around_axis(Vec3::Y, -PI*0.125) // girar ao redor do eixo Y
+        // * transform::translation_matrix(-0.5, -0.5, -0.5) // centralizar o cubo no 0,0
+        * transform::shear_matrix_y_angle(0.2) // shear é mó paia
+        * transform::scale_matrix(1.0, 0.1, 1.0) // amassa o cubo (scale no eixo Y)
         ;
     cube.apply_transform(&trans_matrix1);
 
-    let v1 = Vec3::new(0.0, 0.0, 0.0);
-    let v2 = Vec3::new(1.0, 0.0, 0.0);
-    let v3 = Vec3::new(1.0, 0.0, 1.0);
-    let v4 = Vec3::new(0.0, 0.0, 1.0);
-    let v5 = Vec3::new(0.5, 3.0_f64.sqrt() / 2.0, 0.5);
-    let triangles = vec![
-        Triangle::new(v2, v1, v3), Triangle::new(v3, v1, v4), // baixo
-        Triangle::new(v3, v5, v4), // FRENTE
-        Triangle::new(v2, v1, v5), // ATRÁS
-        Triangle::new(v1, v4, v5), // ESQUERDA
-        Triangle::new(v3, v2, v5), // DIREITA
+    let pyramid_vertices = vec![
+        Vec3::new(0.0, 0.0, 0.0), // 0
+        Vec3::new(1.0, 0.0, 0.0), // 1
+        Vec3::new(1.0, 0.0, 1.0), // 2
+        Vec3::new(0.0, 0.0, 1.0), // 3
+        Vec3::new(0.5, 3.0_f64.sqrt() / 2.0, 0.5), // 4
     ];
-    let mut pyramid = Mesh::new(triangles, mesh2_material);
+    let pyramid_triangles = vec![
+        [1, 0, 2], [2, 0, 3], // baixo
+        [2, 4, 3], // FRENTE
+        [1, 0, 4], // ATRÁS
+        [0, 3, 4], // ESQUERDA
+        [2, 1, 4], // DIREITA
+    ];
+    let mut pyramid = Mesh::new(pyramid_vertices, pyramid_triangles, mesh2_material);
     let trans_matrix2 = transform::translation_matrix(0.5, 0.0, -2.0) // mover ele pro lugar q eu quero
         * transform::translation_matrix(0.5, 0.5, 0.5) // desfazer a translação
         // * transform::rotation_around_axis(Vec3::X, PI*0.12) // girar ao redor do eixo X
@@ -92,32 +94,29 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     pyramid.apply_transform(&trans_matrix2);
 
     println!("starting obj importing...");
-    let input = BufReader::new(File::open("suzanne.obj").unwrap());
+    let input = BufReader::new(File::open("teapot400.obj").unwrap());
     let model: Obj = obj::load_obj(input).unwrap();
 
     // model.vertices;
     println!("converting obj...");
-    let teapot_triangles: Vec<Triangle> = model.indices
+    
+    let teapot_vertices: Vec<Vec3> = model.vertices
+        .into_iter()
+        .map(|vertex| Vec3::new(vertex.position[0] as f64, vertex.position[1] as f64, vertex.position[2] as f64))
+        .collect();
+
+    let teapot_triangles: Vec<[usize; 3]> = model.indices
         .chunks(3)
-        .map(|face| {
-            let v1 = model.vertices[face[0] as usize];
-            let v2 = model.vertices[face[1] as usize];
-            let v3 = model.vertices[face[2] as usize];
-            Triangle::new(
-                Vec3::new(v1.position[0] as f64, v1.position[1] as f64, v1.position[2] as f64),
-                Vec3::new(v2.position[0] as f64, v2.position[1] as f64, v2.position[2] as f64),
-                Vec3::new(v3.position[0] as f64, v3.position[1] as f64, v3.position[2] as f64),
-            )
-        })
+        .map(|face| [face[0] as usize, face[1] as usize, face[2] as usize])
         .collect();
 
 
     println!("imported {:} triangles!", teapot_triangles.len());
-    let mut teapot = Mesh::new(teapot_triangles, Material::WHITE);
-    // let teapot_trans = transform::rotation_around_axis(Vec3::Y, PI*0.5); // girar ao redor do eixo Y
-    // teapot.apply_transform(&teapot_trans);
-    teapot.scale(Vec3::all(0.5));
-    teapot.translate(Vec3::new(0.0, 0.5, -2.0));
+    let mut teapot = Mesh::new(teapot_vertices, teapot_triangles, Material::WHITE);
+    let teapot_trans = transform::rotation_around_axis(Vec3::Y, PI*0.5); // girar ao redor do eixo Y
+    teapot.apply_transform(&teapot_trans);
+    teapot.scale(Vec3::all(0.25));
+    teapot.translate(Vec3::new(0.0, 0.0, -2.0));
     println!("finished scaling!!");
     
     // Definindo as propriedades das luzes
