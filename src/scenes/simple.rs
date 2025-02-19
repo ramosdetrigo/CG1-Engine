@@ -94,7 +94,7 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     pyramid.apply_transform(&trans_matrix2);
 
     println!("starting obj importing...");
-    let input = BufReader::new(File::open("teapot400.obj").unwrap());
+    let input = BufReader::new(File::open("objects/teapot400.obj").unwrap());
     let model: Obj = obj::load_obj(input).unwrap();
 
     // model.vertices;
