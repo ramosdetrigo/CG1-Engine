@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use super::shapes::Shape;
-use super::Light;
+use super::{Light, Ray};
 use crate::utils::Vec3;
 
 // #[derive(Clone, PartialEq)]
@@ -36,5 +36,22 @@ impl Scene {
     /// Adiciona uma luz na cena
     pub fn add_light(&mut self, l: Light) {
         self.lights.push(l);
+    }
+
+    pub fn get_closest_positive_intersection(&self, ray: &Ray) -> (Option<&Box<dyn Shape>>, f64, Vec3) {
+        let mut closest_shape = None;
+        let mut t = f64::INFINITY;
+        let mut n = Vec3::NULL;
+        for shape in &self.shapes {
+            let (t_candidate, n_candidate) = shape.get_intersection(&ray);
+            // se o objeto colide com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
+            if t_candidate > 0.0 && t_candidate < t {
+                closest_shape = Some(shape);
+                t = t_candidate;
+                n = n_candidate;
+            }
+        }
+        if t == f64::INFINITY { (closest_shape, -t, n) }
+        else { (closest_shape, t, n) }
     }
 }

@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use super::{Ray, Scene};
-use super::shapes::{Shape, Material};
+use super::shapes::Material;
 use crate::utils::Vec3;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
@@ -81,18 +81,7 @@ impl Camera {
                     ray.dr = dr;
 
                     // Obtém o objeto mais próximo a colidir com o raio
-                    let mut shape: Option<&Box<dyn Shape>> = None;
-                    let mut t = f64::INFINITY;
-                    let mut n = Vec3::NULL;
-                    for s in &scene.shapes {
-                        let (t_candidate, n_candidate) = s.intersects(&ray);
-                        // se o objeto colide com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
-                        if t_candidate > 0.0 && t_candidate < t {
-                            shape = Some(s);
-                            t = t_candidate;
-                            n = n_candidate;
-                        }
-                    }
+                    let (shape, t, n) = scene.get_closest_positive_intersection(&ray);
                     // se o raio não colide com nenhum objeto, desenha a cor do background e passa pro próximo pixel
                     if shape.is_none() {
                         ppm_slice[rgb_counter] = bg_color.x as u8;
@@ -115,7 +104,7 @@ impl Camera {
                             // Tem alguns problemas de iluminação com detecção de colisão consigo mesmo. Não sei ajeitar ainda.
                             if ptr::eq(s, shape) { continue; }
 
-                            let tl = s.intersects(&light_ray).0;
+                            let tl = s.get_intersection(&light_ray).0;
                             // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0 < tl < 1.0))
                             // 0.0001 previne problemas com floating point precision
                             if 0.0001 < tl && tl < 1.0 { continue 'lights; }

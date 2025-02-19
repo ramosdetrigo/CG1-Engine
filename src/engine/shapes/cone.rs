@@ -28,7 +28,7 @@ impl Shape for Cone {
     }
 
     #[must_use]
-    fn intersects(&self, r: &Ray) -> (f64, Vec3) {
+    fn get_intersection(&self, r: &Ray) -> (f64, Vec3) {
         let mut t = f64::INFINITY;
         let mut n = Vec3::NULL;
 
