@@ -2,9 +2,11 @@
 use super::{Ray, Scene};
 use super::shapes::Material;
 use crate::utils::Vec3;
-use sdl2::rect::Rect;
-use sdl2::render::Canvas;
-use sdl2::video::Window;
+// use sdl2::rect::Rect;
+// use sdl2::render::Canvas;
+// use sdl2::surface::Surface;
+use sdl2::video::WindowSurfaceRef;
+// use sdl2::video::Window;
 use std::{ptr, thread};
 use std::sync::Arc;
 
@@ -31,7 +33,7 @@ impl Camera {
             bg_color: bg_color.clamp(0.0, 1.0) * 255.0,
 
             
-            draw_buffer: vec![0; (n_cols * n_rows * 3) as usize],
+            draw_buffer: vec![0; (n_cols * n_rows * 4) as usize],
 
             viewport: Viewport::new(
                 Vec3::new(pos.x, pos.y, pos.z-viewport_distance), // posição da janela em relação ao observador (0, 0, -d)
@@ -42,9 +44,9 @@ impl Camera {
     }
 
     /// Desenha uma cena em um canvas com base nas especificações da câmera
-    pub fn draw_scene_to_canvas(&mut self, scene: &Scene, canvas: &mut Canvas<Window>) {
+    pub fn draw_scene_to_canvas(&mut self, scene: &Scene, mut surface: WindowSurfaceRef) {
         // Número de bytes no canvas (número de pixels * 3: RGB24)
-        let num_bytes = self.viewport.cols * self.viewport.rows * 3;
+        let num_bytes = self.viewport.cols * self.viewport.rows * 4;
         // Número de threads disponíveis * 3
         // (Nos meus testes usar o triplo de threads disponíveis tende a aumentar a eficiência por algum motivo)
         let num_threads = thread::available_parallelism().unwrap().get() as u32 * 3; 
@@ -67,7 +69,7 @@ impl Camera {
             let bg_color = self.bg_color;
 
             // Número de pixels que a thread vai desenhar
-            let pixel_count = ppm_slice.len() / 3;
+            let pixel_count = ppm_slice.len() / 4;
             
             s.spawn(move || {
                 let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 na direção d
@@ -84,10 +86,11 @@ impl Camera {
                     let (shape, t, n) = scene.get_closest_positive_intersection(&ray);
                     // se o raio não colide com nenhum objeto, desenha a cor do background e passa pro próximo pixel
                     if shape.is_none() {
-                        ppm_slice[rgb_counter] = bg_color.x as u8;
+                        ppm_slice[rgb_counter] = bg_color.z as u8;
                         ppm_slice[rgb_counter + 1] = bg_color.y as u8;
-                        ppm_slice[rgb_counter + 2] = bg_color.z as u8;
-                        rgb_counter += 3;
+                        ppm_slice[rgb_counter + 2] = bg_color.x as u8;
+                        ppm_slice[rgb_counter + 3] = 255;
+                        rgb_counter += 4;
                         continue;
                     }
                     let shape = shape.unwrap();
@@ -126,10 +129,12 @@ impl Camera {
                     ieye = ieye.clamp(0.0, 1.0) * 255.0;
                     
                     // salva o pixel no buffer da câmera
-                    ppm_slice[rgb_counter] = ieye.x as u8;
+                    ppm_slice[rgb_counter] = ieye.z as u8;
                     ppm_slice[rgb_counter + 1] = ieye.y as u8;
-                    ppm_slice[rgb_counter + 2] = ieye.z as u8;
-                    rgb_counter += 3;
+                    ppm_slice[rgb_counter + 2] = ieye.x as u8;
+                    ppm_slice[rgb_counter + 3] = 255;
+                    rgb_counter += 4;
+                    
                 }
             });
 
@@ -137,15 +142,10 @@ impl Camera {
         }
         }); // FIM_RENDER_MULTITHREAD
 
-        let texture_creator = canvas.texture_creator();
-        let mut texture = texture_creator.create_texture(
-            sdl2::pixels::PixelFormatEnum::RGB24,
-            sdl2::render::TextureAccess::Static,
-            viewport.cols, viewport.rows
-        ).unwrap();
-        texture.update(None, &self.draw_buffer, (viewport.cols * 3) as usize).unwrap();
-        canvas.copy(&texture, None, Some(Rect::new(0, 0, viewport.cols, viewport.rows))).unwrap();
-        canvas.present();
+        surface.with_lock_mut(|pixels| {
+            pixels.copy_from_slice(&self.draw_buffer);
+        });
+        surface.finish().unwrap();
     }
 
     pub fn set_position(&mut self, pos: Vec3) {
