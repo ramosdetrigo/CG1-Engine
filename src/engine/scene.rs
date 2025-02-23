@@ -38,20 +38,13 @@ impl Scene {
         self.lights.push(l);
     }
 
-    pub fn get_closest_positive_intersection(&self, ray: &Ray) -> (Option<&Box<dyn Shape>>, f64, Vec3) {
-        let mut closest_shape = None;
-        let mut t = f64::INFINITY;
-        let mut n = Vec3::NULL;
-        for shape in &self.shapes {
-            let (t_candidate, n_candidate) = shape.get_intersection(&ray);
-            // se o objeto colide com o raio, não está atrás do observador, e tá mais próximo que todo objeto testado até agr
-            if t_candidate > 0.0 && t_candidate < t {
-                closest_shape = Some(shape);
-                t = t_candidate;
-                n = n_candidate;
-            }
-        }
-        if t == f64::INFINITY { (closest_shape, -t, n) }
-        else { (closest_shape, t, n) }
+    /// Retorna a interseção com um raio de menor t ou None se não há interseção
+    pub fn get_intersection(&self, ray: &Ray) -> Option<(&Box<dyn Shape>, f64, Vec3)> {
+        self.shapes.iter()
+            .filter_map(|shape| { // filtra colisões com t > 0.0
+                let (t, n) = shape.get_intersection(ray);
+                (t >= 0.0).then_some((shape, t, n))
+            })
+            .min_by(|(_, t1, _), (_, t2, _)| t1.partial_cmp(t2).unwrap() ) // pega a colisão com menor t
     }
 }

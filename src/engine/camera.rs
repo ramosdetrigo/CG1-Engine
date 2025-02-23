@@ -83,9 +83,10 @@ impl Camera {
                     ray.dr = dr;
 
                     // Obtém o objeto mais próximo a colidir com o raio
-                    let (shape, t, n) = scene.get_closest_positive_intersection(&ray);
+                    let intersection = scene.get_intersection(&ray);
+
                     // se o raio não colide com nenhum objeto, desenha a cor do background e passa pro próximo pixel
-                    if shape.is_none() {
+                    if intersection.is_none() {
                         ppm_slice[rgb_counter] = bg_color.z as u8;
                         ppm_slice[rgb_counter + 1] = bg_color.y as u8;
                         ppm_slice[rgb_counter + 2] = bg_color.x as u8;
@@ -93,7 +94,8 @@ impl Camera {
                         rgb_counter += 4;
                         continue;
                     }
-                    let shape = shape.unwrap();
+                    
+                    let (shape, t, n) = intersection.unwrap();
                     mat = shape.material(); // material do objeto
                     
                     // Calcula a cor do pixel de acordo com a iluminação

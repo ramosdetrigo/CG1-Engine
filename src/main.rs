@@ -86,16 +86,18 @@ fn main() {
         camera.draw_scene_to_canvas(&scene, surface);
         
         // imgui
-        window.gl_make_current(&gl_context).unwrap();
-        platform.prepare_frame(&mut imgui, &window, &event_pump);
-        let ui = imgui.new_frame();
-        /* create imgui UI here */
-        // ui.show_demo_window(&mut true);
-        ui.show_about_window(&mut false);
-        /* render */
-        let draw_data = imgui.render();
-        renderer.render(draw_data).unwrap();
-        window.gl_swap_window();
+        if false {
+            window.gl_make_current(&gl_context).unwrap();
+            platform.prepare_frame(&mut imgui, &window, &event_pump);
+            let ui = imgui.new_frame();
+            /* create imgui UI here */
+            // ui.show_demo_window(&mut true);
+            ui.show_about_window(&mut false);
+            /* render */
+            let draw_data = imgui.render();
+            renderer.render(draw_data).unwrap();
+            window.gl_swap_window();
+        }
 
 
         // Contador de FPS
