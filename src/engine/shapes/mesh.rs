@@ -173,31 +173,20 @@ impl Shape for Mesh {
     /// Finds the closest intersection between the mesh and a ray.
     /// Returns `(t, normal)` where `t` is the distance along the ray, and `normal` is the surface normal.
     /// If no intersection is found, returns `(f64::NEG_INFINITY, Vec3::NULL)`.
-    fn get_intersection(&self, r: &Ray) -> (f64, Vec3) {
+    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3)> {
         // Check if the ray intersects with the bounding sphere
         if !self.intersects_bounding_box(r) {
-            return (f64::NEG_INFINITY, Vec3::NULL);
+            return None;
         }
 
-        let mut closest_t = f64::INFINITY;
-        let mut closest_normal = Vec3::NULL;
-
-        // Check intersections with all triangles in the mesh
-        for triangle in &self.triangles {
-            let normal = self.triangle_normal(triangle);
-            if normal.dot(r.dr) > 0.0 { continue }
-            let t = self.triangle_intersects(triangle, r);
-            if t > 1e-8 && t < closest_t {
-                closest_t = t;
-                closest_normal = normal;
-            }
-        }
-
-        if closest_t != f64::INFINITY {
-            (closest_t, closest_normal)
-        } else {
-            (f64::NEG_INFINITY, Vec3::NULL)
-        }
+        self.triangles.iter()
+            .filter_map(|triangle| {
+                let normal = self.triangle_normal(triangle);
+                if normal.dot(r.dr) >= 0.0 { return None }
+                let t = self.triangle_intersects(triangle, r);
+                (t > 1e-8).then_some((t, normal))
+            })
+            .min_by(|(t1,_), (t2,_)| t1.partial_cmp(t2).unwrap())
     }
 
     fn translate(&mut self, translation_vector: Vec3) {

@@ -28,9 +28,9 @@ impl Shape for Cone {
     }
 
     #[must_use]
-    fn get_intersection(&self, r: &Ray) -> (f64, Vec3) {
-        let mut t = f64::INFINITY;
-        let mut n = Vec3::NULL;
+    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3)> {
+        let mut closest_intersection: Option<(f64, Vec3)> = None;
+        let mut min_t = f64::INFINITY;
 
         // Check superfície cônica
         let q = self.dc.projection_matrix();
@@ -53,36 +53,26 @@ impl Shape for Cone {
         if delta >= 0.0 {
             let t1 = (-b + delta.sqrt()) / (2.0*a);
             let t2 = (-b - delta.sqrt()) / (2.0*a);
+            
+            // Encontra o menor t com uma interseção válida na superfíce cônica
+            closest_intersection = (if t1 > t2 { [t2, t1] } else { [t1, t2] })
+                .into_iter()
+                .find_map(|t| {
+                    let cbp = r.at(t) - self.cb;
+                    let cbe = q*cbp;
 
-            if t1 > 0.0 && t1 < t {
-                let cbp = r.at(t1) - self.cb;
-                let cbe = q*cbp;
-
-                if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
-                    t = t1;
-
-                    let p = r.at(t);
-                    let pv = (self.v-p).normalize();
-                    let m_pv = pv.orth_projection_matrix();
-
-                    n = (m_pv*self.dc).normalize();
-                }
-            }
-
-            if t2 > 0.0 && t2 < t {
-                let cbp = r.at(t2) - self.cb;
-                let cbe = q*cbp;
-
-                if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
-                    t = t2;
-
-                    let p = r.at(t);
-                    let pv = (self.v-p).normalize();
-                    let m_pv = Matrix3::I - pv.projection_matrix();
-
-                    n = (m_pv*self.dc).normalize();
-                }
-            }
+                    if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
+                        min_t = t;
+    
+                        let p = r.at(t);
+                        let pv = (self.v-p).normalize();
+                        let m_pv = pv.orth_projection_matrix();
+    
+                        Some((t, (m_pv*self.dc).normalize()))
+                    } else {
+                        None
+                    }
+                });
         }
 
         // Check plano da base do cone
@@ -92,16 +82,14 @@ impl Shape for Cone {
                 let t_base = -(r.origin - self.cb).dot(-self.dc) / bottom;
                 
                 if t_base >= 0.0
-                && t_base < t
+                && t_base < min_t
                 && (r.at(t_base) - self.cb).length() <= self.r {
-                    t = t_base;
-                    n = self.dc;
+                    closest_intersection = Some( (t_base, self.dc) )
                 }
             }
         }
 
-        if t == f64::INFINITY { t = -t; }
-        (t, n * -n.dot(r.dr).signum())
+        closest_intersection.map(|(t, n)| (t, n * -n.dot(r.dr).signum()) )
     }
 
     fn material(&self) -> &Material { &self.material }

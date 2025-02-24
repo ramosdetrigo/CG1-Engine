@@ -24,7 +24,7 @@ fn glow_context(window: &Window) -> glow::Context {
 }
 
 fn main() {
-    let (mut scene, mut camera, window_width, window_height) = scenes::sphere_test();
+    let (mut scene, mut camera, window_width, window_height) = scenes::cone_test();
     let scale = 1.0; // TODO: fix scaling
 
     // Inicializando SDL

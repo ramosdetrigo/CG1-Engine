@@ -109,10 +109,11 @@ impl Camera {
                             // Tem alguns problemas de iluminação com detecção de colisão consigo mesmo. Não sei ajeitar ainda.
                             if ptr::eq(s, shape) { continue; }
 
-                            let tl = s.get_intersection(&light_ray).0;
                             // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0 < tl < 1.0))
                             // 0.0001 previne problemas com floating point precision
-                            if 0.0001 < tl && tl < 1.0 { continue 'lights; }
+                            if let Some((tl, _)) = s.get_intersection(&light_ray) {
+                                if 0.0001 < tl && tl < 1.0 { continue 'lights; }
+                            }
                         }
                         
                         // Se o objeto não estiver na sombra...

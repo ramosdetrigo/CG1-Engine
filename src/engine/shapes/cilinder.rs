@@ -33,9 +33,9 @@ impl Shape for Cilinder {
     }
 
     #[must_use]
-    fn get_intersection(&self, r: &Ray) -> (f64, Vec3) {
-        let mut t = f64::INFINITY;
-        let mut n = Vec3::NULL;
+    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3)> {
+        let mut closest_intersection: Option<(f64, Vec3)> = None;
+        let mut min_t = f64::INFINITY;
 
         // Check superfície cilíndrica
         let q = self.dc.projection_matrix();
@@ -53,41 +53,36 @@ impl Shape for Cilinder {
         if delta >= 0.0 {
             let t1 = (-b + delta.sqrt()) / (2.0*a);
             let t2 = (-b - delta.sqrt()) / (2.0*a);
-
-            if t1 > 0.0 && t1 < t {
-                let cbp = r.at(t1) - self.cb;
-                let cbe = q*cbp;
-
-                if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
-                    t = t1;
-                    n = (m*cbp).normalize();
-                }
-            }
-
-            if t2 > 0.0 && t2 < t {
-                let cbp = r.at(t2) - self.cb;
-                let cbe = q*cbp;
-
-                if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
-                    t = t2;
-                    n = (m*cbp).normalize();
-                }
-            }
+            
+            // Encontra o menor t com uma interseção válida na superfíce cilíndrica
+            closest_intersection = (if t1 > t2 { [t2, t1] } else { [t1, t2] })
+                .into_iter()
+                .find_map(|t| {
+                    let cbp = r.at(t) - self.cb;
+                    let cbe = q*cbp;
+                    // retorna só se a interseção está na região válida da superfície
+                    if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
+                        min_t = t;
+                        Some((t, (m*cbp).normalize()))
+                    } else {
+                        None
+                    }
+                });
         }
         
         // Check plano do topo do cilindro
         if self.has_tampa {
             let bottom = r.dr.dot(self.dc);
             if bottom != 0.0 {
-            let t_tampa = -(r.origin - self.ct).dot(self.dc) / bottom;
-            
-            if t_tampa >= 0.0
-            && t_tampa < t
-            && (r.at(t_tampa) - self.ct).length() <= self.r {
-                t = t_tampa;
-                n = self.dc;
+                let t_tampa = -(r.origin - self.ct).dot(self.dc) / bottom;
+                
+                if t_tampa >= 0.0
+                && t_tampa < min_t
+                && (r.at(t_tampa) - self.ct).length() <= self.r {
+                    min_t = t_tampa;
+                    closest_intersection = Some( (t_tampa, self.dc) )
+                }
             }
-        }
         }
 
         // Check plano da base do cilindro
@@ -97,15 +92,13 @@ impl Shape for Cilinder {
                 let t_base = -(r.origin - self.cb).dot(-self.dc) / bottom;
                 
                 if t_base >= 0.0
-                && t_base < t
+                && t_base < min_t
                 && (r.at(t_base) - self.cb).length() <= self.r {
-                    t = t_base;
-                    n = self.dc;
+                    closest_intersection = Some( (t_base, self.dc) )
                 }
             }
         }
-        
-        if t == f64::INFINITY { t = -t }
-        (t, n * -n.dot(r.dr).signum())
+
+        closest_intersection.map(|(t, n)| (t, n * -n.dot(r.dr).signum()) )
     }
 }

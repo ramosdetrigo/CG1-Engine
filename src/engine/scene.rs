@@ -41,10 +41,7 @@ impl Scene {
     /// Retorna a interseção com um raio de menor t ou None se não há interseção
     pub fn get_intersection(&self, ray: &Ray) -> Option<(&Box<dyn Shape>, f64, Vec3)> {
         self.shapes.iter()
-            .filter_map(|shape| { // filtra colisões com t > 0.0
-                let (t, n) = shape.get_intersection(ray);
-                (t >= 0.0).then_some((shape, t, n))
-            })
+            .filter_map(|shape| shape.get_intersection(ray).map(|(t, n)| (shape, t, n)) )
             .min_by(|(_, t1, _), (_, t2, _)| t1.partial_cmp(t2).unwrap() ) // pega a colisão com menor t
     }
 }
