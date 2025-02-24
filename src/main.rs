@@ -39,9 +39,9 @@ fn main() {
         .unwrap();
     
     // IMGUI
-    let gl_context = window.gl_create_context().unwrap();
-    let gl_context2 = window.gl_create_context().unwrap();
-    window.gl_make_current(&gl_context).unwrap();
+    let gl_context_engine = window.gl_create_context().unwrap();
+    let gl_context_gui = window.gl_create_context().unwrap();
+    window.gl_make_current(&gl_context_gui).unwrap();
     // window.subsystem().gl_set_swap_interval(1).unwrap();
 
     let gl = glow_context(&window);
@@ -81,13 +81,13 @@ fn main() {
         }
 
         // Seção de draw
-        window.gl_make_current(&gl_context2).unwrap();
+        window.gl_make_current(&gl_context_engine).unwrap();
         let surface = window.surface(&event_pump).unwrap();
         camera.draw_scene_to_canvas(&scene, surface);
         
         // imgui
         if false {
-            window.gl_make_current(&gl_context).unwrap();
+            window.gl_make_current(&gl_context_gui).unwrap();
             platform.prepare_frame(&mut imgui, &window, &event_pump);
             let ui = imgui.new_frame();
             /* create imgui UI here */
