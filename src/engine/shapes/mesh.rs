@@ -174,7 +174,7 @@ impl Shape for Mesh {
     /// Returns `(t, normal)` where `t` is the distance along the ray, and `normal` is the surface normal.
     /// If no intersection is found, returns `(f64::NEG_INFINITY, Vec3::NULL)`.
     fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3)> {
-        // Check if the ray intersects with the bounding sphere
+        // Check if the ray intersects with the bounding box
         if !self.intersects_bounding_box(r) {
             return None;
         }
