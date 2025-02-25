@@ -100,7 +100,7 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
     let reye_center = Vec3::new(-1.0+nose_radius*2.0, nose_cb.y+reye_radius, nose_cb.z-reye_radius);
 
     let umbrella_direction = Vec3::new(0.2, 1.0, 0.0);
-    let umbrella_top_height = 0.1;
+    let umbrella_top_height = 0.2;
 
     let umbrella_pole_material = Material::new(
         Vec3::all(0.5),
@@ -109,7 +109,7 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
         20.0
     );
     let umbrella_pole_radius = 0.05;
-    let umbrella_pole_height = 2.1+umbrella_top_height;
+    let umbrella_pole_height = 2.1;
     let umbrella_pole_cb = Vec3::new(0.25, -0.55, -2.5);
 
     let umbrella_top_material = Material::new(
@@ -119,7 +119,7 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
         3.0
     );
     let umbrella_top_radius = 1.0;
-    let umbrella_top_cb = umbrella_pole_cb + umbrella_direction*(umbrella_pole_height-umbrella_top_height-0.1);
+    let umbrella_top_cb = umbrella_pole_cb + umbrella_direction*(umbrella_pole_height-umbrella_top_height-0.037);
 
 
     // Definindo as propriedades das luzes

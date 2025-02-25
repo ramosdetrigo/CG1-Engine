@@ -4,6 +4,7 @@ mod scenes;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use utils::Vec3;
 use std::time::{Duration, Instant};
 
 use imgui::Context;
@@ -24,7 +25,8 @@ fn glow_context(window: &Window) -> glow::Context {
 }
 
 fn main() {
-    let (mut scene, mut camera, window_width, window_height) = scenes::cone_test();
+    #[allow(unused_mut)]
+    let (mut scene, mut camera, window_width, window_height) = scenes::beach();
     let scale = 1.0; // TODO: fix scaling
 
     // Inicializando SDL
@@ -65,15 +67,24 @@ fn main() {
         for event in event_pump.poll_iter() {
             // pass all events to imgui platfrom
             platform.handle_event(&mut imgui, &event);
+            let cdx = camera.coord_system[0];
+            // let cdy = camera.coord_system[1];
+            let cdz = camera.coord_system[2];
             match event {
                 // muda a posição da bola em 10cm pra cada lado pelas setas do teclado
                 // setas = eixos x,y // W,S = eixo z
-                Event::KeyDown { keycode: Some(Keycode::RIGHT), .. } => { scene.lights[0].pos.x += 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::LEFT), .. } => { scene.lights[0].pos.x -= 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::UP), .. } => { scene.lights[0].pos.z -= 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { scene.lights[0].pos.z += 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::W), .. } => { scene.lights[0].pos.y += 0.1; }
-                Event::KeyDown { keycode: Some(Keycode::S), .. } => { scene.lights[0].pos.y -= 0.1; }
+                Event::KeyDown { keycode: Some(Keycode::W), .. } => { camera.translate(-0.1*cdz); } // FRONT
+                Event::KeyDown { keycode: Some(Keycode::S), .. } => { camera.translate(0.1*cdz); } // BACK
+                Event::KeyDown { keycode: Some(Keycode::A), .. } => { camera.translate(-0.1*cdx); } // LEFT
+                Event::KeyDown { keycode: Some(Keycode::D), .. } => { camera.translate(0.1*cdx); } // RIGHT
+                Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => { camera.translate(0.1*Vec3::Y); } // UP
+                Event::KeyDown { keycode: Some(Keycode::LSHIFT), .. } => { camera.translate(-0.1*Vec3::Y); } // DOWN
+                Event::KeyDown { keycode: Some(Keycode::LEFT), .. } => { camera.rotate(Vec3::Y, 0.1); } // ROTATE LEFT
+                Event::KeyDown { keycode: Some(Keycode::RIGHT), .. } => { camera.rotate(Vec3::Y, -0.1); } // ROTATE RIGHT
+                Event::KeyDown { keycode: Some(Keycode::UP), .. } => { camera.rotate(cdx, 0.1); } // ROTATE UP
+                Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { camera.rotate(cdx, -0.1); } // ROTATE DOWN
+                Event::KeyDown { keycode: Some(Keycode::Q), .. } => { camera.rotate(cdz, 0.1); } // ROLL LEFT
+                Event::KeyDown { keycode: Some(Keycode::E), .. } => { camera.rotate(cdz, -0.1); } // ROLL RIGHT
                 // esc pra sair do programa
                 Event::Quit{ .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
                 _ => {}
@@ -83,7 +94,7 @@ fn main() {
         // Seção de draw
         window.gl_make_current(&gl_context_engine).unwrap();
         let surface = window.surface(&event_pump).unwrap();
-        camera.draw_scene_to_canvas(&scene, surface);
+        camera.draw_scene(&scene, surface);
         
         // imgui
         if false {

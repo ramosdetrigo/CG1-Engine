@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use super::{Ray, Scene};
 use super::shapes::Material;
+use crate::utils::transform::rotation_around_axis;
 use crate::utils::Vec3;
 // use sdl2::rect::Rect;
 // use sdl2::render::Canvas;
@@ -13,6 +14,8 @@ use std::sync::Arc;
 pub struct Camera {
     pub pos: Vec3, // observador
     pub bg_color: Vec3,
+    pub focal_distance: f64,
+    pub coord_system: [Vec3; 3],
     viewport: Viewport, // janela
     draw_buffer: Vec<u8>,
 }
@@ -27,16 +30,17 @@ impl Camera {
     /// `viewport_distance`: Distância do viewport até o observador \
     /// `bg_color`: Cor do background
     /// `texture_creator`: TextureCreator para criar a textura interna de buffer da câmera
-    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f64, viewport_h: f64, viewport_distance: f64, bg_color: Vec3) -> Camera {     
+    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f64, viewport_h: f64, focal_distance: f64, bg_color: Vec3) -> Camera {     
         Camera {
             pos, // posição do observador
             bg_color: bg_color.clamp(0.0, 1.0) * 255.0,
-
+            focal_distance,
+            coord_system: [Vec3::X, Vec3::Y, Vec3::Z],
             
             draw_buffer: vec![0; (n_cols * n_rows * 4) as usize],
 
             viewport: Viewport::new(
-                Vec3::new(pos.x, pos.y, pos.z-viewport_distance), // posição da janela em relação ao observador (0, 0, -d)
+                Vec3::new(pos.x, pos.y, pos.z-focal_distance), // posição da janela em relação ao observador (0, 0, -d)
                 viewport_w, viewport_h, // altura * largura da janela
                 n_cols, n_rows, // número de colunas e linhas, basicamente a resolução da câmera.
             ),
@@ -44,7 +48,7 @@ impl Camera {
     }
 
     /// Desenha uma cena em um canvas com base nas especificações da câmera
-    pub fn draw_scene_to_canvas(&mut self, scene: &Scene, mut surface: WindowSurfaceRef) {
+    pub fn draw_scene(&mut self, scene: &Scene, mut surface: WindowSurfaceRef) {
         // Número de bytes no canvas (número de pixels * 3: RGB24)
         let num_bytes = self.viewport.cols * self.viewport.rows * 4;
         // Número de threads disponíveis * 3
@@ -152,14 +156,47 @@ impl Camera {
     }
 
     pub fn set_position(&mut self, pos: Vec3) {
-        let add = pos - self.pos;
         self.pos = pos;
-        self.viewport.add_position(add);
+        self.viewport = Viewport::new(
+            Vec3::new(pos.x, pos.y, pos.z-self.focal_distance), // posição da janela em relação ao observador (0, 0, -d)
+            self.viewport.width, self.viewport.height, // altura * largura da janela
+            self.viewport.cols, self.viewport.rows, // número de colunas e linhas, basicamente a resolução da câmera.
+        );
     }
 
     pub fn add_position(&mut self, add: Vec3) {
         self.pos += add;
         self.viewport.add_position(add);
+    }
+
+    pub fn translate(&mut self, translation_vector: Vec3) {
+        self.pos += translation_vector;
+        self.viewport.pos += translation_vector;
+        self.viewport.p00_coords += translation_vector;
+        self.viewport.top_left_coords += translation_vector;
+    }
+
+    pub fn rotate(&mut self, axis: Vec3, angle: f64) {
+        let translation_vector = self.pos;
+        let transformation_matrix = rotation_around_axis(axis, angle);
+
+        self.pos -= translation_vector;
+        self.viewport.pos -= translation_vector;
+        self.viewport.p00_coords -= translation_vector;
+        self.viewport.top_left_coords -= translation_vector;
+
+        self.pos.transform(&transformation_matrix);
+        for v in &mut self.coord_system { v.transform(&transformation_matrix); }
+        self.viewport.pos.transform(&transformation_matrix);
+        self.viewport.dx.transform(&transformation_matrix);
+        self.viewport.dy.transform(&transformation_matrix);
+        self.viewport.p00_coords.transform(&transformation_matrix);
+        self.viewport.top_left_coords.transform(&transformation_matrix);
+
+        self.pos += translation_vector;
+        self.viewport.pos += translation_vector;
+        self.viewport.p00_coords += translation_vector;
+        self.viewport.top_left_coords += translation_vector;
     }
 }
 

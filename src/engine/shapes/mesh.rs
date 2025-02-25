@@ -105,7 +105,7 @@ impl Mesh {
 
     pub fn apply_transform(&mut self, transformation_matrix: &Matrix4) {
         for vertex in &mut self.vertices {
-            *vertex = vertex.transform(*transformation_matrix);
+            vertex.transform(transformation_matrix);
         }
         (self.min_bound, self.max_bound) = Self::calculate_bounding_box(&self.vertices);
     }

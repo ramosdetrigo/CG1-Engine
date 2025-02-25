@@ -58,6 +58,7 @@ impl Shape for Cone {
             closest_intersection = (if t1 > t2 { [t2, t1] } else { [t1, t2] })
                 .into_iter()
                 .find_map(|t| {
+                    if t < 0.0 { return None }
                     let cbp = r.at(t) - self.cb;
                     let cbe = q*cbp;
 

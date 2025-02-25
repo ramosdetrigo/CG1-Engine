@@ -1,5 +1,5 @@
 // Classes Vec2, Vec3, Vec4
-use std::ops::{Add, Mul, Div, Sub, Neg, AddAssign, MulAssign};
+use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::hash::{Hash, Hasher};
 use super::{Matrix3, Matrix4, Vec4};
 
@@ -135,10 +135,9 @@ impl Vec3 {
     }
 
     #[inline]
-    #[must_use]
-    pub fn transform(&self, transformation_matrix: Matrix4) -> Vec3 {
-        ( transformation_matrix * self.into_vec4() )
-            .into_vec3()
+    pub fn transform(&mut self, transformation_matrix: &Matrix4) {
+        let t = *transformation_matrix * self.into_vec4();
+        self.x = t.x; self.y = t.y; self.z = t.z
     }
 
     #[inline]
@@ -150,6 +149,15 @@ impl Vec3 {
             z: self.z,
             w: 1.0
         }
+    }
+}
+
+impl SubAssign<Vec3> for Vec3 {
+    #[inline]
+    fn sub_assign(&mut self, rhs: Vec3) {
+        self.x -= rhs.x;
+        self.y -= rhs.y;
+        self.z -= rhs.z;
     }
 }
 
