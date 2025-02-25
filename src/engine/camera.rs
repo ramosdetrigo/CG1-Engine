@@ -198,6 +198,11 @@ impl Camera {
         self.viewport.p00_coords += translation_vector;
         self.viewport.top_left_coords += translation_vector;
     }
+
+    #[allow(unused_variables)]
+    pub fn look_at(&mut self, point: Vec3, up: Vec3) {
+        todo!()
+    }
 }
 
 
