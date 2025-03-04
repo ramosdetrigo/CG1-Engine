@@ -1,5 +1,7 @@
 #![allow(dead_code)]
+use std::f64::consts::PI;
 use super::Material;
+use super::Texture;
 use super::Shape;
 use super::super::Ray;
 use crate::utils::Vec3;
@@ -10,19 +12,20 @@ pub struct Sphere {
     pub center: Vec3, // Ponto x,y,z do centro da esfera
     pub radius: f64, // Raio da esfera
     pub material: Material, // Cor da esfera
+    texture: Option<Texture>,
 }
 
-impl Sphere {
+impl  Sphere {
     #[inline]
     #[must_use]
     /// Cria uma nova esfera de centro `center`, raio `radius`, e material `material`. \
     /// (Encapsulada em um enum Shape)
-    pub fn new(center: Vec3, radius: f64, material: Material) -> Box<dyn Shape> {
-        Box::new( Self { center, radius, material, } )
+    pub fn new(center: Vec3, radius: f64, material: Material, texture: Option<Texture>) -> Box<dyn Shape> {
+        Box::new( Self { center, radius, material, texture } )
     }
 }
 
-impl Shape for Sphere {
+impl  Shape for Sphere {
     #[must_use]
     /// Retorna o ponto de interseção (de distância positiva) mais próximo entre uma esfera e um raio `r` \
     /// (`-INFINITY` se não há interseção)
@@ -48,7 +51,23 @@ impl Shape for Sphere {
             [(b + delta.sqrt()) / a, (b - delta.sqrt()) / a].into_iter()
                 .filter(|t| *t > 0.0) // filtra os T's positivos
                 .min_by(|t1, t2| t1.partial_cmp(t2).unwrap() ) // pega o menor deles
-                .map(|t| (t, (r.at(t) - self.center).normalize(), self.material)) // retorna a interseção mais próxima, ou None se não há t positivo
+                .map(|t| {
+                    let normal = (r.at(t) - self.center).normalize();
+                    match &self.texture {
+                        Some(texture) => {
+                            let u = 0.5 + ((normal.z.atan2(normal.x) - PI/2.0) / (2.0 * -PI));
+                            let v = 0.5 - (normal.y.asin() / PI);
+                            let uv_color = texture.sample(u, v);
+                            (t, normal, Material::new(
+                                uv_color * self.material.k_amb,
+                                uv_color * self.material.k_dif,
+                                self.material.k_esp,
+                                self.material.e
+                            ))
+                        }
+                        None => (t, normal, self.material)
+                    }
+                })
         } else {
             None
         }

@@ -12,3 +12,5 @@ mod cone;
 pub use cone::Cone;
 mod mesh;
 pub use mesh::Mesh;
+mod texture;
+pub use texture::Texture;

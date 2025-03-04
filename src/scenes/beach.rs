@@ -134,9 +134,9 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
         Plane::new( plane1_pc, plane1_normal, plane1_material ), // chão
         Plane::new( plane2_pc, plane2_normal, plane2_material ), // fundo
         
-        Sphere::new( snowball1_center, snowball1_radius, snowball_material ), // ball1
-        Sphere::new( snowball2_center, snowball2_radius, snowball_material ), // ball2
-        Sphere::new( snowball3_center, snowball3_radius, snowball_material ), // ball3
+        Sphere::new( snowball1_center, snowball1_radius, snowball_material, None ), // ball1
+        Sphere::new( snowball2_center, snowball2_radius, snowball_material, None ), // ball2
+        Sphere::new( snowball3_center, snowball3_radius, snowball_material, None ), // ball3
 
         Cilinder::new( hat_base_radius, hat_base_height, hat_base_cb, hat_direction, hat_material, true, true ), // hat base
         Cilinder::new( hat_body_radius, hat_body_height, hat_body_cb, hat_direction, hat_material, true, true ), // hat body
@@ -144,8 +144,8 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
 
         Cone::new( nose_radius, nose_height, nose_cb, nose_direction, nose_material, true ), // nose
         
-        Sphere::new( leye_center, leye_radius, eye_material ), // left eye
-        Sphere::new( reye_center, reye_radius, eye_material ), // right eye
+        Sphere::new( leye_center, leye_radius, eye_material, None ), // left eye
+        Sphere::new( reye_center, reye_radius, eye_material, None ), // right eye
 
         Cilinder::new( umbrella_pole_radius, umbrella_pole_height, umbrella_pole_cb, umbrella_direction, umbrella_pole_material, true, true ),
         Cone::new( umbrella_top_radius, umbrella_top_height, umbrella_top_cb, umbrella_direction, umbrella_top_material, false ),

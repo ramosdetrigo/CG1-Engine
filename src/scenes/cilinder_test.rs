@@ -74,8 +74,8 @@ pub fn cilinder_test() -> (Scene, Camera, u32, u32) {
     let shapes = vec![
         Plane::new( plane1_pc, plane1_normal, plane1_material ),
         Plane::new( plane2_pc, plane2_normal, plane2_material ),
-        Sphere::new( sphere1_center, sphere1_radius, sphere1_material ),
-        Sphere::new( sphere2_center, sphere2_radius, sphere2_material ),
+        Sphere::new( sphere1_center, sphere1_radius, sphere1_material, None ),
+        Sphere::new( sphere2_center, sphere2_radius, sphere2_material, None ),
         Cilinder::new( cilinder_r, cilinder_h, cilinder_cb, cilinder_dc, cilinder_material, true, true )
     ];
     
