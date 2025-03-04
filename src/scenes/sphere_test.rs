@@ -46,7 +46,7 @@ pub fn sphere_test() -> (Scene, Camera, u32, u32) {
     );
     
     // Definindo as propriedades das luzes
-    let light1_pos = Vec3::new(0.0, 0.0, -5.0);
+    let light1_pos = Vec3::new(3.0, 3.0, 5.0);
     let light1_color = Vec3::new(1.0, 1.0, 1.0);
     let light1_intensity = 1.0;
     

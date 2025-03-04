@@ -26,7 +26,7 @@ impl Shape for Sphere {
     #[must_use]
     /// Retorna o ponto de interseção (de distância positiva) mais próximo entre uma esfera e um raio `r` \
     /// (`-INFINITY` se não há interseção)
-    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3)> {
+    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3, Material)> {
         // Se existe um t real tal que R(t) pertence à borda da esfera, houve colisão.
         // Resolvendo a equação da esfera obtemos uma equação quadrática,
         // então só precisamos saber se o delta é positivo.
@@ -48,7 +48,7 @@ impl Shape for Sphere {
             [(b + delta.sqrt()) / a, (b - delta.sqrt()) / a].into_iter()
                 .filter(|t| *t > 0.0) // filtra os T's positivos
                 .min_by(|t1, t2| t1.partial_cmp(t2).unwrap() ) // pega o menor deles
-                .map(|t| (t, (r.at(t) - self.center).normalize())) // retorna a interseção mais próxima, ou None se não há t positivo
+                .map(|t| (t, (r.at(t) - self.center).normalize(), self.material)) // retorna a interseção mais próxima, ou None se não há t positivo
         } else {
             None
         }

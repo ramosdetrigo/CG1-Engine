@@ -168,7 +168,7 @@ impl Shape for Mesh {
     /// Finds the closest intersection between the mesh and a ray.
     /// Returns `(t, normal)` where `t` is the distance along the ray, and `normal` is the surface normal.
     /// If no intersection is found, returns `(f64::NEG_INFINITY, Vec3::NULL)`.
-    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3)> {
+    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3, Material)> {
         // Check if the ray intersects with the bounding box
         if !self.intersects_bounding_box(r) {
             return None;
@@ -182,6 +182,7 @@ impl Shape for Mesh {
                 (t > 1e-8).then_some((t, normal))
             })
             .min_by(|(t1,_), (t2,_)| t1.partial_cmp(t2).unwrap())
+            .map(|(t, n)| (t, n, self.material))
     }
 
     fn translate(&mut self, translation_vector: Vec3) {

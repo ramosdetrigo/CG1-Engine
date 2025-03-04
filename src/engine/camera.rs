@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 use super::{Ray, Scene};
-use super::shapes::Material;
 use crate::utils::transform::rotation_around_axis;
 use crate::utils::Vec3;
 // use sdl2::rect::Rect;
@@ -94,7 +93,6 @@ impl Camera {
                         Ray::new(viewport.p00, -coord_system[2])
                     }
                 };
-                let mut mat: &Material;
                 let mut rgb_counter = 0;
                 
                 for pixel in 0..pixel_count {
@@ -122,8 +120,8 @@ impl Camera {
                         continue;
                     }
                     
-                    let (shape, t, n) = intersection.unwrap();
-                    mat = shape.material(); // material do objeto
+                    let (shape, t, n, mat) = intersection.unwrap();
+                    // mat = shape.material(); // material do objeto
                     
                     // Calcula a cor do pixel de acordo com a iluminação
                     // intensidade da luz que chega no olho do observador (começa com a luz ambiente)
@@ -138,7 +136,7 @@ impl Camera {
 
                             // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0 < tl < 1.0))
                             // 0.0001 previne problemas com floating point precision
-                            if let Some((tl, _)) = s.get_intersection(&light_ray) {
+                            if let Some((tl, _, _)) = s.get_intersection(&light_ray) {
                                 if 0.0001 < tl && tl < 1.0 { continue 'lights; }
                             }
                         }

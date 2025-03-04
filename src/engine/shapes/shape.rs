@@ -13,7 +13,7 @@ pub trait Shape : Sync {
     #[must_use]
     /// Retorna o ponto de interseção (de distância positiva) mais próximo entre um objeto e um raio `r` \
     /// (`-INFINITY` se não há interseção)
-    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3)>;
+    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3, Material)>;
 
     fn translate(&mut self, translation_vector: Vec3);
 

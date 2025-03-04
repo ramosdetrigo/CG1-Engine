@@ -28,7 +28,7 @@ impl Shape for Plane {
     #[must_use]
     /// Retorna o ponto de interseção (de distância positiva) mais próximo entre um plano e um raio `r` \
     /// (`-INFINITY` se não há interseção)
-    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3)> {
+    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3, Material)> {
         // Fórmula: n * (p - pc) = 0
         // n * (R(t) - pc) = 0
         // t = - n.dot(r.origin - pc) / n.dot(r.dr)
@@ -40,7 +40,7 @@ impl Shape for Plane {
 
         if bottom == 0.0 { return None; }
         let t = -top/bottom;
-        (t >= 0.0).then_some( (t, self.normal * -self.normal.dot(r.dr).signum()) )
+        (t >= 0.0).then_some( (t, self.normal * -self.normal.dot(r.dr).signum(), self.material) )
     }
 
     fn translate(&mut self, translation_vector: Vec3) {

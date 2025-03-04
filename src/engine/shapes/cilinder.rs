@@ -33,7 +33,7 @@ impl Shape for Cilinder {
     }
 
     #[must_use]
-    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3)> {
+    fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3, Material)> {
         let mut closest_intersection: Option<(f64, Vec3)> = None;
         let mut min_t = f64::INFINITY;
 
@@ -100,6 +100,6 @@ impl Shape for Cilinder {
             }
         }
 
-        closest_intersection.map(|(t, n)| (t, n * -n.dot(r.dr).signum()) )
+        closest_intersection.map(|(t, n)| (t, n * -n.dot(r.dr).signum(), self.material) )
     }
 }

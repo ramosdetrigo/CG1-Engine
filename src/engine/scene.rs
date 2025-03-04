@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+
+use super::shapes::Material;
 use super::shapes::Shape;
 use super::{Light, Ray};
 use crate::utils::Vec3;
@@ -39,9 +41,9 @@ impl Scene {
     }
 
     /// Retorna a interseção com um raio de menor t ou None se não há interseção
-    pub fn get_intersection(&self, ray: &Ray) -> Option<(&Box<dyn Shape>, f64, Vec3)> {
+    pub fn get_intersection(&self, ray: &Ray) -> Option<(&Box<dyn Shape>, f64, Vec3, Material)> {
         self.shapes.iter()
-            .filter_map(|shape| shape.get_intersection(ray).map(|(t, n)| (shape, t, n)) )
-            .min_by(|(_, t1, _), (_, t2, _)| t1.partial_cmp(t2).unwrap() ) // pega a colisão com menor t
+            .filter_map(|shape| shape.get_intersection(ray).map(|(t, n, mat)| (shape, t, n, mat)) )
+            .min_by(|(_, t1, _, _), (_, t2, _, _)| t1.partial_cmp(t2).unwrap() ) // pega a colisão com menor t
     }
 }
