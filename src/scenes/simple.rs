@@ -5,8 +5,9 @@ use std::fs::File;
 use std::io::BufReader;
 use obj::{load_obj, Obj, Vertex};
 
-use crate::engine::{Camera, Scene, Light};
-use crate::utils::Vec3;
+use crate::engine::{Scene, Light};
+use crate::engine::camera::Camera;
+use crate::utils::{Matrix3, Vec3};
 use crate::utils::transform::{self, translation_matrix};
 use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Mesh};
 
@@ -43,12 +44,12 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     );
 
     // Definindo as propriedades de cada objeto
-    let mesh1_material = Material::new(
-        Vec3::new(0.3, 0.7, 0.3),
-        Vec3::new(0.3, 0.7, 0.3),
-        Vec3::new(0.3, 0.7, 0.3),
-        10.0, 
-    );
+    // let mesh1_material = Material::new(
+    //     Vec3::new(0.3, 0.7, 0.3),
+    //     Vec3::new(0.3, 0.7, 0.3),
+    //     Vec3::new(0.3, 0.7, 0.3),
+    //     10.0, 
+    // );
 
     let mesh2_material = Material::new(
         Vec3::new(0.9, 0.7, 0.3),
@@ -57,16 +58,37 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
         10.0, 
     );
     
-    let mut cube = Mesh::cube(mesh1_material);
-    let trans_matrix1 = transform::translation_matrix(-0.5, 0.0, -2.0) // mover ele pro lugar q eu quero
+    let mut cube = Mesh::cube(Material::WHITE);
+    cube.translate(Vec3::new(0.0, 1.0, -2.0));
+    // let trans_matrix1 = transform::translation_matrix(-0.5, 0.0, -2.0) // mover ele pro lugar q eu quero
         // * transform::translation_matrix(0.5, 0.5, 0.5) // desfazer a translação
         // * transform::rotation_around_axis(Vec3::X, PI*0.12) // girar ao redor do eixo X
         // * transform::rotation_around_axis(Vec3::Y, -PI*0.125) // girar ao redor do eixo Y
         // * transform::translation_matrix(-0.5, -0.5, -0.5) // centralizar o cubo no 0,0
-        * transform::shear_matrix_y_angle(0.2) // shear é mó paia
-        * transform::scale_matrix(1.0, 0.1, 1.0) // amassa o cubo (scale no eixo Y)
-        ;
-    cube.apply_transform(&trans_matrix1);
+        // * transform::shear_matrix_y_angle(0.2) // shear é mó paia
+        // * transform::scale_matrix(1.0, 0.1, 1.0) // amassa o cubo (scale no eixo Y)
+    // cube.apply_transform(&trans_matrix1);
+
+    let cilinder_x = Cilinder::new(
+        0.02, 200.0, 
+        Vec3::new(0.0, 1.0, -1.0), Vec3::X, 
+        Material::RED, 
+        true, true
+    );
+    
+    let cilinder_y = Cilinder::new(
+        0.02, 200.0, 
+        Vec3::new(0.0, 1.0, -1.0), Vec3::Y, 
+        Material::GREEN, 
+        true, true
+    );
+
+    let cilinder_z = Cilinder::new(
+        0.02, 200.0, 
+        Vec3::new(0.0, 1.0, -1.0), -Vec3::Z, 
+        Material::BLUE, 
+        true, true
+    );
 
     let pyramid_vertices = vec![
         Vec3::new(0.0, 0.0, 0.0), // 0
@@ -129,6 +151,9 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
         Plane::new( plane1_pc, plane1_normal, plane1_material ),
         Plane::new( plane2_pc, plane2_normal, plane2_material ),
         // cube.into_shape(),
+        // cilinder_x,
+        // cilinder_y,
+        // cilinder_z,
         // pyramid.into_shape(),
         teapot.into_shape()
     ];

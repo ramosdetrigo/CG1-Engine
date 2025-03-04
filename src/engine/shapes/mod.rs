@@ -1,4 +1,3 @@
-#![allow(unused_imports)]
 mod material;
 pub use material::Material; 
 mod shape;

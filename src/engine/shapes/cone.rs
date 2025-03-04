@@ -63,7 +63,7 @@ impl Shape for Cone {
                     let cbe = q*cbp;
 
                     if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
-                        min_t = t;
+                        min_t = min_t.min(t);
     
                         let p = r.at(t);
                         let pv = (self.v-p).normalize();

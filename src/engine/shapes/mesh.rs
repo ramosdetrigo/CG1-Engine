@@ -1,20 +1,15 @@
-#![allow(dead_code)]
 use super::Material;
 use super::Shape;
 use super::super::Ray;
 use crate::utils::Matrix4;
 use crate::utils::Vec3;
-use std::collections::HashSet;
-use std::hash::Hash;
-use std::sync::Arc;
 
 #[derive(Clone, PartialEq)]
 /// A mesh is a collection of triangles.
 pub struct Mesh {
     vertices: Vec<Vec3>,
-    triangles: Vec<[usize; 3]>, // List of triangles
-    material: Material,       // Material of the mesh
-    // center: Vec3,
+    triangles: Vec<[usize; 3]>, // List of triangles (vertex indices)
+    material: Material,
     min_bound: Vec3,
     max_bound: Vec3,
 }

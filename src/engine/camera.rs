@@ -11,11 +11,18 @@ use sdl2::video::WindowSurfaceRef;
 use std::{ptr, thread};
 use std::sync::Arc;
 
+#[derive(Clone, Copy)]
+pub enum Projection {
+    Perspective,
+    Ortographic,
+}
+
 pub struct Camera {
     pub pos: Vec3, // observador
     pub bg_color: Vec3,
     pub focal_distance: f64,
     pub coord_system: [Vec3; 3],
+    projection_type: Projection,
     viewport: Viewport, // janela
     draw_buffer: Vec<u8>,
 }
@@ -36,6 +43,7 @@ impl Camera {
             bg_color: bg_color.clamp(0.0, 1.0) * 255.0,
             focal_distance,
             coord_system: [Vec3::X, Vec3::Y, Vec3::Z],
+            projection_type: Projection::Perspective,
             
             draw_buffer: vec![0; (n_cols * n_rows * 4) as usize],
 
@@ -69,22 +77,37 @@ impl Camera {
             // Clona as referências pesadas e os vetores leves para serem movidos para outra thread
             let scene = Arc::clone(&scene);
             let viewport = Arc::clone(&viewport);
-            let pos = self.pos;
+            let self_pos = self.pos;
             let bg_color = self.bg_color;
+            let projection_type = self.projection_type;
+            let coord_system = self.coord_system;
 
             // Número de pixels que a thread vai desenhar
             let pixel_count = ppm_slice.len() / 4;
             
             s.spawn(move || {
-                let mut ray = Ray::new(pos, Vec3::new(0.0,0.0,1.0)); // cria um raio partindo de p0 na direção d
+                let mut ray = match projection_type {
+                    Projection::Perspective => {
+                        Ray::new(self_pos, Vec3::new(0.0,0.0,1.0)) // cria um raio partindo de p0 na direção d
+                    }
+                    Projection::Ortographic => {
+                        Ray::new(viewport.p00, -coord_system[2])
+                    }
+                };
                 let mut mat: &Material;
                 let mut rgb_counter = 0;
                 
                 for pixel in 0..pixel_count {
                     let row = (lower_bound + pixel) / (viewport.cols as usize);
                     let col = (lower_bound + pixel) % (viewport.cols as usize);
-                    let dr = (((viewport.p00_coords) + (col as f64)*viewport.dx - (row as f64)*viewport.dy) - pos).normalize();
-                    ray.dr = dr;
+                    match projection_type {
+                        Projection::Perspective => {
+                            ray.dr = (((viewport.p00) + (col as f64)*viewport.dx - (row as f64)*viewport.dy) - self_pos).normalize();
+                        }
+                        Projection::Ortographic => {
+                            ray.origin = (viewport.p00) + (col as f64)*viewport.dx - (row as f64)*viewport.dy;
+                        }
+                    };
 
                     // Obtém o objeto mais próximo a colidir com o raio
                     let intersection = scene.get_intersection(&ray);
@@ -125,7 +148,7 @@ impl Camera {
                     
                         let r = 2.0 * l.dot(n)*n - l; // vetor l refletido na normal
                         let nl = n.dot(l); // normal escalar l
-                        let rv = r.dot(-dr); // r escalar v
+                        let rv = r.dot(-ray.dr); // r escalar v
 
                         // O check > 0.0 previne o bug de iluminação no "lado escuro da esfera"
                         if nl > 0.0 { ieye += mat.k_dif * nl * light.intensity; } // Reflexão difusa
@@ -155,6 +178,10 @@ impl Camera {
         surface.finish().unwrap();
     }
 
+    pub fn set_projection(&mut self, projection: Projection) {
+        self.projection_type = projection;
+    }
+
     pub fn set_position(&mut self, pos: Vec3) {
         self.pos = pos;
         self.viewport = Viewport::new(
@@ -172,7 +199,7 @@ impl Camera {
     pub fn translate(&mut self, translation_vector: Vec3) {
         self.pos += translation_vector;
         self.viewport.pos += translation_vector;
-        self.viewport.p00_coords += translation_vector;
+        self.viewport.p00 += translation_vector;
         self.viewport.top_left_coords += translation_vector;
     }
 
@@ -182,7 +209,7 @@ impl Camera {
 
         self.pos -= translation_vector;
         self.viewport.pos -= translation_vector;
-        self.viewport.p00_coords -= translation_vector;
+        self.viewport.p00 -= translation_vector;
         self.viewport.top_left_coords -= translation_vector;
 
         self.pos.transform(&transformation_matrix);
@@ -190,12 +217,12 @@ impl Camera {
         self.viewport.pos.transform(&transformation_matrix);
         self.viewport.dx.transform(&transformation_matrix);
         self.viewport.dy.transform(&transformation_matrix);
-        self.viewport.p00_coords.transform(&transformation_matrix);
+        self.viewport.p00.transform(&transformation_matrix);
         self.viewport.top_left_coords.transform(&transformation_matrix);
 
         self.pos += translation_vector;
         self.viewport.pos += translation_vector;
-        self.viewport.p00_coords += translation_vector;
+        self.viewport.p00 += translation_vector;
         self.viewport.top_left_coords += translation_vector;
     }
 
@@ -213,7 +240,7 @@ impl Camera {
 /// `cols`, `rows`: número de colunas e linhas da grade (praticamente a resolução) \
 /// `dx`, `dy`: tamanho x e y de cada quadrado \
 /// `top_left_coords`: coordenadas da quina superior esquerda do frame \
-/// `p00_coords`: coordenadas do quadrado 0,0 do frame
+/// `p00`: coordenadas do quadrado 0,0 do frame
 struct Viewport {
     pub pos: Vec3, 
     pub width: f64, pub height: f64,
@@ -221,7 +248,7 @@ struct Viewport {
 
     pub dx: Vec3, pub dy: Vec3,
     pub top_left_coords: Vec3,
-    pub p00_coords: Vec3
+    pub p00: Vec3
 }
 
 impl Viewport { 
@@ -233,12 +260,12 @@ impl Viewport {
     /// `cols`, `rows`: número de colunas e linhas da grade (praticamente a resolução) \
     /// `dx`, `dy`: tamanho x e y de cada quadrado \
     /// `top_left_coords`: coordenadas da quina superior esquerda do frame \
-    /// `p00_coords`: coordenadas do quadrado 0,0 do frame
+    /// `p00`: coordenadas do quadrado 0,0 do frame
     pub fn new(pos: Vec3, width: f64, height: f64, cols: u32, rows: u32) -> Viewport {
         let top_left_coords: Vec3 = Vec3::new(pos.x - width/2.0, pos.y + height/2.0, pos.z);
         let dx = Vec3::new(width/(cols as f64), 0.0, 0.0);
         let dy = Vec3::new(0.0, height/(rows as f64), 0.0);
-        let p00_coords: Vec3 = top_left_coords + dx/2.0 - dy/2.0;
+        let p00: Vec3 = top_left_coords + dx/2.0 - dy/2.0;
         
         Viewport {
             pos,
@@ -246,12 +273,12 @@ impl Viewport {
             rows, cols,
 
             dx, dy,
-            top_left_coords, p00_coords,
+            top_left_coords, p00,
         }
     }
 
     pub fn add_position(&mut self, add: Vec3) {
         self.top_left_coords += add;
-        self.p00_coords += add;
+        self.p00 += add;
     }
 }

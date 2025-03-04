@@ -1,4 +1,5 @@
-use crate::engine::{Camera, Scene, Light};
+use crate::engine::{Scene, Light};
+use crate::engine::camera::Camera;
 use crate::utils::Vec3;
 use crate::engine::shapes::{Material, Sphere, Plane, Cilinder, Cone};
 

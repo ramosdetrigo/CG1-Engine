@@ -1,5 +1,4 @@
-mod camera;
-pub use camera::Camera;
+pub mod camera;
 mod ray;
 pub use ray::Ray;
 mod light;

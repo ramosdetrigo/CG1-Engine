@@ -19,7 +19,28 @@ impl Material {
         k_amb: Vec3::all(0.8),
         k_dif: Vec3::all(0.8),
         k_esp: Vec3::all(0.8),
-        e: 10.0,
+        e: 15.0,
+    };
+
+    pub const RED: Material = Material {
+        k_amb: Vec3::new(0.8, 0.3, 0.3),
+        k_dif: Vec3::new(0.8, 0.3, 0.3),
+        k_esp: Vec3::new(0.8, 0.3, 0.3),
+        e: 15.0,
+    };
+
+    pub const GREEN: Material = Material {
+        k_amb: Vec3::new(0.3, 0.8, 0.3),
+        k_dif: Vec3::new(0.3, 0.8, 0.3),
+        k_esp: Vec3::new(0.3, 0.8, 0.3),
+        e: 15.0,
+    };
+
+    pub const BLUE: Material = Material {
+        k_amb: Vec3::new(0.3, 0.3, 0.8),
+        k_dif: Vec3::new(0.3, 0.3, 0.8),
+        k_esp: Vec3::new(0.3, 0.3, 0.8),
+        e: 15.0,
     };
 
     #[inline]
