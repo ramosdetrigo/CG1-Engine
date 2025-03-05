@@ -19,7 +19,7 @@ impl Plane {
     /// Cria um novo plano baseado num ponto `pc` com vetor normal `normal`, de material `material`. \
     /// (Encapsulado em um enum Shape)
     pub fn new(pc: Vec3, normal: Vec3, material: Material ) -> Box<dyn Shape> {
-        Box::new( Self { pc, normal: normal.normalize(), material } )
+        Box::new( Self { pc, normal: normal.normalized(), material } )
     }
 }
 

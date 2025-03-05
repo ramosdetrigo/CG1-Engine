@@ -17,7 +17,7 @@ impl Cilinder {
     #[inline]
     #[must_use]
     pub fn new(r: f64, h: f64, cb: Vec3, mut dc: Vec3, material: Material, has_base: bool, has_tampa: bool) -> Box<dyn Shape> {
-        dc = dc.normalize();
+        dc = dc.normalized();
         Box::new(Cilinder {r, h, cb, dc, ct:cb + h*dc, material, has_base, has_tampa})
     }
 }
@@ -64,7 +64,7 @@ impl Shape for Cilinder {
                     // retorna só se a interseção está na região válida da superfície
                     if cbe.dot(self.dc) > 0.0 && cbe.length() < self.h {
                         min_t = t;
-                        Some((t, (m*cbp).normalize()))
+                        Some((t, (m*cbp).normalized()))
                     } else {
                         None
                     }

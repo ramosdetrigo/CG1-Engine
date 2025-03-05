@@ -79,7 +79,7 @@ pub fn shear_matrix_z_angle(angle: f64) -> Matrix4 {
 }
 
 pub fn rotation_around_axis(axis: Vec3, angle: f64) -> Matrix4 {
-    let axis = axis.normalize();
+    let axis = axis.normalized();
     let (x, y, z) = (axis.x, axis.y, axis.z);
     let cos_theta = angle.cos();
     let sin_theta = angle.sin();

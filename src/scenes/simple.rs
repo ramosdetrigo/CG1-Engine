@@ -11,17 +11,7 @@ use crate::utils::{Matrix3, Vec3};
 use crate::utils::transform::{self, translation_matrix};
 use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Mesh};
 
-pub fn simple() -> (Scene, Camera, u32, u32) {
-    let p0 = Vec3::new(0.0, 0.4, 0.2); // posição do observador
-    
-    let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
-    
-    let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
-    let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
-    let viewport_distance: f64 = 0.01; // distância da janela até o observador
-    
-    let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
-    
+pub fn simple() -> (Scene, Camera, u32, u32) {    
     // Planos
     let plane1_pc = Vec3::new(0.0, -0.5, 0.0); // Ponto conhecido do plano
     let plane1_normal = Vec3::new(0.0, 1.0 ,0.0); // Normal do plano
@@ -140,11 +130,18 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     
     let ambient_light = Vec3::new(0.3, 0.3, 0.3); // Luz ambiente
     let scene = Scene::new(shapes, lights, ambient_light);
+
+    let p0 = Vec3::new(0.0, 0.4, 0.2); // posição do observador
+    let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
+    let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
+    let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
+    let viewport_distance: f64 = 0.01; // distância da janela até o observador
+    let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
     
     let camera: Camera = Camera::new(
         p0, // a posição do observador
         image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
-        90.0, // tamanho da janela (em metros)
+        1.6, 0.9, // tamanho da janela (em metros)
         viewport_distance, // distância da janela até o observador (em metros)
         bg_color, // cor do background
     );

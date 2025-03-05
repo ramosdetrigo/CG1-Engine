@@ -1,6 +1,5 @@
 #![allow(unused_imports)]
 #![allow(dead_code)]
-// #![allow(unused_variables)]
 mod beach;
 mod cone_test;
 mod cilinder_test;

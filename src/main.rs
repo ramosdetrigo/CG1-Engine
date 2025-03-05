@@ -7,7 +7,6 @@ use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
 use utils::Vec3;
 use std::time::{Duration, Instant};
-
 use imgui::Context;
 use imgui_glow_renderer::{
     glow,
@@ -59,7 +58,7 @@ fn main() {
     let mut platform = SdlPlatform::new(&mut imgui);
     let mut renderer = AutoRenderer::new(gl, &mut imgui).unwrap();
     // END_IMGUI
-
+    
     // main loop do programa
     let mut frame_count = 0; // contador de FPS no terminal
     let mut last_time = Instant::now();
@@ -89,6 +88,13 @@ fn main() {
                 // FOV
                 Event::KeyDown { keycode: Some(Keycode::EQUALS), .. } => { camera.set_fov(camera.fov - 10.0); }
                 Event::KeyDown { keycode: Some(Keycode::MINUS), .. } => { camera.set_fov(camera.fov + 10.0); }
+                Event::KeyDown { keycode: Some(Keycode::LEFTBRACKET), .. } => { camera.set_focal_distance(camera.focal_distance + 0.1); }
+                Event::KeyDown { keycode: Some(Keycode::RIGHTBRACKET), .. } => { camera.set_focal_distance(camera.focal_distance - 0.1); }
+                Event::KeyDown { keycode: Some(Keycode::RETURN), .. } => { camera.set_viewport_size(1.6, 0.9); }
+                // PROJECTION
+                Event::KeyDown { keycode: Some(Keycode::NUM_1), .. } => { camera.set_projection(engine::camera::Projection::Perspective); }
+                Event::KeyDown { keycode: Some(Keycode::NUM_2), .. } => { camera.set_projection(engine::camera::Projection::Ortographic); }
+                Event::KeyDown { keycode: Some(Keycode::NUM_3), .. } => { camera.set_projection(engine::camera::Projection::Oblique); }
                 // MOUSE CLICK
                 Event::MouseButtonDown { x, y, mouse_btn, .. } => {
                     match mouse_btn {

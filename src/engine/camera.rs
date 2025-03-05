@@ -16,6 +16,7 @@ use std::sync::Arc;
 pub enum Projection {
     Perspective,
     Ortographic,
+    Oblique
 }
 
 pub struct Camera {
@@ -25,7 +26,8 @@ pub struct Camera {
     pub focal_distance: f64,
     pub fov: f64,
     pub projection_type: Projection,
-    viewport: Viewport, // janela
+    pub obliqueness: Vec3,
+    pub viewport: Viewport, // janela
     draw_buffer: Vec<u8>,
 }
 
@@ -39,11 +41,8 @@ impl Camera {
     /// `viewport_distance`: Distância do viewport até o observador \
     /// `bg_color`: Cor do background
     /// `texture_creator`: TextureCreator para criar a textura interna de buffer da câmera
-    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, fov: f64, focal_distance: f64, bg_color: Vec3) -> Camera {     
-        let fov_rad = fov.to_radians();
-        let aspect_ratio = n_rows as f64 / n_cols as f64;
-        let viewport_h = 2.0 * focal_distance * (fov_rad / 2.0).tan();
-        let viewport_w = viewport_h / aspect_ratio;
+    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f64, viewport_h: f64, focal_distance: f64, bg_color: Vec3) -> Camera {     
+        let fov = 2.0 * (viewport_h / (2.0 * focal_distance)).atan().to_degrees();
 
         Camera {
             pos, // posição do observador
@@ -52,6 +51,7 @@ impl Camera {
             coord_system: [Vec3::X, Vec3::Y, Vec3::Z],
             fov,
             projection_type: Projection::Perspective,
+            obliqueness: Vec3::new(0.0, 30.0, 0.0),
             
             draw_buffer: vec![0; (n_cols * n_rows * 4) as usize],
 
@@ -63,25 +63,75 @@ impl Camera {
         }
     }
 
+    pub fn set_viewport_size(&mut self, width: f64, height: f64) {
+        self.viewport = Viewport::new(
+            Vec3::new(0.0, 0.0, self.pos.z-self.focal_distance), // posição da janela em relação ao observador (0, 0, -d)
+            width, height, // altura * largura da janela
+            self.viewport.cols, self.viewport.rows, // número de colunas e linhas, basicamente a resolução da câmera.
+        );
+        self.viewport.top_left_coords = self.camera_to_world(self.viewport.top_left_coords);
+        self.viewport.p00 = self.camera_to_world(self.viewport.p00);
+        self.viewport.pos = self.camera_to_world(self.viewport.pos);
+        self.viewport.dx = self.coord_system[0] * self.viewport.dx.length();
+        self.viewport.dy = self.coord_system[1] * self.viewport.dy.length();
+
+        let height = self.viewport.height;
+        let new_fov = 2.0 * (height / (2.0 * self.focal_distance)).atan().to_degrees();
+        self.fov = new_fov;
+    }
+
+    pub fn world_to_camera(&self, point: Vec3) -> Vec3 {
+        let point_translated = point - self.pos;
+        let point_rotated = Vec3::new(
+            point_translated.dot(self.coord_system[0]),
+            point_translated.dot(self.coord_system[1]),
+            point_translated.dot(self.coord_system[2]),
+        );
+        point_rotated
+    }
+
+    pub fn camera_to_world(&self, point: Vec3) -> Vec3 {
+        let point_rotated = point.x * self.coord_system[0]
+            + point.y * self.coord_system[1]
+            + point.z * self.coord_system[2];
+        let point_translated = point_rotated + self.pos;
+        point_translated
+    }
+
     pub fn set_fov(&mut self, fov: f64) {
         self.fov = fov;
+        let fov = fov.to_radians();
 
-        self.viewport.set_fov(fov, self.focal_distance, &self.coord_system);
+        let aspect_ratio = self.viewport.rows as f64 / self.viewport.cols as f64;
+        let height = 2.0 * self.focal_distance * (fov / 2.0).tan();
+        let width = height / aspect_ratio;
+
+        let top_left_coords = self.viewport.pos
+            - self.coord_system[0] * (width/2.0)
+            + self.coord_system[1] * (height/2.0);
+        let dx = self.coord_system[0] * (width/self.viewport.cols as f64);
+        let dy = self.coord_system[1] * (height/self.viewport.rows as f64);
+        let p00: Vec3 = top_left_coords + dx/2.0 - dy/2.0;
+
+        self.viewport.width = width;
+        self.viewport.height = height;
+        self.viewport.top_left_coords = top_left_coords;
+        self.viewport.dx = dx;
+        self.viewport.dy = dy;
+        self.viewport.p00 = p00;
     }
 
     pub fn set_focal_distance(&mut self, focal_distance: f64) {
-        let fov = self.fov;
-        let aspect_ratio = self.viewport.rows as f64 / self.viewport.cols as f64;
-        let viewport_h = 2.0 * self.focal_distance * (fov / 2.0).tan();
-        let viewport_w = viewport_h / aspect_ratio;
-
+        let change = self.focal_distance - focal_distance;
+        
+        self.viewport.pos += change * self.coord_system[2];
+        self.viewport.p00 += change * self.coord_system[2];
+        self.viewport.top_left_coords += change * self.coord_system[2];
+        
         self.focal_distance = focal_distance;
-
-        self.viewport = Viewport::new(
-            self.pos - self.coord_system[2] * focal_distance, // posição da janela em relação ao observador (0, 0, -d)
-            viewport_w, viewport_h, // altura * largura da janela
-            self.viewport.cols, self.viewport.rows, // número de colunas e linhas, basicamente a resolução da câmera.
-        );
+        let height = self.viewport.height;
+        let new_fov = 2.0 * (height / (2.0 * focal_distance)).atan().to_degrees();
+        self.fov = new_fov;
     }
 
     /// Desenha uma cena em um canvas com base nas especificações da câmera
@@ -110,6 +160,7 @@ impl Camera {
             let bg_color = self.bg_color;
             let projection_type = self.projection_type;
             let coord_system = self.coord_system;
+            let obliqueness = self.obliqueness;
 
             // Número de pixels que a thread vai desenhar
             let pixel_count = ppm_slice.len() / 4;
@@ -117,10 +168,23 @@ impl Camera {
             s.spawn(move || {
                 let mut ray = match projection_type {
                     Projection::Perspective => {
-                        Ray::new(self_pos, Vec3::new(0.0,0.0,1.0)) // cria um raio partindo de p0 na direção d
+                        Ray::new(self_pos, Vec3::NULL) // cria um raio partindo de p0 na direção d
                     }
                     Projection::Ortographic => {
                         Ray::new(viewport.p00, -coord_system[2])
+                    }
+                    Projection::Oblique => {
+                        let mut dr = -coord_system[2];
+                        if obliqueness.x != 0.0 {
+                            dr.transform(&rotation_around_axis(coord_system[0], obliqueness.x.to_radians()));
+                        }
+                        if obliqueness.y != 0.0 {
+                            dr.transform(&rotation_around_axis(coord_system[1], obliqueness.y.to_radians()));
+                        }
+                        if obliqueness.z != 0.0 {
+                            dr.transform(&rotation_around_axis(coord_system[2], obliqueness.z.to_radians()));
+                        }
+                        Ray::new(viewport.p00, dr)
                     }
                 };
                 let mut rgb_counter = 0;
@@ -130,9 +194,12 @@ impl Camera {
                     let col = (lower_bound + pixel) % (viewport.cols as usize);
                     match projection_type {
                         Projection::Perspective => {
-                            ray.dr = (((viewport.p00) + (col as f64)*viewport.dx - (row as f64)*viewport.dy) - self_pos).normalize();
+                            ray.dr = (((viewport.p00) + (col as f64)*viewport.dx - (row as f64)*viewport.dy) - self_pos).normalized();
                         }
                         Projection::Ortographic => {
+                            ray.origin = (viewport.p00) + (col as f64)*viewport.dx - (row as f64)*viewport.dy;
+                        }
+                        Projection::Oblique => {
                             ray.origin = (viewport.p00) + (col as f64)*viewport.dx - (row as f64)*viewport.dy;
                         }
                     };
@@ -168,7 +235,7 @@ impl Camera {
                             Light::Spotlight { pos, dr, angle, intensity } => {
                                 ldr = *pos - p_i;
                                 light_intensity = *intensity;
-                                if dr.dot(ldr.normalize()) <= angle.cos() { continue 'lights; }
+                                if dr.dot(ldr.normalized()) <= angle.cos() { continue 'lights; }
                             }
                             Light::Directional { dr, intensity } => {
                                 ldr = *dr;
@@ -190,7 +257,7 @@ impl Camera {
                         }
                         
                         // Se o objeto não estiver na sombra...
-                        let l = light_ray.dr.normalize(); // vetor unitário apontando na direção da luz
+                        let l = light_ray.dr.normalized(); // vetor unitário apontando na direção da luz
                     
                         let r = 2.0 * l.dot(n)*n - l; // vetor l refletido na normal
                         let nl = n.dot(l); // normal escalar l
@@ -233,13 +300,19 @@ impl Camera {
             Projection::Ortographic => {
                 Ray::new(self.viewport.p00, -self.coord_system[2])
             }
+            Projection::Oblique => {
+                Ray::new(self.viewport.p00, -self.coord_system[2])
+            }
         };
 
         match self.projection_type {
             Projection::Perspective => {
-                ray.dr = (((self.viewport.p00) + (col as f64)*self.viewport.dx - (row as f64)*self.viewport.dy) - self.pos).normalize();
+                ray.dr = (((self.viewport.p00) + (col as f64)*self.viewport.dx - (row as f64)*self.viewport.dy) - self.pos).normalized();
             }
             Projection::Ortographic => {
+                ray.origin = (self.viewport.p00) + (col as f64)*self.viewport.dx - (row as f64)*self.viewport.dy;
+            }
+            Projection::Oblique => {
                 ray.origin = (self.viewport.p00) + (col as f64)*self.viewport.dx - (row as f64)*self.viewport.dy;
             }
         };
@@ -252,17 +325,7 @@ impl Camera {
     }
 
     pub fn set_position(&mut self, pos: Vec3) {
-        self.pos = pos;
-        self.viewport = Viewport::new(
-            Vec3::new(pos.x, pos.y, pos.z-self.focal_distance), // posição da janela em relação ao observador (0, 0, -d)
-            self.viewport.width, self.viewport.height, // altura * largura da janela
-            self.viewport.cols, self.viewport.rows, // número de colunas e linhas, basicamente a resolução da câmera.
-        );
-    }
-
-    pub fn add_position(&mut self, add: Vec3) {
-        self.pos += add;
-        self.viewport.add_position(add);
+        self.translate(self.pos - pos);
     }
 
     pub fn translate(&mut self, translation_vector: Vec3) {
@@ -295,20 +358,19 @@ impl Camera {
         self.viewport.top_left_coords += translation_vector;
     }
 
-    #[allow(unused_variables)]
     pub fn look_at(&mut self, point: Vec3, up: Vec3) {
-        let z_axis = (point - self.pos).normalize(); // z axis of where i'm lookin at
-        let x_axis = up.cross(z_axis).normalize(); // mia direita segundo o vetor up
-        let y_axis = z_axis.cross(x_axis);
+        let z_axis = (point - self.pos).normalized(); // z axis of where i'm lookin at
+        let x_axis = up.cross(z_axis).normalized(); // mia direita segundo o vetor up
+        // let y_axis = z_axis.cross(x_axis);
     
         let current_z_axis = self.coord_system[2];
-        let rotation_axis = current_z_axis.cross(z_axis).normalize();
+        let rotation_axis = current_z_axis.cross(z_axis).normalized();
         let rotation_angle = current_z_axis.angle(z_axis);
     
         self.rotate(rotation_axis, rotation_angle+PI);
     
         let current_x_axis = self.coord_system[0];
-        let rotation_axis = current_x_axis.cross(x_axis).normalize();
+        let rotation_axis = current_x_axis.cross(x_axis).normalized();
         let rotation_angle = current_x_axis.angle(x_axis);
     
         self.rotate(rotation_axis, rotation_angle+PI);
@@ -324,7 +386,7 @@ impl Camera {
 /// `dx`, `dy`: tamanho x e y de cada quadrado \
 /// `top_left_coords`: coordenadas da quina superior esquerda do frame \
 /// `p00`: coordenadas do quadrado 0,0 do frame
-struct Viewport {
+pub struct Viewport {
     pub pos: Vec3, 
     pub width: f64, pub height: f64,
     pub cols: u32, pub rows: u32,
@@ -351,39 +413,12 @@ impl Viewport {
         let p00: Vec3 = top_left_coords + dx/2.0 - dy/2.0;
         
         Viewport {
-            pos,
+            pos, // centro do viewport
             height, width,
             rows, cols,
 
             dx, dy,
             top_left_coords, p00,
         }
-    }
-
-    pub fn set_fov(&mut self, fov: f64, focal_distance: f64, coord_sys: &[Vec3]) {
-        let fov = fov.to_radians();
-
-        let aspect_ratio = self.rows as f64 / self.cols as f64;
-        let height = 2.0 * focal_distance * (fov / 2.0).tan();
-        let width = height / aspect_ratio;
-
-        let top_left_coords = self.pos
-            - coord_sys[0] * (width/2.0)
-            + coord_sys[1] * (height/2.0);
-        let dx = coord_sys[0] * (width/self.cols as f64);
-        let dy = coord_sys[1] * (height/self.rows as f64);
-        let p00: Vec3 = top_left_coords + dx/2.0 - dy/2.0;
-
-        self.width = width;
-        self.height = height;
-        self.top_left_coords = top_left_coords;
-        self.dx = dx;
-        self.dy = dy;
-        self.p00 = p00;
-    }
-
-    pub fn add_position(&mut self, add: Vec3) {
-        self.top_left_coords += add;
-        self.p00 += add;
     }
 }

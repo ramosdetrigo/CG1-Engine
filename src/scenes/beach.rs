@@ -10,17 +10,7 @@ use crate::utils::transform::{rotation_around_axis, scale_matrix, shear_matrix_x
 use crate::utils::Vec3;
 use crate::engine::shapes::{Cilinder, Cone, Material, Mesh, Plane, Sphere, Texture};
 
-pub fn beach() -> (Scene, Camera, u32, u32) {
-    let p0 = Vec3::new(2.3, 1.3, 3.9); // posição do observador
-    
-    let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
-    let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
-    let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
-    
-    // let viewport_width: f64 = 0.032; // Tamanho da janela (em metros)
-    // let viewport_height: f64 = viewport_width/aspect_ratio;
-    let viewport_distance: f64 = 0.01; // distância da janela até o observador
-    
+pub fn beach() -> (Scene, Camera, u32, u32) {    
     let bg_color = Vec3::new(0.35,0.63,0.95); // cor do background
 
     let sand_pc = Vec3::new(0.0, 0.0, 9.0); // Ponto conhecido do plano
@@ -288,12 +278,20 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
 
     let ambient_light = Vec3::new(0.3, 0.3, 0.3); // Luz ambiente
     let scene = Scene::new(shapes, lights, ambient_light);
+
+    let p0 = Vec3::new(2.3, 1.3, 3.9); // posição do observador
+    let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
+    let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
+    let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
+    let viewport_width: f64 = 0.032; // Tamanho da janela (em metros)
+    let viewport_height: f64 = viewport_width/aspect_ratio;
+    let focal_distance: f64 = 0.01; // distância da janela até o observador
     
     let mut camera: Camera = Camera::new(
         p0, // a posição do observador
         image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
-        90.0, // tamanho da janela (em metros)
-        viewport_distance, // distância da janela até o observador (em metros)
+        viewport_width, viewport_height, // tamanho da janela (em metros)
+        focal_distance, // distância da janela até o observador (em metros)
         bg_color, // cor do background
     );
 

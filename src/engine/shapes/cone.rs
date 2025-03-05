@@ -16,7 +16,7 @@ impl Cone {
     #[inline]
     #[must_use]
     pub fn new(r: f64, h: f64, cb: Vec3, mut dc: Vec3, material: Material, has_base: bool) -> Box<dyn Shape> {
-        dc = dc.normalize();
+        dc = dc.normalized();
         Box::new( Self { r, h, cb, v: cb + dc*h, dc, material, has_base } )
     }
 }
@@ -66,10 +66,10 @@ impl Shape for Cone {
                         min_t = min_t.min(t);
     
                         let p = r.at(t);
-                        let pv = (self.v-p).normalize();
+                        let pv = (self.v-p).normalized();
                         let m_pv = pv.orth_projection_matrix();
     
-                        Some((t, (m_pv*self.dc).normalize()))
+                        Some((t, (m_pv*self.dc).normalized()))
                     } else {
                         None
                     }

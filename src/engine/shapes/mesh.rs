@@ -121,7 +121,7 @@ impl Mesh {
     }
 
     fn triangle_normal(&self, triangle: &[usize;3]) -> Vec3 {
-        (self.vertices[triangle[1]] - self.vertices[triangle[0]]).cross(self.vertices[triangle[2]] - self.vertices[triangle[0]]).normalize()
+        (self.vertices[triangle[1]] - self.vertices[triangle[0]]).cross(self.vertices[triangle[2]] - self.vertices[triangle[0]]).normalized()
     }
     
     fn triangle_intersects(&self, triangle: &[usize;3], r: &Ray) -> f64 {

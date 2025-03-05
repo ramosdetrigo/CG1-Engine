@@ -52,7 +52,7 @@ impl  Shape for Sphere {
                 .filter(|t| *t > 0.0) // filtra os T's positivos
                 .min_by(|t1, t2| t1.partial_cmp(t2).unwrap() ) // pega o menor deles
                 .map(|t| {
-                    let normal = (r.at(t) - self.center).normalize();
+                    let normal = (r.at(t) - self.center).normalized();
                     match &self.texture {
                         Some(texture) => {
                             let u = 0.5 + ((normal.z.atan2(normal.x) - PI/2.0) / (2.0 * -PI));
