@@ -107,3 +107,27 @@ pub fn rotation_around_axis(axis: Vec3, angle: f64) -> Matrix4 {
         [0.0, 0.0, 0.0, 1.0],
     ])
 }
+
+pub fn householder_reflection(normal: Vec3) -> Matrix4 {
+    // Normalize the normal vector
+    let norm = normal.length();
+    let u = normal / norm;
+
+    // Calculate the Householder matrix
+    let uu_t = [
+        [u.x * u.x, u.x * u.y, u.x * u.z],
+        [u.y * u.x, u.y * u.y, u.y * u.z],
+        [u.z * u.x, u.z * u.y, u.z * u.z],
+    ];
+
+    // Create the Householder matrix
+    let mut householder_matrix = Matrix4::I;
+
+    for i in 0..3 {
+        for j in 0..3 {
+            householder_matrix[i][j] -= 2.0 * uu_t[i][j] / (norm * norm);
+        }
+    }
+
+    householder_matrix
+}

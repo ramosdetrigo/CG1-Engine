@@ -4,6 +4,7 @@ mod scenes;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use sdl2::mouse::MouseButton;
 use utils::Vec3;
 use std::time::{Duration, Instant};
 
@@ -26,7 +27,7 @@ fn glow_context(window: &Window) -> glow::Context {
 
 fn main() {
     #[allow(unused_mut)]
-    let (mut scene, mut camera, window_width, window_height) = scenes::sphere_test();
+    let (mut scene, mut camera, window_width, window_height) = scenes::beach();
     let scale = 1.0; // TODO: fix scaling
 
     // Inicializando SDL
@@ -85,10 +86,26 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { camera.rotate(cdx, -0.1); } // ROTATE DOWN
                 Event::KeyDown { keycode: Some(Keycode::Q), .. } => { camera.rotate(cdz, 0.1); } // ROLL LEFT
                 Event::KeyDown { keycode: Some(Keycode::E), .. } => { camera.rotate(cdz, -0.1); } // ROLL RIGHT
+                // FOV
+                Event::KeyDown { keycode: Some(Keycode::EQUALS), .. } => { camera.set_fov(camera.fov - 10.0); }
+                Event::KeyDown { keycode: Some(Keycode::MINUS), .. } => { camera.set_fov(camera.fov + 10.0); }
+                // MOUSE CLICK
+                Event::MouseButtonDown { x, y, mouse_btn, .. } => {
+                    match mouse_btn {
+                        MouseButton::Left => {
+                            if let Some((ray, t, _)) = camera.send_ray(y, x, &scene) {
+                                let p = ray.at(t);
+                                camera.look_at(p, Vec3::Y);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
                 // esc pra sair do programa
                 Event::Quit{ .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
                 _ => {}
             }
+            // println!("{:?}", camera.pos);
         }
 
         // Seção de draw

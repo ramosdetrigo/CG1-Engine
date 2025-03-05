@@ -150,6 +150,17 @@ impl Vec3 {
             w: 1.0
         }
     }
+
+    pub fn angle(&self, other: Vec3) -> f64 {
+        let dot_product = self.dot(other);
+        let magnitude_self = self.length();
+        let magnitude_other = other.length();
+
+        let cos_theta = dot_product / (magnitude_self * magnitude_other);
+        let theta = cos_theta.acos();
+
+        theta
+    }
 }
 
 impl SubAssign<Vec3> for Vec3 {

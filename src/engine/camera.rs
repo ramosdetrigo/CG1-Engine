@@ -6,6 +6,7 @@ use crate::utils::Vec3;
 // use sdl2::render::Canvas;
 // use sdl2::surface::Surface;
 use sdl2::video::WindowSurfaceRef;
+use std::f64::consts::PI;
 // use sdl2::video::Window;
 use std::{ptr, thread};
 use std::sync::Arc;
@@ -19,9 +20,10 @@ pub enum Projection {
 pub struct Camera {
     pub pos: Vec3, // observador
     pub bg_color: Vec3,
-    pub focal_distance: f64,
     pub coord_system: [Vec3; 3],
-    projection_type: Projection,
+    pub focal_distance: f64,
+    pub fov: f64,
+    pub projection_type: Projection,
     viewport: Viewport, // janela
     draw_buffer: Vec<u8>,
 }
@@ -36,12 +38,18 @@ impl Camera {
     /// `viewport_distance`: Distância do viewport até o observador \
     /// `bg_color`: Cor do background
     /// `texture_creator`: TextureCreator para criar a textura interna de buffer da câmera
-    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f64, viewport_h: f64, focal_distance: f64, bg_color: Vec3) -> Camera {     
+    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, fov: f64, focal_distance: f64, bg_color: Vec3) -> Camera {     
+        let fov_rad = fov.to_radians();
+        let aspect_ratio = n_rows as f64 / n_cols as f64;
+        let viewport_h = 2.0 * focal_distance * (fov_rad / 2.0).tan();
+        let viewport_w = viewport_h / aspect_ratio;
+
         Camera {
             pos, // posição do observador
             bg_color: bg_color.clamp(0.0, 1.0) * 255.0,
             focal_distance,
             coord_system: [Vec3::X, Vec3::Y, Vec3::Z],
+            fov,
             projection_type: Projection::Perspective,
             
             draw_buffer: vec![0; (n_cols * n_rows * 4) as usize],
@@ -52,6 +60,27 @@ impl Camera {
                 n_cols, n_rows, // número de colunas e linhas, basicamente a resolução da câmera.
             ),
         }
+    }
+
+    pub fn set_fov(&mut self, fov: f64) {
+        self.fov = fov;
+
+        self.viewport.set_fov(fov, self.focal_distance, &self.coord_system);
+    }
+
+    pub fn set_focal_distance(&mut self, focal_distance: f64) {
+        let fov = self.fov;
+        let aspect_ratio = self.viewport.rows as f64 / self.viewport.cols as f64;
+        let viewport_h = 2.0 * self.focal_distance * (fov / 2.0).tan();
+        let viewport_w = viewport_h / aspect_ratio;
+
+        self.focal_distance = focal_distance;
+
+        self.viewport = Viewport::new(
+            self.pos - self.coord_system[2] * focal_distance, // posição da janela em relação ao observador (0, 0, -d)
+            viewport_w, viewport_h, // altura * largura da janela
+            self.viewport.cols, self.viewport.rows, // número de colunas e linhas, basicamente a resolução da câmera.
+        );
     }
 
     /// Desenha uma cena em um canvas com base nas especificações da câmera
@@ -137,7 +166,7 @@ impl Camera {
                             // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0 < tl < 1.0))
                             // 0.0001 previne problemas com floating point precision
                             if let Some((tl, _, _)) = s.get_intersection(&light_ray) {
-                                if 0.0001 < tl && tl < 1.0 { continue 'lights; }
+                                if 0.0001 < tl && tl < 0.9999 { continue 'lights; }
                             }
                         }
                         
@@ -174,6 +203,29 @@ impl Camera {
             pixels.copy_from_slice(&self.draw_buffer);
         });
         surface.finish().unwrap();
+    }
+
+    #[must_use]
+    pub fn send_ray(&self, row: i32, col: i32, scene: &Scene) -> Option<(Ray, f64, Vec3)> {
+        let mut ray = match self.projection_type {
+            Projection::Perspective => {
+                Ray::new(self.pos, Vec3::new(0.0,0.0,1.0)) // cria um raio partindo de p0 na direção d
+            }
+            Projection::Ortographic => {
+                Ray::new(self.viewport.p00, -self.coord_system[2])
+            }
+        };
+
+        match self.projection_type {
+            Projection::Perspective => {
+                ray.dr = (((self.viewport.p00) + (col as f64)*self.viewport.dx - (row as f64)*self.viewport.dy) - self.pos).normalize();
+            }
+            Projection::Ortographic => {
+                ray.origin = (self.viewport.p00) + (col as f64)*self.viewport.dx - (row as f64)*self.viewport.dy;
+            }
+        };
+
+        scene.get_intersection(&ray).map(|(_shape, t, normal, _material)| (ray, t, normal) )
     }
 
     pub fn set_projection(&mut self, projection: Projection) {
@@ -226,7 +278,21 @@ impl Camera {
 
     #[allow(unused_variables)]
     pub fn look_at(&mut self, point: Vec3, up: Vec3) {
-        todo!()
+        let z_axis = (point - self.pos).normalize(); // z axis of where i'm lookin at
+        let x_axis = up.cross(z_axis).normalize(); // mia direita segundo o vetor up
+        let y_axis = z_axis.cross(x_axis);
+    
+        let current_z_axis = self.coord_system[2];
+        let rotation_axis = current_z_axis.cross(z_axis).normalize();
+        let rotation_angle = current_z_axis.angle(z_axis);
+    
+        self.rotate(rotation_axis, rotation_angle+PI);
+    
+        let current_x_axis = self.coord_system[0];
+        let rotation_axis = current_x_axis.cross(x_axis).normalize();
+        let rotation_angle = current_x_axis.angle(x_axis);
+    
+        self.rotate(rotation_axis, rotation_angle+PI);
     }
 }
 
@@ -273,6 +339,28 @@ impl Viewport {
             dx, dy,
             top_left_coords, p00,
         }
+    }
+
+    pub fn set_fov(&mut self, fov: f64, focal_distance: f64, coord_sys: &[Vec3]) {
+        let fov = fov.to_radians();
+
+        let aspect_ratio = self.rows as f64 / self.cols as f64;
+        let height = 2.0 * focal_distance * (fov / 2.0).tan();
+        let width = height / aspect_ratio;
+
+        let top_left_coords = self.pos
+            - coord_sys[0] * (width/2.0)
+            + coord_sys[1] * (height/2.0);
+        let dx = coord_sys[0] * (width/self.cols as f64);
+        let dy = coord_sys[1] * (height/self.rows as f64);
+        let p00: Vec3 = top_left_coords + dx/2.0 - dy/2.0;
+
+        self.width = width;
+        self.height = height;
+        self.top_left_coords = top_left_coords;
+        self.dx = dx;
+        self.dy = dy;
+        self.p00 = p00;
     }
 
     pub fn add_position(&mut self, add: Vec3) {

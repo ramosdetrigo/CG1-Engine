@@ -7,11 +7,11 @@ use crate::utils::Vec3;
 #[derive(Clone, PartialEq)]
 /// A mesh is a collection of triangles.
 pub struct Mesh {
-    vertices: Vec<Vec3>,
-    triangles: Vec<[usize; 3]>, // List of triangles (vertex indices)
-    material: Material,
-    min_bound: Vec3,
-    max_bound: Vec3,
+    pub vertices: Vec<Vec3>,
+    pub triangles: Vec<[usize; 3]>, // List of triangles (vertex indices)
+    pub material: Material,
+    pub min_bound: Vec3,
+    pub max_bound: Vec3,
 }
 
 impl Mesh {
