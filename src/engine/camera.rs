@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use super::{Ray, Scene};
+use super::Light;
 use crate::utils::transform::rotation_around_axis;
 use crate::utils::Vec3;
 // use sdl2::rect::Rect;
@@ -157,8 +158,26 @@ impl Camera {
                     let mut ieye = mat.k_amb * scene.ambient_light;
                     let p_i = ray.at(t); // ponto de interseção
                     'lights: for light in &scene.lights {
+                        let ldr: Vec3;
+                        let light_intensity: Vec3;
+                        match light {
+                            Light::Point { pos, intensity } => {
+                                ldr = *pos - p_i;
+                                light_intensity = *intensity;
+                            }
+                            Light::Spotlight { pos, dr, angle, intensity } => {
+                                ldr = *pos - p_i;
+                                light_intensity = *intensity;
+                                if dr.dot(ldr.normalize()) <= angle.cos() { continue 'lights; }
+                            }
+                            Light::Directional { dr, intensity } => {
+                                ldr = *dr;
+                                light_intensity = *intensity;
+                            }
+                        }
+
                         // Checar se o objeto está na sombra de algum outro objeto
-                        let light_ray = Ray::new(p_i, light.pos - p_i); // raio partindo de p_i até o ponto de luz
+                        let light_ray = Ray::new(p_i, ldr); // raio partindo de p_i até o ponto de luz
                         for s in &scene.shapes {
                             // Tem alguns problemas de iluminação com detecção de colisão consigo mesmo. Não sei ajeitar ainda.
                             if ptr::eq(s, shape) { continue; }
@@ -178,8 +197,8 @@ impl Camera {
                         let rv = r.dot(-ray.dr); // r escalar v
 
                         // O check > 0.0 previne o bug de iluminação no "lado escuro da esfera"
-                        if nl > 0.0 { ieye += mat.k_dif * nl * light.intensity; } // Reflexão difusa
-                        if rv > 0.0 { ieye += mat.k_esp * rv.powf(mat.e) * light.intensity } // Reflexão especular
+                        if nl > 0.0 { ieye += mat.k_dif * nl * light_intensity; } // Reflexão difusa
+                        if rv > 0.0 { ieye += mat.k_esp * rv.powf(mat.e) * light_intensity } // Reflexão especular
                     }
                     
                     // converte pra range de u8, etc.

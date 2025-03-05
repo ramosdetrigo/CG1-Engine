@@ -135,7 +135,7 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     ];
     
     let lights = vec![
-        Light::new( light1_pos, light1_color, light1_intensity ),
+        Light::point( light1_pos, light1_color, light1_intensity ),
     ];
     
     let ambient_light = Vec3::new(0.3, 0.3, 0.3); // Luz ambiente

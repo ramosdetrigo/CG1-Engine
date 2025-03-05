@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 use crate::engine::{Scene, Light};
 use crate::engine::camera::Camera;
 use crate::utils::Vec3;
@@ -64,7 +66,7 @@ pub fn cilinder_test() -> (Scene, Camera, u32, u32) {
     );
     
     // Definindo as propriedades das luzes
-    let light1_pos = Vec3::new(0.0, 0.8, 0.0);
+    let light1_pos = Vec3::new(0.0, 2.0, -1.5);
     let light1_color = Vec3::new(1.0, 1.0, 1.0);
     let light1_intensity = 1.0;
     
@@ -78,7 +80,9 @@ pub fn cilinder_test() -> (Scene, Camera, u32, u32) {
     ];
     
     let lights = vec![
-        Light::new( light1_pos, light1_color, light1_intensity ),
+        // Light::point( light1_pos, light1_color, light1_intensity ),
+        Light::spotlight(light1_pos, -Vec3::Y, PI/4.0, light1_color, light1_intensity),
+        // Light::directional(-Vec3::Y, light1_color, light1_intensity),
     ];
     
     let ambient_light = Vec3::new(0.3, 0.3, 0.3); // Luz ambiente
