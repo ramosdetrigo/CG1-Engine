@@ -26,7 +26,7 @@ fn glow_context(window: &Window) -> glow::Context {
 
 fn main() {
     #[allow(unused_mut)]
-    let (mut scene, mut camera, window_width, window_height) = scenes::cilinder_test();
+    let (mut scene, mut camera, window_width, window_height) = scenes::beach();
     let scale = 1.0; // TODO: fix scaling
 
     // Inicializando SDL
@@ -51,8 +51,7 @@ fn main() {
     
     imgui.set_ini_filename(None);
     imgui.set_log_filename(None);
-    imgui
-        .fonts()
+    imgui.fonts()
         .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
     // create platform and renderer
     let mut platform = SdlPlatform::new(&mut imgui);

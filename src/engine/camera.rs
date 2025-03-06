@@ -325,7 +325,7 @@ impl Camera {
     }
 
     pub fn set_position(&mut self, pos: Vec3) {
-        self.translate(self.pos - pos);
+        self.translate(pos - self.pos);
     }
 
     pub fn translate(&mut self, translation_vector: Vec3) {
