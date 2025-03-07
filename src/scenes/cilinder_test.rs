@@ -61,8 +61,8 @@ pub fn cilinder_test() -> (Scene, Camera, u32, u32) {
     
     // Criando os objetos e as luzes
     let shapes = vec![
-        Plane::new( plane1_pc, plane1_normal, plane1_material ),
-        Plane::new( plane2_pc, plane2_normal, plane2_material ),
+        Plane::new( plane1_pc, plane1_normal, plane1_material, None, 1.0, 1.0 ),
+        Plane::new( plane2_pc, plane2_normal, plane2_material, None, 1.0, 1.0 ),
         Sphere::new( sphere1_center, sphere1_radius, sphere1_material, None ),
         Sphere::new( sphere2_center, sphere2_radius, sphere2_material, None ),
         Cilinder::new( cilinder_r, cilinder_h, cilinder_cb, cilinder_dc, cilinder_material, true, true )

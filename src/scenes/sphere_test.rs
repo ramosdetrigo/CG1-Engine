@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use std::path::Path;
 use sdl2::image::ImageRWops;
 use sdl2::rwops::RWops;
@@ -9,7 +10,7 @@ use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Texture};
 pub fn sphere_test() -> (Scene, Camera, u32, u32) {    
     // Definindo as propriedades de cada objeto
     let sphere1_radius = 0.5; // Raio em metros
-    let sphere1_center = Vec3::new(1.0, 1.0, -1.75); // Coords. centro da esfera (metros)
+    let sphere1_center = Vec3::new(0.0, 0.25, -2.0); // Coords. centro da esfera (metros)
     let sphere1_material = Material::new(
         Vec3::new(0.8, 0.8, 0.8), // Ambient
         Vec3::new(0.8, 0.8, 0.8), // Diffuse
@@ -41,11 +42,12 @@ pub fn sphere_test() -> (Scene, Camera, u32, u32) {
     let light1_intensity = 1.0;
 
     let my_texture = Texture::new("textures/beach_ball.png");
+    let plane_texture = Texture::new("textures/bw.png");
     
     // Criando os objetos e as luzes
     let shapes = vec![
-        Plane::new( plane1_pc, plane1_normal, plane1_material ),
-        Plane::new( plane2_pc, plane2_normal, plane2_material ),
+        Plane::new( plane1_pc, plane1_normal, sphere1_material, Some(plane_texture), 2.0, 2.0 ),
+        Plane::new( plane2_pc, plane2_normal, plane2_material, None, 1.0, 1.0 ),
         Sphere::new( sphere1_center, sphere1_radius, sphere1_material, Some(my_texture) ),
     ];
     
@@ -56,13 +58,14 @@ pub fn sphere_test() -> (Scene, Camera, u32, u32) {
     let ambient_light = Vec3::new(0.3, 0.3, 0.3); // Luz ambiente
     let scene = Scene::new(shapes, lights, ambient_light);
 
-    let p0 = Vec3::new(0.0, 0.0, 0.0); // posição do observador
+    let p0 = Vec3::new(0.0, 0.4, 0.0); // posição do observador
     let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
     let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
     let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
-    let focal_distance: f64 = 0.01; // distância da janela até o observador
+    let focal_distance: f64 = 0.5; // distância da janela até o observador
     let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
     
+    #[allow(unused_mut)]
     let mut camera: Camera = Camera::new(
         p0, // a posição do observador
         image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
@@ -71,7 +74,7 @@ pub fn sphere_test() -> (Scene, Camera, u32, u32) {
         bg_color, // cor do background
     );
 
-    camera.look_at(sphere1_center, Vec3::Y);
+    // camera.look_at(sphere1_center, Vec3::Y);
 
     (scene, camera, image_width, image_height)
 }

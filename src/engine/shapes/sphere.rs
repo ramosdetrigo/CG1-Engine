@@ -25,7 +25,7 @@ impl  Sphere {
     }
 }
 
-impl  Shape for Sphere {
+impl Shape for Sphere {
     #[must_use]
     /// Retorna o ponto de interseção (de distância positiva) mais próximo entre uma esfera e um raio `r` \
     /// (`-INFINITY` se não há interseção)
@@ -61,7 +61,7 @@ impl  Shape for Sphere {
                             (t, normal, Material::new(
                                 uv_color * self.material.k_amb,
                                 uv_color * self.material.k_dif,
-                                self.material.k_esp,
+                                uv_color * self.material.k_esp,
                                 self.material.e
                             ))
                         }

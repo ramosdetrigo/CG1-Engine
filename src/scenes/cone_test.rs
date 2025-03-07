@@ -75,8 +75,8 @@ pub fn cone_test() -> (Scene, Camera, u32, u32) {
     
     // Criando os objetos e as luzes
     let shapes = vec![
-        Plane::new( plane1_pc, plane1_normal, plane1_material ),
-        Plane::new( plane2_pc, plane2_normal, plane2_material ),
+        Plane::new( plane1_pc, plane1_normal, plane1_material, None, 1.0, 1.0 ),
+        Plane::new( plane2_pc, plane2_normal, plane2_material, None, 1.0, 1.0 ),
         Cilinder::new( cilinder2_r, cilinder2_h, cilinder2_cb, cilinder2_dc, cilinder2_material, true, true),
         Sphere::new( sphere1_center, sphere1_radius, sphere1_material, None ),
         Cone::new( cone1_r, cone1_h, cone1_cb, cone1_dc, cone1_material, true),

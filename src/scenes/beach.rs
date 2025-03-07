@@ -240,8 +240,8 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
     
     // Criando os objetos e as luzes
     let shapes = vec![
-        Plane::new( sand_pc, sand_normal, sand_material ), // chão
-        Plane::new( water_pc, water_normal, water_material ), // fundo
+        Plane::new( sand_pc, sand_normal, sand_material, None, 1.0, 1.0 ), // chão
+        Plane::new( water_pc, water_normal, water_material, None, 1.0, 1.0 ), // fundo
 
         // bola de praia
         Sphere::new( ball_center, ball_radius, ball_material, Some(ball_texture) ),

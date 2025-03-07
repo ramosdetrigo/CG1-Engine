@@ -114,8 +114,8 @@ pub fn simple() -> (Scene, Camera, u32, u32) {
     
     // Criando os objetos e as luzes
     let shapes = vec![
-        Plane::new( plane1_pc, plane1_normal, plane1_material ),
-        Plane::new( plane2_pc, plane2_normal, plane2_material ),
+        Plane::new( plane1_pc, plane1_normal, plane1_material, None, 1.0, 1.0 ),
+        Plane::new( plane2_pc, plane2_normal, plane2_material, None, 1.0, 1.0 ),
         // cube.into_shape(),
         // cilinder_x,
         // cilinder_y,
