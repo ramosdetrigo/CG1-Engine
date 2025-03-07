@@ -40,9 +40,7 @@ pub fn sphere_test() -> (Scene, Camera, u32, u32) {
     let light1_color = Vec3::new(1.0, 1.0, 1.0);
     let light1_intensity = 1.0;
 
-    let my_path = Path::new("textures/beach_ball.png");
-    let my_surface = RWops::from_file(my_path, "r").unwrap().load_png().unwrap();
-    let my_texture = Texture::new(my_surface);
+    let my_texture = Texture::new("textures/beach_ball.png");
     
     // Criando os objetos e as luzes
     let shapes = vec![

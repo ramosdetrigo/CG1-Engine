@@ -170,9 +170,7 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
         10.0, // coeficiente de "brilho" ou "polimento"
     );
 
-    let ball_texture = Texture::new(
-        RWops::from_file(Path::new("textures/beach_ball.png"), "r").unwrap().load_png().unwrap()
-    );
+    let ball_texture = Texture::new("textures/beach_ball.png");
 
 
     #[allow(unused_variables)]

@@ -26,7 +26,7 @@ fn glow_context(window: &Window) -> glow::Context {
 
 fn main() {
     #[allow(unused_mut)]
-    let (mut scene, mut camera, window_width, window_height) = scenes::cilinder_test();
+    let (mut scene, mut camera, window_width, window_height) = scenes::beach();
     let scale = 1.0; // TODO: fix scaling
 
     // Inicializando SDL

@@ -1,4 +1,5 @@
-use sdl2::surface::Surface;
+use std::path::Path;
+use sdl2::{rwops::RWops, image::ImageRWops, surface::Surface};
 use crate::utils::Vec3;
 
 #[derive(Clone, PartialEq)]
@@ -11,7 +12,12 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn new(surface: Surface) -> Self {
+    pub fn new(file_name: &str) -> Self {
+        let surface = RWops::from_file(Path::new(file_name), "r").unwrap().load_png().unwrap();
+        Self::from_surface(surface)
+    }
+
+    pub fn from_surface(surface: Surface) -> Self {
         let width = surface.width();
         let height = surface.height();
         let pitch = surface.pitch();

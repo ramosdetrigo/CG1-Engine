@@ -96,7 +96,7 @@ pub fn cone_test() -> (Scene, Camera, u32, u32) {
     let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
     let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
     let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
-    let viewport_distance: f64 = 0.01; // distância da janela até o observador
+    let viewport_distance: f64 = 0.5; // distância da janela até o observador
     let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
     
     #[allow(unused_mut)]
