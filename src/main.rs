@@ -27,7 +27,7 @@ fn glow_context(window: &Window) -> glow::Context {
 fn main() {
     #[allow(unused_mut)]
     let (mut scene, mut camera, window_width, window_height) = scenes::beach();
-    let scale = 1.0; // TODO: fix scaling
+    let scale = 2.0;
 
     // Inicializando SDL
     let sdl_context = sdl2::init().unwrap();
@@ -112,11 +112,17 @@ fn main() {
             }
             // println!("{:?}", camera.pos);
         }
-
+        
         // Seção de draw
         window.gl_make_current(&gl_context_engine).unwrap();
-        let surface = window.surface(&event_pump).unwrap();
-        camera.draw_scene(&scene, surface);
+        
+        camera.draw_scene(&scene);
+
+        
+        let mut window_surface = window.surface(&event_pump).unwrap();
+        let window_rect = window_surface.rect();
+        camera.sdl_surface.blit_scaled(camera.sdl_surface.rect(), &mut window_surface, window_rect).unwrap();
+        window_surface.finish().unwrap();
         
         // imgui
         if false {

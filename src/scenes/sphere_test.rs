@@ -7,7 +7,7 @@ use crate::engine::camera::Camera;
 use crate::utils::Vec3;
 use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Texture};
 
-pub fn sphere_test() -> (Scene, Camera, u32, u32) {    
+pub fn sphere_test<'a>() -> (Scene, Camera<'a>, u32, u32) {    
     // Definindo as propriedades de cada objeto
     let sphere1_radius = 0.5; // Raio em metros
     let sphere1_center = Vec3::new(0.0, 0.25, -2.0); // Coords. centro da esfera (metros)

@@ -1,6 +1,9 @@
 use std::f64::consts::PI;
+use std::fs::File;
+use std::io::BufReader;
 use std::path::Path;
 
+use obj::Obj;
 use sdl2::rwops::RWops;
 use sdl2::image::ImageRWops;
 
@@ -10,7 +13,7 @@ use crate::utils::transform::{rotation_around_axis, scale_matrix, shear_matrix_x
 use crate::utils::Vec3;
 use crate::engine::shapes::{Cilinder, Cone, Material, Mesh, Plane, Sphere, Texture};
 
-pub fn beach() -> (Scene, Camera, u32, u32) {    
+pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {    
     let bg_color = Vec3::new(0.35,0.63,0.95); // cor do background
 
     let sand_pc = Vec3::new(0.0, 0.0, 9.0); // Ponto conhecido do plano
@@ -157,7 +160,7 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
         Vec3::all(0.5),
         Vec3::all(0.5),
         Vec3::all(0.2),
-        20.0
+        50.0
     );
     let umbrella_pole_radius = 0.075;
     let umbrella_pole_height = 3.1;
@@ -208,7 +211,7 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
     );
 
     // Definindo as propriedades das luzes
-    let light1_pos = Vec3::new(100.0, 200.0, 0.0);
+    let light1_direction = Vec3::new(-1.0, -2.0, 0.25).normalized();
     let light1_color = Vec3::new(1.0, 1.0, 1.0);
     let light1_intensity = 0.65;
 
@@ -238,17 +241,89 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
         * scale_matrix(0.75, 0.12, 0.75);
     chair_top.apply_transform(&transform2);
 
+    let max_y = chair_middle.vertices.iter().max_by(|vertex1, vertex2| {
+        vertex1.y.partial_cmp(&vertex2.y).unwrap()
+    }).unwrap().y;
+    let mut chair_leg_back = Mesh::cube(chair_material);
+    let transform3 = translation_matrix(snowman1_x + 0.65, max_y-0.12, snowman1_z)
+        * rotation_around_axis(Vec3::Y, -PI/2.0)
+        * shear_matrix_y_angle(-0.7)
+        * rotation_around_axis(Vec3::Y, PI/2.0)
+        * scale_matrix(0.75, 0.12, 0.75);
+    chair_leg_back.apply_transform(&transform3);
+
     let min_y = chair_middle.vertices.iter().min_by(|vertex1, vertex2| {
         vertex1.y.partial_cmp(&vertex2.y).unwrap()
     }).unwrap().y;
     let mut chair_bottom = Mesh::cube(chair_material);
-    let transform2 = translation_matrix(snowman1_x + 0.65, min_y-0.81+0.18, snowman1_z - 1.95)
+    let transform4 = translation_matrix(snowman1_x + 0.65, min_y-0.81+0.18, snowman1_z - 1.95)
         * rotation_around_axis(Vec3::Y, -PI/2.0)
         * shear_matrix_y_angle(0.7)
         * rotation_around_axis(Vec3::Y, PI/2.0)
         * scale_matrix(0.75, 0.12, 0.75);
-    chair_bottom.apply_transform(&transform2);
+    chair_bottom.apply_transform(&transform4);
 
+
+    let td = 0.4;
+    let td_angle = 30.0_f64.to_radians();
+    let table_top = Cilinder::new(
+        0.5, 0.1,
+        Vec3::new(umbrella_pole_cb.x, 0.6, umbrella_pole_cb.z - 1.0),
+        Vec3::Y,
+        chair_material, true, true
+    );
+
+    let table_leg1 = Cilinder::new(
+        0.075, 0.6,
+        Vec3::new(umbrella_pole_cb.x, 0.0, umbrella_pole_cb.z - 1.0 + td),
+        Vec3::Y,
+        chair_material, true, true
+    );
+
+    let table_leg2 = Cilinder::new(
+        0.075, 0.6,
+        Vec3::new(umbrella_pole_cb.x + td*td_angle.cos(), 0.0, umbrella_pole_cb.z - 1.0 - td*td_angle.sin()),
+        Vec3::Y,
+        chair_material, true, true
+    );
+
+    let table_leg3 = Cilinder::new(
+        0.075, 0.6,
+        Vec3::new(umbrella_pole_cb.x - td*td_angle.cos(), 0.0, umbrella_pole_cb.z - 1.0 - td*td_angle.sin()),
+        Vec3::Y,
+        chair_material, true, true
+    );
+
+    let input = BufReader::new(File::open("objects/teapot400.obj").unwrap());
+    let model: Obj = obj::load_obj(input).unwrap();
+    let teapot_vertices: Vec<Vec3> = model.vertices
+        .into_iter()
+        .map(|vertex| Vec3::new(vertex.position[0] as f64, vertex.position[1] as f64, vertex.position[2] as f64))
+        .collect();
+    let teapot_triangles: Vec<[usize; 3]> = model.indices
+        .chunks(3)
+        .map(|face| [face[0] as usize, face[1] as usize, face[2] as usize])
+        .collect();
+
+    let mut teapot = Mesh::new(teapot_vertices, teapot_triangles, Material::WHITE);
+    // let teapot_trans = rotation_around_axis(Vec3::Y, PI*0.5); // girar ao redor do eixo Y
+    // teapot.apply_transform(&teapot_trans);
+    teapot.scale(Vec3::all(0.1));
+    teapot.translate(Vec3::new(umbrella_pole_cb.x + td/2.0, 0.7, umbrella_pole_cb.z - 1.0));
+
+    let cup = Cilinder::new(
+        0.065, 0.2,
+        Vec3::new(umbrella_pole_cb.x - td/2.0, 0.7, umbrella_pole_cb.z - 1.0),
+        Vec3::Y,
+        Material::WHITE, true, false
+    );
+
+    let liquid = Cilinder::new(
+        0.064, 0.18,
+        Vec3::new(umbrella_pole_cb.x - td/2.0, 0.7, umbrella_pole_cb.z - 1.0),
+        Vec3::Y,
+        Material::GREEN, true, true
+    );
 
     let sand_texture = Texture::new("textures/sand.png");
     let water_texture = Texture::new("textures/water.png");
@@ -282,12 +357,23 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
         chair_middle.into_shape(),
         chair_top.into_shape(),
         chair_bottom.into_shape(),
+        chair_leg_back.into_shape(),
+
+        table_top,
+        table_leg1,
+        table_leg2,
+        table_leg3,
+        cup,
+        liquid,
+
+        teapot.into_shape()
 
         // cilinder_x, cilinder_y, cilinder_z
     ];
 
     let lights = vec![
-        Light::point( light1_pos, light1_color, light1_intensity ),
+        // Light::point( light1_pos, light1_color, light1_intensity ),
+        Light::directional(light1_direction, light1_color, light1_intensity)
     ];
 
     let ambient_light = Vec3::new(0.3, 0.3, 0.3); // Luz ambiente
@@ -295,7 +381,7 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
 
     let p0 = Vec3::new(2.3, 1.3, 3.9); // posição do observador
     let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
-    let image_width: u32 = 1920; // Resolução da imagem (número de colunas e linhas na grade)
+    let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
     let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
     let viewport_width: f64 = 0.032; // Tamanho da janela (em metros)
     let viewport_height: f64 = viewport_width/aspect_ratio;

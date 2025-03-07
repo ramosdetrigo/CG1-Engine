@@ -11,7 +11,7 @@ use crate::utils::{Matrix3, Vec3};
 use crate::utils::transform::{self, translation_matrix};
 use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Mesh};
 
-pub fn simple() -> (Scene, Camera, u32, u32) {    
+pub fn simple<'a>() -> (Scene, Camera<'a>, u32, u32) {    
     // Planos
     let plane1_pc = Vec3::new(0.0, -0.5, 0.0); // Ponto conhecido do plano
     let plane1_normal = Vec3::new(0.0, 1.0 ,0.0); // Normal do plano

@@ -3,10 +3,10 @@ use super::{Ray, Scene};
 use super::Light;
 use crate::utils::transform::rotation_around_axis;
 use crate::utils::Vec3;
+use sdl2::surface::Surface;
 // use sdl2::rect::Rect;
 // use sdl2::render::Canvas;
 // use sdl2::surface::Surface;
-use sdl2::video::WindowSurfaceRef;
 use std::f64::consts::PI;
 // use sdl2::video::Window;
 use std::{ptr, thread};
@@ -19,7 +19,7 @@ pub enum Projection {
     Oblique
 }
 
-pub struct Camera {
+pub struct Camera<'a> {
     pub pos: Vec3, // observador
     pub bg_color: Vec3,
     pub coord_system: [Vec3; 3],
@@ -27,11 +27,11 @@ pub struct Camera {
     pub fov: f64,
     pub projection_type: Projection,
     pub obliqueness: Vec3,
-    pub viewport: Viewport, // janela
-    draw_buffer: Vec<u8>,
+    pub viewport: Viewport, // janela   
+    pub sdl_surface: Surface<'a>,
 }
 
-impl Camera {
+impl <'a> Camera<'a> {
     #[inline]
     #[must_use]
     /// Cria uma nova câmera. \
@@ -41,8 +41,9 @@ impl Camera {
     /// `viewport_distance`: Distância do viewport até o observador \
     /// `bg_color`: Cor do background
     /// `texture_creator`: TextureCreator para criar a textura interna de buffer da câmera
-    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f64, viewport_h: f64, focal_distance: f64, bg_color: Vec3) -> Camera {     
+    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f64, viewport_h: f64, focal_distance: f64, bg_color: Vec3) -> Camera<'a> {     
         let fov = 2.0 * (viewport_h / (2.0 * focal_distance)).atan().to_degrees();
+        let sdl_surface = Surface::new(n_cols, n_rows, sdl2::pixels::PixelFormatEnum::RGB888).unwrap();
 
         Camera {
             pos, // posição do observador
@@ -53,7 +54,7 @@ impl Camera {
             projection_type: Projection::Perspective,
             obliqueness: Vec3::new(0.0, 30.0, 0.0),
             
-            draw_buffer: vec![0; (n_cols * n_rows * 4) as usize],
+            sdl_surface,
 
             viewport: Viewport::new(
                 Vec3::new(pos.x, pos.y, pos.z-focal_distance), // posição da janela em relação ao observador (0, 0, -d)
@@ -135,7 +136,7 @@ impl Camera {
     }
 
     /// Desenha uma cena em um canvas com base nas especificações da câmera
-    pub fn draw_scene(&mut self, scene: &Scene, mut surface: WindowSurfaceRef) {
+    pub fn draw_scene(&mut self, scene: &Scene) {
         // Número de bytes no canvas (número de pixels * 3: RGB24)
         let num_bytes = self.viewport.cols * self.viewport.rows * 4;
         // Número de threads disponíveis * 3
@@ -149,10 +150,11 @@ impl Camera {
         // Render multithread
         // (A câmera tem um array de pixels em formato RGB24. A gente divide esse buffer pra várias threads
         // e elas vão calcular os pixels em paralelo, acelerando o render.)
-        thread::scope(|s| { // COMEÇO_RENDER_MULTITHREAD
+        let surface_pixels = self.sdl_surface.without_lock_mut().unwrap();
+        thread::scope(|s| {
         let mut lower_bound = 0;
         // Divide o array de buffer em chunks de tamanhos iguais pras threads
-        for ppm_slice in self.draw_buffer.chunks_mut((num_bytes/num_threads) as usize) {
+        for ppm_slice in surface_pixels.chunks_mut((num_bytes/num_threads) as usize) {
             // Clona as referências pesadas e os vetores leves para serem movidos para outra thread
             let scene = Arc::clone(&scene);
             let viewport = Arc::clone(&viewport);
@@ -227,6 +229,7 @@ impl Camera {
                     'lights: for light in &scene.lights {
                         let ldr: Vec3;
                         let light_intensity: Vec3;
+                        let mut is_directional= false;
                         match light {
                             Light::Point { pos, intensity } => {
                                 ldr = *pos - p_i;
@@ -240,6 +243,7 @@ impl Camera {
                             Light::Directional { dr, intensity } => {
                                 ldr = *dr;
                                 light_intensity = *intensity;
+                                is_directional = true;
                             }
                         }
 
@@ -252,7 +256,7 @@ impl Camera {
                             // se tem um objeto ENTRE p_i e a luz (não está atrás da luz ou atrás de p_i (0.0 < tl < 1.0))
                             // 0.0001 previne problemas com floating point precision
                             if let Some((tl, _, _)) = s.get_intersection(&light_ray) {
-                                if 0.0001 < tl && tl < 0.9999 { continue 'lights; }
+                                if 0.0001 < tl && (is_directional || tl < 0.9999) { continue 'lights; }
                             }
                         }
                         
@@ -283,12 +287,7 @@ impl Camera {
 
             lower_bound += pixel_count;
         }
-        }); // FIM_RENDER_MULTITHREAD
-
-        surface.with_lock_mut(|pixels| {
-            pixels.copy_from_slice(&self.draw_buffer);
         });
-        surface.finish().unwrap();
     }
 
     #[must_use]
