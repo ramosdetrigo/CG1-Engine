@@ -15,20 +15,32 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
 
     let sand_pc = Vec3::new(0.0, 0.0, 9.0); // Ponto conhecido do plano
     let sand_normal = Vec3::new(0.0, 1.0 , 0.0001); // Normal do plano
+    // let sand_material = Material::new(
+    //     Vec3::new(0.92, 0.78, 0.65),
+    //     Vec3::new(0.92, 0.78, 0.65),
+    //     Vec3::all(0.5),
+    //     3.0, 
+    // );
     let sand_material = Material::new(
-        Vec3::new(0.92, 0.78, 0.65),
-        Vec3::new(0.92, 0.78, 0.65),
-        Vec3::all(0.5),
-        3.0, 
+        Vec3::new(0.9, 0.9, 0.9), // Ambient
+        Vec3::new(0.9, 0.9, 0.9), // Diffuse
+        Vec3::new(0.9, 0.9, 0.9), // Specular
+        5.0, // coeficiente de "brilho" ou "polimento"
     );
-
+    
     let water_pc = Vec3::new(0.0, 0.0, 4.0); // Ponto conhecido do plano
     let water_normal = Vec3::new(0.0, 1.0 ,0.0); // Normal do plano
+    // let water_material = Material::new(
+    //     Vec3::new(0.1, 0.6, 0.8),
+    //     Vec3::new(0.1, 0.6, 0.8),
+    //     Vec3::all(0.5),
+    //     40.0, 
+    // );
     let water_material = Material::new(
-        Vec3::new(0.1, 0.6, 0.8),
-        Vec3::new(0.1, 0.6, 0.8),
-        Vec3::all(0.5),
-        40.0, 
+        Vec3::new(0.9, 0.9, 0.9), // Ambient
+        Vec3::new(0.9, 0.9, 0.9), // Diffuse
+        Vec3::new(0.9, 0.9, 0.9), // Specular
+        50.0, // coeficiente de "brilho" ou "polimento"
     );
 
     let snowball_material = Material::new(
@@ -237,11 +249,15 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
         * scale_matrix(0.75, 0.12, 0.75);
     chair_bottom.apply_transform(&transform2);
 
+
+    let sand_texture = Texture::new("textures/sand.png");
+    let water_texture = Texture::new("textures/water.png");
+
     
     // Criando os objetos e as luzes
     let shapes = vec![
-        Plane::new( sand_pc, sand_normal, sand_material, None, 1.0, 1.0 ), // chão
-        Plane::new( water_pc, water_normal, water_material, None, 1.0, 1.0 ), // fundo
+        Plane::new( sand_pc, sand_normal, sand_material, Some(sand_texture), 4.0, 4.0 ), // chão
+        Plane::new( water_pc, water_normal, water_material, Some(water_texture), 16.0, 16.0 ), // fundo
 
         // bola de praia
         Sphere::new( ball_center, ball_radius, ball_material, Some(ball_texture) ),
@@ -279,7 +295,7 @@ pub fn beach() -> (Scene, Camera, u32, u32) {
 
     let p0 = Vec3::new(2.3, 1.3, 3.9); // posição do observador
     let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
-    let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
+    let image_width: u32 = 1920; // Resolução da imagem (número de colunas e linhas na grade)
     let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
     let viewport_width: f64 = 0.032; // Tamanho da janela (em metros)
     let viewport_height: f64 = viewport_width/aspect_ratio;

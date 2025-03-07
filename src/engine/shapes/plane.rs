@@ -58,9 +58,9 @@ impl Shape for Plane {
                     let p = r.at(t);
                     let mut u = (p - self.pc).dot(basis1) / self.ty_scale;
                     let mut v = (p - self.pc).dot(basis2) / self.tx_scale;
-
-                    u = u - u.floor();
-                    v = v - v.floor();
+                    
+                    u = (u - u.floor()).max(0.0).min(1.0);
+                    v = (v - v.floor()).max(0.0).min(1.0);
 
                     let uv_color = texture.sample(u, v);
 

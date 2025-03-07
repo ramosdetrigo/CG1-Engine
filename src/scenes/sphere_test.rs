@@ -42,7 +42,7 @@ pub fn sphere_test() -> (Scene, Camera, u32, u32) {
     let light1_intensity = 1.0;
 
     let my_texture = Texture::new("textures/beach_ball.png");
-    let plane_texture = Texture::new("textures/bw.png");
+    let plane_texture = Texture::new("textures/sand.png");
     
     // Criando os objetos e as luzes
     let shapes = vec![
