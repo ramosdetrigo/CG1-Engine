@@ -1,4 +1,4 @@
-1. [ ] **Definição do cenário**
+1. [x] **Definição do cenário**
     1. [x] Coerência temática (Obrigatório)
 	    `O cenário tem de ter coerência temática, isto é, não pode ser um amontoado de objetos aleatoriamente distribuídos.`
 	2. [x] Coordenadas do mundo (Obrigatório)
