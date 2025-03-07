@@ -51,8 +51,7 @@ fn main() {
     
     imgui.set_ini_filename(None);
     imgui.set_log_filename(None);
-    imgui
-        .fonts()
+    imgui.fonts()
         .add_font(&[imgui::FontSource::DefaultFontData { config: None }]);
     // create platform and renderer
     let mut platform = SdlPlatform::new(&mut imgui);
