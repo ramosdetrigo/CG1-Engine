@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use crate::engine::Ray;
-use crate::utils::{Matrix3, Vec3};
+use crate::utils::{Matrix3, Matrix4, Vec3};
 use super::{Material, Shape};
 
 #[derive(Clone, PartialEq)]
@@ -91,6 +91,12 @@ impl Shape for Cone {
         }
 
         closest_intersection.map(|(t, n)| (t, n * -n.dot(r.dr).signum(), self.material) )
+    }
+
+    fn transform(&mut self, matrix: &Matrix4) {
+        self.cb.transform(matrix);
+        self.v.transform(matrix);
+        self.dc = (self.v - self.cb).normalized();
     }
 
     fn material(&self) -> &Material { &self.material }

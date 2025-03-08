@@ -212,7 +212,7 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     chair_middle.apply_transform(&transform1);
 
     let max_y = chair_middle.vertices.iter().max_by(|vertex1, vertex2| {
-        vertex1.y.partial_cmp(&vertex2.y).unwrap()
+        vertex1.y.total_cmp(&vertex2.y)
     }).unwrap().y;
     let mut chair_top = Mesh::cube(chair_material);
     let transform2 = translation_matrix(snowman1_x + 0.65, max_y-0.12, snowman1_z)
@@ -223,7 +223,7 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     chair_top.apply_transform(&transform2);
 
     let max_y = chair_middle.vertices.iter().max_by(|vertex1, vertex2| {
-        vertex1.y.partial_cmp(&vertex2.y).unwrap()
+        vertex1.y.total_cmp(&vertex2.y)
     }).unwrap().y;
     let mut chair_leg_back = Mesh::cube(chair_material);
     let transform3 = translation_matrix(snowman1_x + 0.65, max_y-0.12, snowman1_z)
@@ -234,7 +234,7 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     chair_leg_back.apply_transform(&transform3);
 
     let min_y = chair_middle.vertices.iter().min_by(|vertex1, vertex2| {
-        vertex1.y.partial_cmp(&vertex2.y).unwrap()
+        vertex1.y.total_cmp(&vertex2.y)
     }).unwrap().y;
     let mut chair_bottom = Mesh::cube(chair_material);
     let transform4 = translation_matrix(snowman1_x + 0.65, min_y-0.81+0.18, snowman1_z - 1.95)

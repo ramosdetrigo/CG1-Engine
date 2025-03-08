@@ -26,7 +26,7 @@ fn glow_context(window: &Window) -> glow::Context {
 
 fn main() {
     #[allow(unused_mut)]
-    let (mut scene, mut camera, window_width, window_height) = scenes::beach();
+    let (mut scene, mut camera, window_width, window_height) = scenes::sphere_test();
     let scale = 2.0;
 
     // Inicializando SDL
@@ -98,7 +98,7 @@ fn main() {
                 Event::MouseButtonDown { x, y, mouse_btn, .. } => {
                     match mouse_btn {
                         MouseButton::Left => {
-                            if let Some((ray, t, _)) = camera.send_ray(y, x, &scene) {
+                            if let Some((ray, t, _)) = camera.send_ray(y/scale as i32, x/scale as i32, &scene) {
                                 let p = ray.at(t);
                                 camera.look_at(p, Vec3::Y);
                             }

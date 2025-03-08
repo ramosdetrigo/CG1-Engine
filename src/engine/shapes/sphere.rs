@@ -4,7 +4,7 @@ use super::Material;
 use super::Texture;
 use super::Shape;
 use super::super::Ray;
-use crate::utils::Vec3;
+use crate::utils::{Matrix4, Vec3};
 
 #[derive(Clone, PartialEq)]
 /// Esfera de centro `center`, raio `radius`, e material `material`.
@@ -50,7 +50,7 @@ impl Shape for Sphere {
         if delta >= 0.0 {
             [(b + delta.sqrt()) / a, (b - delta.sqrt()) / a].into_iter()
                 .filter(|t| *t > 0.0) // filtra os T's positivos
-                .min_by(|t1, t2| t1.partial_cmp(t2).unwrap() ) // pega o menor deles
+                .min_by(|t1, t2| t1.total_cmp(t2) ) // pega o menor deles
                 .map(|t| {
                     let normal = (r.at(t) - self.center).normalized();
                     match &self.texture {
@@ -75,6 +75,10 @@ impl Shape for Sphere {
 
     fn translate(&mut self, translation_vector: Vec3) {
         self.center += translation_vector;
+    }
+
+    fn transform(&mut self, matrix: &Matrix4) {
+        self.center.transform(&matrix);
     }
 
     #[inline]

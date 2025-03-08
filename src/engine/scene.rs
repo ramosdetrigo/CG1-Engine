@@ -44,6 +44,6 @@ impl Scene {
     pub fn get_intersection(&self, ray: &Ray) -> Option<(&Box<dyn Shape>, f64, Vec3, Material)> {
         self.shapes.iter()
             .filter_map(|shape| shape.get_intersection(ray).map(|(t, n, mat)| (shape, t, n, mat)) )
-            .min_by(|(_, t1, _, _), (_, t2, _, _)| t1.partial_cmp(t2).unwrap() ) // pega a colisão com menor t
+            .min_by(|(_, t1, _, _), (_, t2, _, _)| t1.total_cmp(t2) ) // pega a colisão com menor t
     }
 }

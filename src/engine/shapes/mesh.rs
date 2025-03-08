@@ -193,6 +193,10 @@ impl Shape for Mesh {
         self.max_bound += translation_vector;
     }
 
+    fn transform(&mut self, matrix: &Matrix4) {
+        self.apply_transform(matrix);
+    }
+
     #[inline]
     #[must_use]
     /// Returns the material of the mesh.

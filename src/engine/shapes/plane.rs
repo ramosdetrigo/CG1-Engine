@@ -3,7 +3,7 @@ use super::Material;
 use super::Shape;
 use super::super::Ray;
 use super::Texture;
-use crate::utils::Vec3;
+use crate::utils::{Vec3, Matrix4};
 
 #[derive(Clone, PartialEq)]
 /// Plano baseado num ponto `pc` com vetor normal `normal`, de material `material`.
@@ -77,6 +77,10 @@ impl Shape for Plane {
 
     fn translate(&mut self, translation_vector: Vec3) {
         self.pc += translation_vector;
+    }
+
+    fn transform(&mut self, matrix: &Matrix4) {
+        self.pc.transform(&matrix);
     }
 
     fn material(&self) -> &Material { &self.material }

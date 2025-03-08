@@ -32,6 +32,12 @@ impl Shape for Cilinder {
         self.ct += translation_vector;
     }
 
+    fn transform(&mut self, matrix: &crate::utils::Matrix4) {
+        self.cb.transform(matrix);
+        self.ct.transform(matrix);
+        self.dc = (self.ct - self.cb).normalized();
+    }
+
     #[must_use]
     fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3, Material)> {
         let mut closest_intersection: Option<(f64, Vec3)> = None;

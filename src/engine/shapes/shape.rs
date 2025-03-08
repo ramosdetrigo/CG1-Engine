@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use super::Material;
 use super::super::Ray;
-use crate::utils::Vec3;
+use crate::utils::{Vec3, Matrix4};
 
 /// Enum Shape que "encapsula" objetos diferentes (esfera, plano)
 pub trait Shape : Sync {
@@ -16,6 +16,8 @@ pub trait Shape : Sync {
     fn get_intersection(&self, r: &Ray) -> Option<(f64, Vec3, Material)>;
 
     fn translate(&mut self, translation_vector: Vec3);
+
+    fn transform(&mut self, matrix: &Matrix4);
 
     // fn rotate(&mut self, rotation_vector: Vec3);
 }

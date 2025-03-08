@@ -8,7 +8,7 @@ use obj::{load_obj, Obj, Vertex};
 use crate::engine::{Scene, Light};
 use crate::engine::camera::Camera;
 use crate::utils::{Matrix3, Vec3};
-use crate::utils::transform::{self, translation_matrix};
+use crate::utils::transform::{self, householder_reflection, translation_matrix};
 use crate::engine::shapes::{Cilinder, Cone, Material, Plane, Sphere, Mesh};
 
 pub fn simple<'a>() -> (Scene, Camera<'a>, u32, u32) {    
@@ -104,7 +104,11 @@ pub fn simple<'a>() -> (Scene, Camera<'a>, u32, u32) {
     let teapot_trans = transform::rotation_around_axis(Vec3::Y, PI*0.5); // girar ao redor do eixo Y
     teapot.apply_transform(&teapot_trans);
     teapot.scale(Vec3::all(0.25));
-    teapot.translate(Vec3::new(0.0, 0.0, -2.0));
+    teapot.translate(Vec3::new(2.0, 0.0, -2.0));
+
+    let espelho = householder_reflection(Vec3::X);
+    teapot.apply_transform(&espelho);
+
     println!("finished scaling!!");
     
     // Definindo as propriedades das luzes
@@ -135,7 +139,7 @@ pub fn simple<'a>() -> (Scene, Camera<'a>, u32, u32) {
     let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
     let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
     let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
-    let viewport_distance: f64 = 0.01; // distância da janela até o observador
+    let viewport_distance: f64 = 0.3; // distância da janela até o observador
     let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
     
     let camera: Camera = Camera::new(
