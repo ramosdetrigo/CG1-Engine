@@ -108,4 +108,6 @@ impl Shape for Cilinder {
 
         closest_intersection.map(|(t, n)| (t, n * -n.dot(r.dr).signum(), self.material) )
     }
+
+    fn as_any(&mut self) -> &mut dyn std::any::Any { self }
 }

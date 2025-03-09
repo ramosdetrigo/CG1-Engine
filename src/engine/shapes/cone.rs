@@ -100,4 +100,6 @@ impl Shape for Cone {
     }
 
     fn material(&self) -> &Material { &self.material }
+
+    fn as_any(&mut self) -> &mut dyn std::any::Any { self }
 }

@@ -12,6 +12,8 @@ pub struct Mesh {
     pub material: Material,
     pub min_bound: Vec3,
     pub max_bound: Vec3,
+        pub centroid: Vec3, // New field
+
 }
 
 impl Mesh {
@@ -20,7 +22,8 @@ impl Mesh {
     /// Creates a new mesh from a list of triangles and a material.
     pub fn new(vertices: Vec<Vec3>, triangles: Vec<[usize; 3]>, material: Material) -> Mesh {
         let (min_bound, max_bound) = Self::calculate_bounding_box(&vertices);
-        Self { vertices, triangles, material, min_bound, max_bound }
+        let centroid = vertices.iter().fold(Vec3::new(0.0, 0.0, 0.0), |acc, v| acc + *v) / vertices.len() as f64;
+        Self { vertices, triangles, material, min_bound, max_bound, centroid }
     }
 
     pub fn into_shape(self) -> Box<dyn Shape> {
@@ -102,6 +105,7 @@ impl Mesh {
         for vertex in &mut self.vertices {
             vertex.transform(transformation_matrix);
         }
+        self.centroid.transform(transformation_matrix);
         (self.min_bound, self.max_bound) = Self::calculate_bounding_box(&self.vertices);
     }
 
@@ -109,6 +113,7 @@ impl Mesh {
         for vertex in &mut self.vertices {
             *vertex *= scaling_vector;
         }
+        self.centroid *= scaling_vector;
         (self.min_bound, self.max_bound) = Self::calculate_bounding_box(&self.vertices);
     }
 
@@ -116,6 +121,7 @@ impl Mesh {
         for vertex in &mut self.vertices {
             *vertex += translation_vector;
         }
+        self.centroid += translation_vector;
         self.min_bound += translation_vector;
         self.max_bound += translation_vector;
     }
@@ -203,4 +209,6 @@ impl Shape for Mesh {
     fn material(&self) -> &Material {
         &self.material
     }
+
+    fn as_any(&mut self) -> &mut dyn std::any::Any { self }
 }

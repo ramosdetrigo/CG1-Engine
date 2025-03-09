@@ -9,7 +9,7 @@ use sdl2::image::ImageRWops;
 
 use crate::engine::{Scene, Light};
 use crate::engine::camera::Camera;
-use crate::utils::transform::{rotation_around_axis, scale_matrix, shear_matrix_x_angle, shear_matrix_y_angle, translation_matrix};
+use crate::utils::transform::{rotation_around_axis, scale_matrix, shear_matrix_y, translation_matrix};
 use crate::utils::Vec3;
 use crate::engine::shapes::{Cilinder, Cone, Material, Mesh, Plane, Sphere, Texture};
 
@@ -206,7 +206,7 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     let mut chair_middle = Mesh::cube(chair_material);
     let transform1 = translation_matrix(snowman1_x + 0.65, 0.4, snowman1_z - 1.2)
         * rotation_around_axis(Vec3::Y, -PI/2.0)
-        * shear_matrix_y_angle(0.15)
+        * shear_matrix_y(0.15, 0.0)
         * rotation_around_axis(Vec3::Y, PI/2.0)
         * scale_matrix(0.75, 0.12, 1.2);
     chair_middle.apply_transform(&transform1);
@@ -217,7 +217,7 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     let mut chair_top = Mesh::cube(chair_material);
     let transform2 = translation_matrix(snowman1_x + 0.65, max_y-0.12, snowman1_z)
         * rotation_around_axis(Vec3::Y, -PI/2.0)
-        * shear_matrix_y_angle(0.7)
+        * shear_matrix_y(0.7, 0.0)
         * rotation_around_axis(Vec3::Y, PI/2.0)
         * scale_matrix(0.75, 0.12, 0.75);
     chair_top.apply_transform(&transform2);
@@ -228,7 +228,7 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     let mut chair_leg_back = Mesh::cube(chair_material);
     let transform3 = translation_matrix(snowman1_x + 0.65, max_y-0.12, snowman1_z)
         * rotation_around_axis(Vec3::Y, -PI/2.0)
-        * shear_matrix_y_angle(-0.7)
+        * shear_matrix_y(-0.7, 0.0)
         * rotation_around_axis(Vec3::Y, PI/2.0)
         * scale_matrix(0.75, 0.12, 0.75);
     chair_leg_back.apply_transform(&transform3);
@@ -239,7 +239,7 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     let mut chair_bottom = Mesh::cube(chair_material);
     let transform4 = translation_matrix(snowman1_x + 0.65, min_y-0.81+0.18, snowman1_z - 1.95)
         * rotation_around_axis(Vec3::Y, -PI/2.0)
-        * shear_matrix_y_angle(0.7)
+        * shear_matrix_y(0.7, 0.0)
         * rotation_around_axis(Vec3::Y, PI/2.0)
         * scale_matrix(0.75, 0.12, 0.75);
     chair_bottom.apply_transform(&transform4);
@@ -492,43 +492,29 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     let light1_color = Vec3::new(1.0, 1.0, 1.0);
     let light1_intensity = 0.55;
 
-    let light2_color = Vec3::new(1.0, 0.8, 0.3);
-    let light2_intensity = 0.65;
-
-    let light3_position = umbrella_top_cb + (umbrella_top_height * Vec3::Y * 0.9);
-
     let lights = vec![
-        // Light::directional(light1_direction, light1_color, light1_intensity),
-        Light::spotlight(
-            Vec3::new(14.0, 6.25, 4.0),
-            -Vec3::Y, PI/4.0,
-            light2_color,
-            light2_intensity
-        ),
-        Light::point( light3_position, light2_color, 0.3 ),
+        Light::directional(light1_direction, light1_color, light1_intensity),
     ];
     
-    let ambient_light = Vec3::all(0.2); // Luz ambiente
-    // let ambient_light = Vec3::all(0.4); // Luz ambiente
+    // let ambient_light = Vec3::all(0.2); // Luz ambiente
+    let ambient_light = Vec3::all(0.4); // Luz ambiente
     let bg_color = Vec3::new(0.35,0.63,0.95); // cor do background
-    let bg_color = Vec3::NULL; // cor do background
 
-    let scene = Scene::new(shapes, lights, ambient_light);
+    let scene = Scene::new(shapes, lights, ambient_light, bg_color);
 
     let p0 = Vec3::new(2.3, 1.3, 3.9); // posição do observador
     let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
     let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
     let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
-    let viewport_width: f64 = 3.2; // Tamanho da janela (em metros)
+    let viewport_width: f64 = 16.0; // Tamanho da janela (em metros)
     let viewport_height: f64 = viewport_width/aspect_ratio;
-    let focal_distance: f64 = 1.0; // distância da janela até o observador
+    let focal_distance: f64 = 5.0; // distância da janela até o observador
     
     let mut camera: Camera = Camera::new(
         p0, // a posição do observador
         image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
         viewport_width, viewport_height, // tamanho da janela (em metros)
         focal_distance, // distância da janela até o observador (em metros)
-        bg_color, // cor do background
     );
 
     camera.rotate(Vec3::Y, PI + PI/3.0);

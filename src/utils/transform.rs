@@ -45,35 +45,38 @@ pub fn shear_matrix_z(sh_xy: f64, sh_yx: f64) -> Matrix4 {
     ])
 }
 
-pub fn shear_matrix_x_angle(angle: f64) -> Matrix4 {
-    let sh_yz = angle.tan(); // Shear factor based on the angle for x-axis
+pub fn shear_matrix_x_angle(angle_yz: f64, angle_zy: f64) -> Matrix4 {
+    let sh_yz = angle_yz.tan(); // Shear factor based on the angle for x-y plane
+    let sh_zy = angle_zy.tan(); // Shear factor based on the angle for x-y plane
 
     Matrix4::new([
-        [1.0, sh_yz, 0.0, 0.0],
+        [1.0, sh_yz, sh_zy, 0.0],
         [0.0, 1.0, 0.0, 0.0],
         [0.0, 0.0, 1.0, 0.0],
         [0.0, 0.0, 0.0, 1.0],
     ])
 }
 
-pub fn shear_matrix_y_angle(angle: f64) -> Matrix4 {
-    let sh_xz = angle.tan(); // Shear factor based on the angle for y-axis
+pub fn shear_matrix_y_angle(angle_xz: f64, angle_zy: f64) -> Matrix4 {
+    let sh_xz = angle_xz.tan(); // Shear factor based on the angle for y-x plane
+    let sh_zy = angle_zy.tan(); // Shear factor based on the angle for y-z plane
 
     Matrix4::new([
         [1.0, 0.0, 0.0, 0.0],
-        [sh_xz, 1.0, 0.0, 0.0],
+        [sh_xz, 1.0, sh_zy, 0.0],
         [0.0, 0.0, 1.0, 0.0],
         [0.0, 0.0, 0.0, 1.0],
     ])
 }
 
-pub fn shear_matrix_z_angle(angle: f64) -> Matrix4 {
-    let sh_xy = angle.tan(); // Shear factor based on the angle for z-axis
+pub fn shear_matrix_z_angle(angle_xy: f64, angle_yx: f64) -> Matrix4 {
+    let sh_xy = angle_xy.tan(); // Shear factor based on the angle for z-x plane
+    let sh_yx = angle_yx.tan(); // Shear factor based on the angle for z-y plane
 
     Matrix4::new([
         [1.0, 0.0, 0.0, 0.0],
         [0.0, 1.0, 0.0, 0.0],
-        [sh_xy, 0.0, 1.0, 0.0],
+        [sh_xy, sh_yx, 1.0, 0.0],
         [0.0, 0.0, 0.0, 1.0],
     ])
 }
@@ -108,16 +111,17 @@ pub fn rotation_around_axis(axis: Vec3, angle: f64) -> Matrix4 {
     ])
 }
 
-pub fn householder_reflection(normal: Vec3) -> Matrix4 {
+pub fn householder_reflection(pc: Vec3, normal: Vec3) -> Matrix4 {
     // Normalize the normal vector
     let norm = normal.length();
     let u = normal / norm;
 
     // Calculate the Householder matrix
     let uu_t = [
-        [u.x * u.x, u.x * u.y, u.x * u.z],
-        [u.y * u.x, u.y * u.y, u.y * u.z],
-        [u.z * u.x, u.z * u.y, u.z * u.z],
+        [u.x * u.x, u.x * u.y, u.x * u.z, 0.0],
+        [u.y * u.x, u.y * u.y, u.y * u.z, 0.0],
+        [u.z * u.x, u.z * u.y, u.z * u.z, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
     ];
 
     // Create the Householder matrix
@@ -125,9 +129,10 @@ pub fn householder_reflection(normal: Vec3) -> Matrix4 {
 
     for i in 0..3 {
         for j in 0..3 {
-            householder_matrix[i][j] -= 2.0 * uu_t[i][j] / (norm * norm);
+            householder_matrix[i][j] -= 2.0 * uu_t[i][j];
         }
     }
 
-    householder_matrix
+    translation_matrix(pc.x, pc.y, pc.z) * householder_matrix * translation_matrix(-pc.x, -pc.y, -pc.z)
 }
+

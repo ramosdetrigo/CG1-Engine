@@ -42,7 +42,7 @@ impl Shape for Sphere {
         // delta = b² - 4ac
         let v: Vec3 = self.center - r.origin;
         let a: f64 = r.dr.length_squared();
-        let b: f64 = r.dr.dot(v); // TODO: Explicar otimização
+        let b: f64 = r.dr.dot(v);
         let c: f64 = v.length_squared() - self.radius*self.radius;
         let delta: f64 = b*b - a*c;
         
@@ -84,4 +84,6 @@ impl Shape for Sphere {
     #[inline]
     #[must_use]
     fn material(&self) -> &Material { &self.material }
+
+    fn as_any(&mut self) -> &mut dyn std::any::Any { self }
 }

@@ -106,7 +106,7 @@ pub fn simple<'a>() -> (Scene, Camera<'a>, u32, u32) {
     teapot.scale(Vec3::all(0.25));
     teapot.translate(Vec3::new(2.0, 0.0, -2.0));
 
-    let espelho = householder_reflection(Vec3::X);
+    let espelho = householder_reflection(Vec3::NULL, Vec3::X);
     teapot.apply_transform(&espelho);
 
     println!("finished scaling!!");
@@ -132,22 +132,21 @@ pub fn simple<'a>() -> (Scene, Camera<'a>, u32, u32) {
         Light::point( light1_pos, light1_color, light1_intensity ),
     ];
     
+    let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
     let ambient_light = Vec3::new(0.3, 0.3, 0.3); // Luz ambiente
-    let scene = Scene::new(shapes, lights, ambient_light);
+    let scene = Scene::new(shapes, lights, ambient_light, bg_color);
 
     let p0 = Vec3::new(0.0, 0.4, 0.2); // posição do observador
     let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
     let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
     let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
     let viewport_distance: f64 = 0.3; // distância da janela até o observador
-    let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
     
     let camera: Camera = Camera::new(
         p0, // a posição do observador
         image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
         1.6, 0.9, // tamanho da janela (em metros)
         viewport_distance, // distância da janela até o observador (em metros)
-        bg_color, // cor do background
     );
 
     println!("returning scene...");

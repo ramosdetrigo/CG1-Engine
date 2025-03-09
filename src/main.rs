@@ -1,10 +1,12 @@
 mod engine;
 mod utils;
 mod scenes;
+mod user_interface;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
+use user_interface::make_ui;
 use utils::Vec3;
 use std::time::{Duration, Instant};
 use imgui::Context;
@@ -25,9 +27,8 @@ fn glow_context(window: &Window) -> glow::Context {
 }
 
 fn main() {
-    #[allow(unused_mut)]
-    let (mut scene, mut camera, window_width, window_height) = scenes::sphere_test();
-    let scale = 2.0;
+    let (mut scene, mut camera, window_width, window_height) = scenes::beach();
+    let scale = 1.0;
 
     // Inicializando SDL
     let sdl_context = sdl2::init().unwrap();
@@ -57,6 +58,8 @@ fn main() {
     let mut platform = SdlPlatform::new(&mut imgui);
     let mut renderer = AutoRenderer::new(gl, &mut imgui).unwrap();
     // END_IMGUI
+
+    let mut selected_shape: Option<usize> = None;
     
     // main loop do programa
     let mut frame_count = 0; // contador de FPS no terminal
@@ -85,21 +88,22 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::Q), .. } => { camera.rotate(cdz, 0.1); } // ROLL LEFT
                 Event::KeyDown { keycode: Some(Keycode::E), .. } => { camera.rotate(cdz, -0.1); } // ROLL RIGHT
                 // FOV
-                Event::KeyDown { keycode: Some(Keycode::EQUALS), .. } => { camera.set_fov(camera.fov - 10.0); }
-                Event::KeyDown { keycode: Some(Keycode::MINUS), .. } => { camera.set_fov(camera.fov + 10.0); }
                 Event::KeyDown { keycode: Some(Keycode::LEFTBRACKET), .. } => { camera.set_focal_distance(camera.focal_distance + 0.1); }
                 Event::KeyDown { keycode: Some(Keycode::RIGHTBRACKET), .. } => { camera.set_focal_distance(camera.focal_distance - 0.1); }
-                Event::KeyDown { keycode: Some(Keycode::RETURN), .. } => { camera.set_viewport_size(1.6, 0.9); }
                 // PROJECTION
-                Event::KeyDown { keycode: Some(Keycode::NUM_1), .. } => { camera.set_projection(engine::camera::Projection::Perspective); }
-                Event::KeyDown { keycode: Some(Keycode::NUM_2), .. } => { camera.set_projection(engine::camera::Projection::Ortographic); }
-                Event::KeyDown { keycode: Some(Keycode::NUM_3), .. } => { camera.set_projection(engine::camera::Projection::Oblique); }
+                Event::KeyDown { keycode: Some(Keycode::F1), .. } => { camera.set_projection(engine::camera::Projection::Perspective); }
+                Event::KeyDown { keycode: Some(Keycode::F2), .. } => { camera.set_projection(engine::camera::Projection::Ortographic); }
+                Event::KeyDown { keycode: Some(Keycode::F3), .. } => { camera.set_projection(engine::camera::Projection::Oblique); }
                 // MOUSE CLICK
                 Event::MouseButtonDown { x, y, mouse_btn, .. } => {
                     match mouse_btn {
-                        MouseButton::Left => {
-                            if let Some((ray, t, _)) = camera.send_ray(y/scale as i32, x/scale as i32, &scene) {
-                                let p = ray.at(t);
+                        MouseButton::Right => {
+                            if let Some((s, _, _)) = camera.send_ray(y/scale as i32, x/scale as i32, &scene) {
+                                selected_shape = Some(s);
+                            }
+                        }
+                        MouseButton::Middle => {
+                            if let Some((_, p, _)) = camera.send_ray(y/scale as i32, x/scale as i32, &scene) {
                                 camera.look_at(p, Vec3::Y);
                             }
                         }
@@ -107,17 +111,16 @@ fn main() {
                     }
                 }
                 // esc pra sair do programa
-                Event::Quit{ .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
+                Event::Quit{ .. } => break 'running,
                 _ => {}
             }
             // println!("{:?}", camera.pos);
         }
         
+        
         // Seção de draw
         window.gl_make_current(&gl_context_engine).unwrap();
-        
         camera.draw_scene(&scene);
-
         
         let mut window_surface = window.surface(&event_pump).unwrap();
         let window_rect = window_surface.rect();
@@ -125,18 +128,19 @@ fn main() {
         window_surface.finish().unwrap();
         
         // imgui
-        if false {
-            window.gl_make_current(&gl_context_gui).unwrap();
-            platform.prepare_frame(&mut imgui, &window, &event_pump);
-            let ui = imgui.new_frame();
-            /* create imgui UI here */
-            // ui.show_demo_window(&mut true);
-            ui.show_about_window(&mut false);
-            /* render */
-            let draw_data = imgui.render();
-            renderer.render(draw_data).unwrap();
-            window.gl_swap_window();
-        }
+        platform.prepare_frame(&mut imgui, &window, &event_pump);
+        let ui = imgui.new_frame();
+
+        // create UI
+        make_ui(ui, &mut scene, &mut camera, &mut selected_shape);
+        // ui.show_demo_window(&mut true);
+        // ui.show_about_window(&mut false);
+        
+        // render UI
+        let draw_data = imgui.render();
+        window.gl_make_current(&gl_context_gui).unwrap();
+        renderer.render(draw_data).unwrap();
+        window.gl_swap_window();
 
 
         // Contador de FPS

@@ -10,22 +10,16 @@ use crate::utils::Vec3;
 pub struct Scene {
     pub shapes: Vec<Box<dyn Shape>>,
     pub lights: Vec<Light>,
-    pub ambient_light: Vec3
+    pub ambient_light: Vec3,
+    pub bg_color: Vec3,
 }
 
 impl Scene {
     #[inline]
     #[must_use]
     /// Cria uma nova cena
-    pub fn new(shapes: Vec<Box<dyn Shape>>, lights: Vec<Light>, ambient_light: Vec3) -> Scene {
-        Scene { shapes, lights, ambient_light }
-    }
-
-    #[inline]
-    #[must_use]
-    /// Cria uma nova cena vazia com luz ambiente definida
-    pub fn new_empty(ambient_light: Vec3) -> Scene {
-        Scene { shapes: Vec::new(), lights: Vec::new(), ambient_light }
+    pub fn new(shapes: Vec<Box<dyn Shape>>, lights: Vec<Light>, ambient_light: Vec3, bg_color: Vec3) -> Scene {
+        Scene { shapes, lights, ambient_light, bg_color: (bg_color*255.0).clamp(0.0, 255.0) }
     }
 
     #[inline]
@@ -38,6 +32,16 @@ impl Scene {
     /// Adiciona uma luz na cena
     pub fn add_light(&mut self, l: Light) {
         self.lights.push(l);
+    }
+
+    #[inline]
+    pub fn remove_shape(&mut self, i: usize) {
+        self.shapes.remove(i);
+    }
+
+    #[inline]
+    pub fn remove_light(&mut self, i: usize) {
+        self.lights.remove(i);
     }
 
     /// Retorna a interseção com um raio de menor t ou None se não há interseção

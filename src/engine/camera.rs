@@ -21,10 +21,8 @@ pub enum Projection {
 
 pub struct Camera<'a> {
     pub pos: Vec3, // observador
-    pub bg_color: Vec3,
     pub coord_system: [Vec3; 3],
     pub focal_distance: f64,
-    pub fov: f64,
     pub projection_type: Projection,
     pub obliqueness: Vec3,
     pub viewport: Viewport, // janela   
@@ -41,16 +39,13 @@ impl <'a> Camera<'a> {
     /// `viewport_distance`: Distância do viewport até o observador \
     /// `bg_color`: Cor do background
     /// `texture_creator`: TextureCreator para criar a textura interna de buffer da câmera
-    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f64, viewport_h: f64, focal_distance: f64, bg_color: Vec3) -> Camera<'a> {     
-        let fov = 2.0 * (viewport_h / (2.0 * focal_distance)).atan().to_degrees();
+    pub fn new(pos: Vec3, n_cols: u32, n_rows: u32, viewport_w: f64, viewport_h: f64, focal_distance: f64) -> Camera<'a> {     
         let sdl_surface = Surface::new(n_cols, n_rows, sdl2::pixels::PixelFormatEnum::RGB888).unwrap();
 
         Camera {
             pos, // posição do observador
-            bg_color: bg_color.clamp(0.0, 1.0) * 255.0,
             focal_distance,
             coord_system: [Vec3::X, Vec3::Y, Vec3::Z],
-            fov,
             projection_type: Projection::Perspective,
             obliqueness: Vec3::new(0.0, 30.0, 0.0),
             
@@ -75,10 +70,6 @@ impl <'a> Camera<'a> {
         self.viewport.pos = self.camera_to_world(self.viewport.pos);
         self.viewport.dx = self.coord_system[0] * self.viewport.dx.length();
         self.viewport.dy = self.coord_system[1] * self.viewport.dy.length();
-
-        let height = self.viewport.height;
-        let new_fov = 2.0 * (height / (2.0 * self.focal_distance)).atan().to_degrees();
-        self.fov = new_fov;
     }
 
     pub fn world_to_camera(&self, point: Vec3) -> Vec3 {
@@ -99,29 +90,6 @@ impl <'a> Camera<'a> {
         point_translated
     }
 
-    pub fn set_fov(&mut self, fov: f64) {
-        self.fov = fov;
-        let fov = fov.to_radians();
-
-        let aspect_ratio = self.viewport.rows as f64 / self.viewport.cols as f64;
-        let height = 2.0 * self.focal_distance * (fov / 2.0).tan();
-        let width = height / aspect_ratio;
-
-        let top_left_coords = self.viewport.pos
-            - self.coord_system[0] * (width/2.0)
-            + self.coord_system[1] * (height/2.0);
-        let dx = self.coord_system[0] * (width/self.viewport.cols as f64);
-        let dy = self.coord_system[1] * (height/self.viewport.rows as f64);
-        let p00: Vec3 = top_left_coords + dx/2.0 - dy/2.0;
-
-        self.viewport.width = width;
-        self.viewport.height = height;
-        self.viewport.top_left_coords = top_left_coords;
-        self.viewport.dx = dx;
-        self.viewport.dy = dy;
-        self.viewport.p00 = p00;
-    }
-
     pub fn set_focal_distance(&mut self, focal_distance: f64) {
         let change = self.focal_distance - focal_distance;
         
@@ -130,9 +98,6 @@ impl <'a> Camera<'a> {
         self.viewport.top_left_coords += change * self.coord_system[2];
         
         self.focal_distance = focal_distance;
-        let height = self.viewport.height;
-        let new_fov = 2.0 * (height / (2.0 * focal_distance)).atan().to_degrees();
-        self.fov = new_fov;
     }
 
     /// Desenha uma cena em um canvas com base nas especificações da câmera
@@ -144,7 +109,7 @@ impl <'a> Camera<'a> {
         let num_threads = thread::available_parallelism().unwrap().get() as u32 * 3; 
         
         // Referências thread-safe
-        let scene = Arc::new(&scene); // Cena
+        let scene = Arc::new(scene); // Cena
         let viewport = Arc::new(&self.viewport); // Viewport da câmera
         
         // Render multithread
@@ -159,7 +124,7 @@ impl <'a> Camera<'a> {
             let scene = Arc::clone(&scene);
             let viewport = Arc::clone(&viewport);
             let self_pos = self.pos;
-            let bg_color = self.bg_color;
+            let bg_color = scene.bg_color;
             let projection_type = self.projection_type;
             let coord_system = self.coord_system;
             let obliqueness = self.obliqueness;
@@ -291,7 +256,8 @@ impl <'a> Camera<'a> {
     }
 
     #[must_use]
-    pub fn send_ray(&self, row: i32, col: i32, scene: &Scene) -> Option<(Ray, f64, Vec3)> {
+    /// índice do objeto, ponto de interseção, normal
+    pub fn send_ray(&self, row: i32, col: i32, scene: &Scene) -> Option<(usize, Vec3, Vec3)> {
         let mut ray = match self.projection_type {
             Projection::Perspective => {
                 Ray::new(self.pos, Vec3::new(0.0,0.0,1.0)) // cria um raio partindo de p0 na direção d
@@ -316,7 +282,19 @@ impl <'a> Camera<'a> {
             }
         };
 
-        scene.get_intersection(&ray).map(|(_shape, t, normal, _material)| (ray, t, normal) )
+        let intersection = scene.get_intersection(&ray);
+        match intersection {
+            None => { None }
+            Some( (shape, t, normal, _material) )=> {
+                let mut counter: usize = 0;
+                for s in &scene.shapes {
+                    if ptr::eq(s, shape) { break; }
+                    counter += 1;
+                }
+                Some( (counter, ray.at(t), normal) )
+            }
+        }
+
     }
 
     pub fn set_projection(&mut self, projection: Projection) {

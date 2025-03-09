@@ -88,16 +88,16 @@ pub fn cone_test<'a>() -> (Scene, Camera<'a>, u32, u32) {
         // Light::spotlight(light1_pos, -Vec3::Y, PI/4.0, light1_color, light1_intensity),
         // Light::directional(-Vec3::Y, light1_color, light1_intensity),
     ];
-
+        
     let ambient_light = Vec3::new(0.3, 0.3, 0.3); // Luz ambiente
-    let scene = Scene::new(shapes, lights, ambient_light);
+    let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
+    let scene = Scene::new(shapes, lights, ambient_light, bg_color);
 
     let p0 = Vec3::new(0.0, 0.0, 0.0); // posição do observador
     let aspect_ratio: f64 = 16.0/9.0; // aspect ratio que eu quero
     let image_width: u32 = 960; // Resolução da imagem (número de colunas e linhas na grade)
     let image_height: u32 = ((image_width as f64)/aspect_ratio) as u32;
     let viewport_distance: f64 = 0.5; // distância da janela até o observador
-    let bg_color = Vec3::new(0.0,0.0,0.0); // cor do background
     
     #[allow(unused_mut)]
     let mut camera: Camera = Camera::new(
@@ -105,7 +105,6 @@ pub fn cone_test<'a>() -> (Scene, Camera<'a>, u32, u32) {
         image_width, image_height, // número de colunas e linhas na grade (basicamente a resolução)
         1.6, 0.9, // tamanho da janela (em metros)
         viewport_distance, // distância da janela até o observador (em metros)
-        bg_color, // cor do background
     );
 
     // camera.set_projection(crate::engine::camera::Projection::Ortographic);
