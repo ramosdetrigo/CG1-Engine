@@ -8,7 +8,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
 use user_interface::make_ui;
 use utils::Vec3;
-use std::time::{Duration, Instant};
+use std::{f64::consts::PI, time::{Duration, Instant}};
 use imgui::Context;
 use imgui_glow_renderer::{
     glow,
@@ -42,9 +42,7 @@ fn main() {
         .unwrap();
     
     // IMGUI
-    let gl_context_engine = window.gl_create_context().unwrap();
     let gl_context_gui = window.gl_create_context().unwrap();
-    window.gl_make_current(&gl_context_gui).unwrap();
     // window.subsystem().gl_set_swap_interval(1).unwrap();
 
     let gl = glow_context(&window);
@@ -72,6 +70,7 @@ fn main() {
             let cdx = camera.coord_system[0];
             // let cdy = camera.coord_system[1];
             let cdz = camera.coord_system[2];
+            let angle_step = PI/2.0/10.0;
             match event {
                 // muda a posição da bola em 10cm pra cada lado pelas setas do teclado
                 // setas = eixos x,y // W,S = eixo z
@@ -81,12 +80,12 @@ fn main() {
                 Event::KeyDown { keycode: Some(Keycode::D), .. } => { camera.translate(0.1*cdx); } // RIGHT
                 Event::KeyDown { keycode: Some(Keycode::SPACE), .. } => { camera.translate(0.1*Vec3::Y); } // UP
                 Event::KeyDown { keycode: Some(Keycode::LSHIFT), .. } => { camera.translate(-0.1*Vec3::Y); } // DOWN
-                Event::KeyDown { keycode: Some(Keycode::LEFT), .. } => { camera.rotate(Vec3::Y, 0.1); } // ROTATE LEFT
-                Event::KeyDown { keycode: Some(Keycode::RIGHT), .. } => { camera.rotate(Vec3::Y, -0.1); } // ROTATE RIGHT
-                Event::KeyDown { keycode: Some(Keycode::UP), .. } => { camera.rotate(cdx, 0.1); } // ROTATE UP
-                Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { camera.rotate(cdx, -0.1); } // ROTATE DOWN
-                Event::KeyDown { keycode: Some(Keycode::Q), .. } => { camera.rotate(cdz, 0.1); } // ROLL LEFT
-                Event::KeyDown { keycode: Some(Keycode::E), .. } => { camera.rotate(cdz, -0.1); } // ROLL RIGHT
+                Event::KeyDown { keycode: Some(Keycode::LEFT), .. } => { camera.rotate(Vec3::Y, angle_step); } // ROTATE LEFT
+                Event::KeyDown { keycode: Some(Keycode::RIGHT), .. } => { camera.rotate(Vec3::Y, -angle_step); } // ROTATE RIGHT
+                Event::KeyDown { keycode: Some(Keycode::UP), .. } => { camera.rotate(cdx, angle_step); } // ROTATE UP
+                Event::KeyDown { keycode: Some(Keycode::DOWN), .. } => { camera.rotate(cdx, -angle_step); } // ROTATE DOWN
+                Event::KeyDown { keycode: Some(Keycode::Q), .. } => { camera.rotate(cdz, angle_step); } // ROLL LEFT
+                Event::KeyDown { keycode: Some(Keycode::E), .. } => { camera.rotate(cdz, -angle_step); } // ROLL RIGHT
                 // FOV
                 Event::KeyDown { keycode: Some(Keycode::LEFTBRACKET), .. } => { camera.set_focal_distance(camera.focal_distance + 0.1); }
                 Event::KeyDown { keycode: Some(Keycode::RIGHTBRACKET), .. } => { camera.set_focal_distance(camera.focal_distance - 0.1); }
@@ -117,31 +116,24 @@ fn main() {
             // println!("{:?}", camera.pos);
         }
         
-        
-        // Seção de draw
-        window.gl_make_current(&gl_context_engine).unwrap();
+        // render scene
         camera.draw_scene(&scene);
-        
         let mut window_surface = window.surface(&event_pump).unwrap();
         let window_rect = window_surface.rect();
         camera.sdl_surface.blit_scaled(camera.sdl_surface.rect(), &mut window_surface, window_rect).unwrap();
         window_surface.finish().unwrap();
         
-        // imgui
+        // create imgui UI
         platform.prepare_frame(&mut imgui, &window, &event_pump);
         let ui = imgui.new_frame();
-
-        // create UI
         make_ui(ui, &mut scene, &mut camera, &mut selected_shape);
-        // ui.show_demo_window(&mut true);
-        // ui.show_about_window(&mut false);
-        
-        // render UI
         let draw_data = imgui.render();
+        
+
+        // render UI
         window.gl_make_current(&gl_context_gui).unwrap();
         renderer.render(draw_data).unwrap();
         window.gl_swap_window();
-
 
         // Contador de FPS
         frame_count += 1;

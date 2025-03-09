@@ -237,7 +237,7 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
         vertex1.y.total_cmp(&vertex2.y)
     }).unwrap().y;
     let mut chair_bottom = Mesh::cube(chair_material);
-    let transform4 = translation_matrix(snowman1_x + 0.65, min_y-0.81+0.18, snowman1_z - 1.95)
+    let transform4 = translation_matrix(snowman1_x + 0.65, min_y-0.7_f64.tan()*0.75 + 0.107, snowman1_z - 1.95)
         * rotation_around_axis(Vec3::Y, -PI/2.0)
         * shear_matrix_y(0.7, 0.0)
         * rotation_around_axis(Vec3::Y, PI/2.0)

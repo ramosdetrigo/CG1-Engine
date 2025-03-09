@@ -123,8 +123,8 @@ fn mod_dr(ui: &Ui, label: String, dr: &mut Vec3, p0: Option<Vec3>) -> bool {
         changed = true;
     }
 
-    ui.same_line();
     unsafe { if let Some(p) = p0 {
+        ui.same_line();
         if ui.small_button("look_at") {
             let look_at = Vec3::new(LOOK_AT[0] as f64, LOOK_AT[1] as f64, LOOK_AT[2] as f64);
             *dr = (look_at - p).normalized();
@@ -209,6 +209,9 @@ pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_sha
                 let up = Vec3::new(UP[0] as f64, UP[1] as f64, UP[2] as f64);
                 camera.look_at(look_at, up);
             }};
+
+            ui.text(format!("Camera coord system:\nX: {:.2?}\nY: {:.2?}\nZ: {:.2?}", camera.coord_system[0], camera.coord_system[1], camera.coord_system[2]));
+            ui.separator();
             
             match selected_shape {
                 None => {ui.text("No shape selected.")}

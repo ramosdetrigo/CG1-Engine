@@ -90,14 +90,19 @@ impl <'a> Camera<'a> {
         point_translated
     }
 
+    
     pub fn set_focal_distance(&mut self, focal_distance: f64) {
-        let change = self.focal_distance - focal_distance;
-        
-        self.viewport.pos += change * self.coord_system[2];
-        self.viewport.p00 += change * self.coord_system[2];
-        self.viewport.top_left_coords += change * self.coord_system[2];
-        
         self.focal_distance = focal_distance;
+        self.viewport = Viewport::new(
+            Vec3::new(0.0, 0.0, -focal_distance), // posição da janela em relação ao observador (0, 0, -d)
+            self.viewport.width, self.viewport.height, // altura * largura da janela
+            self.viewport.cols, self.viewport.rows, // número de colunas e linhas, basicamente a resolução da câmera.
+        );
+        self.viewport.top_left_coords = self.camera_to_world(self.viewport.top_left_coords);
+        self.viewport.p00 = self.camera_to_world(self.viewport.p00);
+        self.viewport.pos = self.camera_to_world(self.viewport.pos);
+        self.viewport.dx = self.coord_system[0] * self.viewport.dx.length();
+        self.viewport.dy = self.coord_system[1] * self.viewport.dy.length();
     }
 
     /// Desenha uma cena em um canvas com base nas especificações da câmera
