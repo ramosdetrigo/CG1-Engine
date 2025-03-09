@@ -1,3 +1,6 @@
+// esse é possívelmente o pior código de UI que eu já escrevi na minha vida.
+// provavelmente o pior código rust que eu já escrevi em geral.
+// favor levar em consideração.
 #![allow(static_mut_refs)]
 use imgui::{TreeNodeFlags, Ui};
 use std::f64::consts::PI;
@@ -25,6 +28,7 @@ static mut HOUSEHOLDER_NORMAL: [f32; 3] = [0.0, 0.0, 0.0];
 static mut TRANSFORM_MATRIX: Matrix4 = Matrix4::I;
 static mut LOOK_AT: [f32; 3] = [0.0, 0.0, 0.0];
 static mut UP: [f32; 3] = [0.0, 1.0, 0.0];
+static mut RESOLUTION: [u32; 2] = [960, 540];
 
 
 pub fn make_transformation_menu(ui: &Ui) {
@@ -203,6 +207,9 @@ pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_sha
                 camera.set_viewport_size(whf[0] as f64, whf[1] as f64);
                 camera.set_focal_distance(whf[2] as f64);
             }
+            unsafe { if ui.input_scalar_n("Resolution", &mut RESOLUTION).enter_returns_true(true).build() {
+                camera.set_resolution(RESOLUTION[0], RESOLUTION[1]);
+            }}
 
             unsafe { if ui.small_button("look_at") {
                 let look_at = Vec3::new(LOOK_AT[0] as f64, LOOK_AT[1] as f64, LOOK_AT[2] as f64);

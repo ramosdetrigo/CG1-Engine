@@ -37,6 +37,7 @@ fn main() {
     let window = video_subsystem // a janela do computador em si
         .window("CG1 - engine", ((window_width as f64)*scale) as u32, ((window_height as f64)*scale) as u32)
         .position_centered()
+        .resizable()
         .opengl()
         .build()
         .unwrap();
@@ -97,12 +98,20 @@ fn main() {
                 Event::MouseButtonDown { x, y, mouse_btn, .. } => {
                     match mouse_btn {
                         MouseButton::Right => {
-                            if let Some((s, _, _)) = camera.send_ray(y/scale as i32, x/scale as i32, &scene) {
+                            let (x,y) = (x as f64, y as f64);
+                            let (wx, wy) = window.size();
+                            let scale_x = wx as f64 / camera.viewport.cols as f64;
+                            let scale_y = wy as f64 / camera.viewport.rows as f64;
+                            println!("{scale_x}, {scale_y}");
+                            if let Some((s, _, _)) = camera.send_ray((y/scale_y) as i32, (x/scale_x) as i32, &scene) {
                                 selected_shape = Some(s);
                             }
                         }
                         MouseButton::Middle => {
-                            if let Some((_, p, _)) = camera.send_ray(y/scale as i32, x/scale as i32, &scene) {
+                            let (mut scale_x, mut scale_y) = window.size();                        
+                            scale_x /= camera.viewport.cols;
+                            scale_y /= camera.viewport.rows;
+                            if let Some((_, p, _)) = camera.send_ray(y/scale_y as i32, x/scale_x as i32, &scene) {
                                 camera.look_at(p, Vec3::Y);
                             }
                         }

@@ -59,9 +59,23 @@ impl <'a> Camera<'a> {
         }
     }
 
+    pub fn set_resolution(&mut self, cols: u32, rows: u32) {
+        self.sdl_surface = Surface::new(cols, rows, sdl2::pixels::PixelFormatEnum::RGB888).unwrap();
+        self.viewport = Viewport::new(
+            Vec3::new(0.0, 0.0, -self.focal_distance), // posição da janela em relação ao observador (0, 0, -d)
+            self.viewport.width, self.viewport.height, // altura * largura da janela
+            cols, rows, // número de colunas e linhas, basicamente a resolução da câmera.
+        );
+        self.viewport.top_left_coords = self.camera_to_world(self.viewport.top_left_coords);
+        self.viewport.p00 = self.camera_to_world(self.viewport.p00);
+        self.viewport.pos = self.camera_to_world(self.viewport.pos);
+        self.viewport.dx = self.coord_system[0] * self.viewport.dx.length();
+        self.viewport.dy = self.coord_system[1] * self.viewport.dy.length();
+    }
+
     pub fn set_viewport_size(&mut self, width: f64, height: f64) {
         self.viewport = Viewport::new(
-            Vec3::new(0.0, 0.0, self.pos.z-self.focal_distance), // posição da janela em relação ao observador (0, 0, -d)
+            Vec3::new(0.0, 0.0, -self.focal_distance), // posição da janela em relação ao observador (0, 0, -d)
             width, height, // altura * largura da janela
             self.viewport.cols, self.viewport.rows, // número de colunas e linhas, basicamente a resolução da câmera.
         );
