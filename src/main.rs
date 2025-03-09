@@ -28,7 +28,7 @@ fn glow_context(window: &Window) -> glow::Context {
 
 fn main() {
     let (mut scene, mut camera, window_width, window_height) = scenes::beach();
-    let scale = 1.0;
+    let scale = 2.0;
 
     // Inicializando SDL
     let sdl_context = sdl2::init().unwrap();
