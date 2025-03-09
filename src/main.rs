@@ -106,16 +106,16 @@ fn main() {
                             let (wx, wy) = window.size();
                             let scale_x = wx as f64 / camera.viewport.cols as f64;
                             let scale_y = wy as f64 / camera.viewport.rows as f64;
-                            println!("{scale_x}, {scale_y}");
                             if let Some((s, _, _)) = camera.send_ray((y/scale_y) as i32, (x/scale_x) as i32, &scene) {
                                 selected_shape = Some(s);
                             }
                         }
                         MouseButton::Middle => {
-                            let (mut scale_x, mut scale_y) = window.size();                        
-                            scale_x /= camera.viewport.cols;
-                            scale_y /= camera.viewport.rows;
-                            if let Some((_, p, _)) = camera.send_ray(y/scale_y as i32, x/scale_x as i32, &scene) {
+                            let (x,y) = (x as f64, y as f64);
+                            let (wx, wy) = window.size();
+                            let scale_x = wx as f64 / camera.viewport.cols as f64;
+                            let scale_y = wy as f64 / camera.viewport.rows as f64;
+                            if let Some((_, p, _)) = camera.send_ray((y/scale_y) as i32, (x/scale_x) as i32, &scene) {
                                 camera.look_at(p, Vec3::Y);
                             }
                         }

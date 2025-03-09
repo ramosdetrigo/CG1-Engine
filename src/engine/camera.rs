@@ -7,7 +7,6 @@ use sdl2::surface::Surface;
 // use sdl2::rect::Rect;
 // use sdl2::render::Canvas;
 // use sdl2::surface::Surface;
-use std::f64::consts::PI;
 // use sdl2::video::Window;
 use std::{ptr, thread};
 use std::sync::Arc;
@@ -354,22 +353,32 @@ impl <'a> Camera<'a> {
         self.viewport.top_left_coords += translation_vector;
     }
 
-    pub fn look_at(&mut self, point: Vec3, up: Vec3) {
-        let z_axis = (point - self.pos).normalized(); // z axis of where i'm lookin at
-        let x_axis = up.cross(z_axis).normalized(); // mia direita segundo o vetor up
-        // let y_axis = z_axis.cross(x_axis);
-    
-        let current_z_axis = self.coord_system[2];
-        let rotation_axis = current_z_axis.cross(z_axis).normalized();
-        let rotation_angle = current_z_axis.angle(z_axis);
-    
-        self.rotate(rotation_axis, rotation_angle+PI);
-    
-        let current_x_axis = self.coord_system[0];
-        let rotation_axis = current_x_axis.cross(x_axis).normalized();
-        let rotation_angle = current_x_axis.angle(x_axis);
-    
-        self.rotate(rotation_axis, rotation_angle+PI);
+    pub fn look_at(&mut self, point: Vec3, mut up: Vec3) {
+        up = up.normalized();
+        // Calculate the forward direction (view direction)
+        let forward = (point - self.pos).normalized();
+        
+        // Calculate the right direction
+        let right = forward.cross(up).normalized();
+        
+        // Recalculate the up direction
+        let new_up = right.cross(forward).normalized();
+        
+        // Update the camera's coordinate system
+        self.coord_system[0] = right;  // X-axis
+        self.coord_system[1] = new_up;  // Y-axis
+        self.coord_system[2] = -forward; // Z-axis (inverted)
+
+        self.viewport = Viewport::new(
+            Vec3::new(0.0, 0.0, -self.focal_distance), // posição da janela em relação ao observador (0, 0, -d)
+            self.viewport.width, self.viewport.height, // altura * largura da janela
+            self.viewport.cols, self.viewport.rows, // número de colunas e linhas, basicamente a resolução da câmera.
+        );
+        self.viewport.top_left_coords = self.camera_to_world(self.viewport.top_left_coords);
+        self.viewport.p00 = self.camera_to_world(self.viewport.p00);
+        self.viewport.pos = self.camera_to_world(self.viewport.pos);
+        self.viewport.dx = self.coord_system[0] * self.viewport.dx.length();
+        self.viewport.dy = self.coord_system[1] * self.viewport.dy.length();
     }
 }
 

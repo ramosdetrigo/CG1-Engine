@@ -108,13 +108,13 @@ pub fn make_transformation_menu(ui: &Ui) {
 
 fn mod_point(ui: &Ui, label: String, point: &mut Vec3, transform: bool) -> bool {
     let mut vec = [point.x as f32, point.y as f32, point.z as f32];
-    if ui.input_float3(label, &mut vec).enter_returns_true(true).build() {
+    if ui.input_float3(label.clone(), &mut vec).enter_returns_true(true).build() {
         point.x = vec[0] as f64; point.y = vec[1] as f64; point.z = vec[2] as f64;
         return true;
     }
     if transform {
         ui.same_line();
-        unsafe { if ui.small_button("trans.") { point.transform(&TRANSFORM_MATRIX); } };
+        unsafe { if ui.small_button("trans.".to_string() + &label.clone()) { point.transform(&TRANSFORM_MATRIX); } };
     }
     false
 }
@@ -129,7 +129,7 @@ fn mod_dr(ui: &Ui, label: String, dr: &mut Vec3, p0: Option<Vec3>) -> bool {
 
     unsafe { if let Some(p) = p0 {
         ui.same_line();
-        if ui.small_button(label + "look_at") {
+        if ui.small_button("look_at".to_string() + &label) {
             println!("eita");
             let look_at = Vec3::new(LOOK_AT[0] as f64, LOOK_AT[1] as f64, LOOK_AT[2] as f64);
             *dr = -(look_at - p).normalized();
@@ -161,30 +161,30 @@ fn mod_shape(ui: &Ui, scene: &mut Scene, index: usize, custom_label: Option<&str
         mod_point(ui, label.clone() + "center", &mut sphere.center, false);
         mod_double(ui, label.clone() + "radius", &mut sphere.radius);
         unsafe { if ui.small_button("transform" ) { shape.transform(&TRANSFORM_MATRIX); }; };
-        if ui.button("delete") { scene.remove_shape(index); return true; }
+        if ui.button("delete shape") { scene.remove_shape(index); return true; }
     } else if let Some(plane) = shape.as_any().downcast_mut::<Plane>() {
         ui.text("Type: plane");
         mod_point(ui, label.clone() + "pc", &mut plane.pc, false);
         mod_point(ui, label.clone() + "normal", &mut plane.normal, false);
         unsafe { if ui.small_button("transform" ) { shape.transform(&TRANSFORM_MATRIX); }; };
-        if ui.button("delete") { scene.remove_shape(index); return true; }
+        if ui.button("delete shape") { scene.remove_shape(index); return true; }
     } else if let Some(cilinder) = shape.as_any().downcast_mut::<Cilinder>() {
         ui.text("Type: cilinder");
         ui.text(format!(" - cb: {:.2?}\n - ct: {:.2?}\n - dc: {:.2?}\n - height: {:.2}", cilinder.cb, cilinder.ct, cilinder.dc, cilinder.h));
         mod_double(ui, label.clone() + "radius", &mut cilinder.r);
         unsafe { if ui.small_button("transform" ) { shape.transform(&TRANSFORM_MATRIX); }; };
-        if ui.button("delete") { scene.remove_shape(index); return true; }
+        if ui.button("delete shape") { scene.remove_shape(index); return true; }
     } else if let Some(cone) = shape.as_any().downcast_mut::<Cone>() {
         ui.text("Type: cone");
         ui.text(format!(" - cb: {:.2?}\n - v: {:.2?}\n - dc: {:.2?}\n - height: {:.2}", cone.cb, cone.v, cone.dc, cone.h));
         mod_double(ui, label.clone() + "radius", &mut cone.r);
         unsafe { if ui.small_button("transform" ) { shape.transform(&TRANSFORM_MATRIX); }; };
-        if ui.button("delete") { scene.remove_shape(index); return true; }
+        if ui.button("delete shape") { scene.remove_shape(index); return true; }
     } else if let Some(mesh) = shape.as_any().downcast_mut::<Mesh>() {
         ui.text("Type: mesh");
         ui.text(format!(" - centroid: {:.2?}", mesh.centroid));
         unsafe { if ui.small_button("transform" ) { shape.transform(&TRANSFORM_MATRIX); }; };
-        if ui.button("delete") { scene.remove_shape(index); return true; }
+        if ui.button("delete shape") { scene.remove_shape(index); return true; }
     }
     false
 }
@@ -265,7 +265,7 @@ pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_sha
                         mod_point(ui, format!("{counter}. Intensidade"), intensity, false);
                     }
                 }
-                if ui.button("delete") { delete = Some(counter-1); }
+                if ui.button(format!("delete light {counter}")) { delete = Some(counter-1); }
                 counter += 1;
             }
             if let Some(n) = delete { scene.remove_light(n); }
