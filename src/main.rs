@@ -27,9 +27,8 @@ fn glow_context(window: &Window) -> glow::Context {
 }
 
 fn main() {
-    let (mut scene, mut camera, window_width, window_height) = scenes::sphere_test();
-    camera.set_resolution(1920, 1080);
-    let scale = 1.0;
+    let (mut scene, mut camera, window_width, window_height) = scenes::beach();
+    let scale = 1.75;
 
     // Inicializando SDL
     let sdl_context = sdl2::init().unwrap();
@@ -38,7 +37,7 @@ fn main() {
     let window = video_subsystem // a janela do computador em si
         .window("CG1 - engine", ((window_width as f64)*scale) as u32, ((window_height as f64)*scale) as u32)
         .position_centered()
-        // .resizable()
+        .resizable()
         .opengl()
         .build()
         .unwrap();

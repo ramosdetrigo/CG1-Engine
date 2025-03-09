@@ -122,16 +122,17 @@ fn mod_point(ui: &Ui, label: String, point: &mut Vec3, transform: bool) -> bool 
 fn mod_dr(ui: &Ui, label: String, dr: &mut Vec3, p0: Option<Vec3>) -> bool {
     let mut changed = false;
     let mut vec = [dr.x as f32, dr.y as f32, dr.z as f32];
-    if ui.input_float3(label, &mut vec).enter_returns_true(true).build() {
+    if ui.input_float3(label.clone() + "Direção", &mut vec).enter_returns_true(true).build() {
         dr.x = vec[0] as f64; dr.y = vec[1] as f64; dr.z = vec[2] as f64;
         changed = true;
     }
 
     unsafe { if let Some(p) = p0 {
         ui.same_line();
-        if ui.small_button("look_at") {
+        if ui.small_button(label + "look_at") {
+            println!("eita");
             let look_at = Vec3::new(LOOK_AT[0] as f64, LOOK_AT[1] as f64, LOOK_AT[2] as f64);
-            *dr = (look_at - p).normalized();
+            *dr = -(look_at - p).normalized();
         }
     }};
     
@@ -207,6 +208,10 @@ pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_sha
                 camera.set_viewport_size(whf[0] as f64, whf[1] as f64);
                 camera.set_focal_distance(whf[2] as f64);
             }
+            let mut oblique = [camera.obliqueness.x as f32, camera.obliqueness.y as f32, camera.obliqueness.z as f32];
+            if ui.input_float3("Oblique angle", &mut oblique).enter_returns_true(true).build() {
+                camera.obliqueness = Vec3::new(oblique[0] as f64, oblique[1] as f64, oblique[2] as f64);
+            }
             unsafe { if ui.input_scalar_n("Resolution", &mut RESOLUTION).enter_returns_true(true).build() {
                 camera.set_resolution(RESOLUTION[0], RESOLUTION[1]);
             }}
@@ -249,14 +254,14 @@ pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_sha
                         let name = format!("{counter}. LUZ SPOT");
                         ui.text(format!("{name}"));
                         mod_point(ui, format!("{counter}. Posição"), pos, true);
-                        mod_dr(ui, format!("{counter}. Direção"), dr, Some(*pos));
+                        mod_dr(ui, format!("{counter}. "), dr, Some(*pos));
                         mod_double(ui, format!("{counter}. Ângulo"), angle);
                         mod_point(ui, format!("{counter}. Intensidade"), intensity, false);
                     }
                     Light::Directional { dr, intensity } => {
                         let name = format!("{counter}. LUZ DIRECIONAL");
                         ui.text(format!("{name}"));
-                        mod_dr(ui, format!("{counter}. Direção"), dr, None);
+                        mod_dr(ui, format!("{counter}. "), dr, None);
                         mod_point(ui, format!("{counter}. Intensidade"), intensity, false);
                     }
                 }
