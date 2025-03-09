@@ -186,6 +186,7 @@ fn mod_shape(ui: &Ui, scene: &mut Scene, index: usize, custom_label: Option<&str
 
 pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_shape: &mut Option<usize>) {
     ui.window("User interface")
+    .collapsed(true, imgui::Condition::FirstUseEver)
     .size([400.0, 540.0], imgui::Condition::FirstUseEver)
     .position([0.0, 0.0], imgui::Condition::FirstUseEver)
     .build(|| {
