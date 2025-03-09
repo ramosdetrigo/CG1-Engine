@@ -27,7 +27,8 @@ fn glow_context(window: &Window) -> glow::Context {
 }
 
 fn main() {
-    let (mut scene, mut camera, window_width, window_height) = scenes::beach();
+    let (mut scene, mut camera, window_width, window_height) = scenes::sphere_test();
+    camera.set_resolution(1920, 1080);
     let scale = 1.0;
 
     // Inicializando SDL

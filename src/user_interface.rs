@@ -7,7 +7,7 @@ use std::f64::consts::PI;
 
 use crate::engine::{Scene, Light};
 use crate::engine::camera::Camera;
-use crate::utils::transform::*;
+use crate::utils::{save_surface_as_ppm, transform::*};
 use crate::utils::Matrix4;
 use crate::utils::Vec3;
 use crate::engine::shapes::{Cilinder, Cone, Mesh, Plane, Sphere};
@@ -216,6 +216,10 @@ pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_sha
                 let up = Vec3::new(UP[0] as f64, UP[1] as f64, UP[2] as f64);
                 camera.look_at(look_at, up);
             }};
+
+            if ui.small_button("save image") {
+                save_surface_as_ppm(&camera.sdl_surface, "output.ppm").unwrap();
+            }
 
             ui.text(format!("Camera coord system:\nX: {:.2?}\nY: {:.2?}\nZ: {:.2?}", camera.coord_system[0], camera.coord_system[1], camera.coord_system[2]));
             ui.separator();

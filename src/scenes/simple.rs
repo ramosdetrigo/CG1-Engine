@@ -103,11 +103,11 @@ pub fn simple<'a>() -> (Scene, Camera<'a>, u32, u32) {
     let mut teapot = Mesh::new(teapot_vertices, teapot_triangles, Material::WHITE);
     let teapot_trans = transform::rotation_around_axis(Vec3::Y, PI*0.5); // girar ao redor do eixo Y
     teapot.apply_transform(&teapot_trans);
-    teapot.scale(Vec3::all(0.25));
-    teapot.translate(Vec3::new(2.0, 0.0, -2.0));
+    teapot.scale(Vec3::all(0.3));
+    teapot.translate(Vec3::new(0.0, 0.0, -2.0));
 
-    let espelho = householder_reflection(Vec3::NULL, Vec3::X);
-    teapot.apply_transform(&espelho);
+    // let espelho = householder_reflection(Vec3::NULL, Vec3::X);
+    // teapot.apply_transform(&espelho);
 
     println!("finished scaling!!");
     

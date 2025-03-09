@@ -118,6 +118,7 @@ pub fn cube<'a>() -> (Scene, Camera<'a>, u32, u32) {
     );
 
     camera.look_at(cube_pos, Vec3::Y);
+    camera.rotate(camera.coord_system[0], PI/4.0);
 
     println!("returning scene...");
     (scene, camera, image_width, image_height)
