@@ -24,19 +24,19 @@ impl Vec4 {
     #[inline(always)]
     #[must_use]
     /// Constructor
-    pub fn new(x: f64, y: f64, z: f64, w: f64) -> Self { Self { x, y, z, w } }
+    pub const fn new(x: f64, y: f64, z: f64, w: f64) -> Self { Self { x, y, z, w } }
 
-    pub fn from_vec3(v: Vec3) -> Self { Self { x: v.x, y: v.y, z: v.z, w: 1.0 } }
+    pub const fn from_vec3(v: Vec3) -> Self { Self { x: v.x, y: v.y, z: v.z, w: 1.0 } }
 
     #[inline]
     #[must_use]
     /// Constructor x=y=z=w
-    pub fn all(a: f64) -> Self { Self { x: a, y: a, z: a, w: a } }
+    pub const fn all(a: f64) -> Self { Self { x: a, y: a, z: a, w: a } }
 
     #[inline]
     #[must_use]
     /// Produto escalar entre dois vetores
-    pub fn dot(&self, rhs: Self) -> f64 { self.x * rhs.x + self.y * rhs.y + self.z * rhs.z + self.w * rhs.w }
+    pub const fn dot(&self, rhs: Self) -> f64 { self.x * rhs.x + self.y * rhs.y + self.z * rhs.z + self.w * rhs.w }
 
     #[inline]
     #[must_use]
@@ -46,7 +46,7 @@ impl Vec4 {
     #[inline]
     #[must_use]
     /// Retorna o tamanho do vetor ao quadrado
-    pub fn length_squared(&self) -> f64 { self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w }
+    pub const fn length_squared(&self) -> f64 { self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w }
 
     #[inline]
     #[must_use]
@@ -68,7 +68,7 @@ impl Vec4 {
     #[inline]
     #[must_use]
     /// Converte o vetor pra valores rgb entre 0 e 1
-    pub fn rgb_normal(&self) -> Self {
+    pub const fn rgb_normal(&self) -> Self {
         Self {
             x: self.x / 255.0,
             y: self.y / 255.0,
@@ -80,7 +80,7 @@ impl Vec4 {
     #[inline]
     #[must_use]
     /// Converte o vetor pra valores rgb entre 0 e 255
-    pub fn rgb_255(&self) -> Self {
+    pub const fn rgb_255(&self) -> Self {
         Self {
             x: self.x * 255.0,
             y: self.y * 255.0,
@@ -91,7 +91,7 @@ impl Vec4 {
     
     #[inline]
     #[must_use]
-    pub fn by_transpost(&self, rhs: Self) -> Matrix4 {
+    pub const fn by_transpost(&self, rhs: Self) -> Matrix4 {
         Matrix4::new(
             [[self.x * rhs.x, self.x * rhs.y, self.x * rhs.z, self.x * rhs.w],
             [self.y * rhs.x, self.y * rhs.y, self.y * rhs.z, self.y * rhs.w],
@@ -102,7 +102,7 @@ impl Vec4 {
 
     #[inline]
     #[must_use]
-    pub fn projection_matrix(&self) -> Matrix4 {
+    pub const fn projection_matrix(&self) -> Matrix4 {
         Matrix4::new(
             [[self.x * self.x, self.x * self.y, self.x * self.z, self.x * self.w],
              [self.y * self.x, self.y * self.y, self.y * self.z, self.y * self.w],
@@ -120,7 +120,7 @@ impl Vec4 {
         )
     }
 
-    pub fn into_vec3(&self) -> Vec3 {
+    pub const fn into_vec3(&self) -> Vec3 {
         Vec3 { x: self.x, y: self.y, z: self.z }
     }
 }

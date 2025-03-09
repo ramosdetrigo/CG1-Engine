@@ -282,7 +282,7 @@ fn make_day(scene: &mut Scene) {
     scene.lights = lights;
 }
 
-fn make_night(scene: &mut Scene) {
+pub fn make_night(scene: &mut Scene) {
     let snowman1_x = 3.0;
     let snowman1_z = 7.0;
     let umbrella_top_height = 0.5;

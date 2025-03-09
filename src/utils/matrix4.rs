@@ -15,9 +15,9 @@ impl Matrix4 {
             [0.0, 0.0, 0.0, 1.0]]
     };
 
-    #[inline(always)]
+    #[inline]
     #[must_use]
-    pub fn new(m: [[f64; 4]; 4]) -> Self { Self { m } }
+    pub const fn new(m: [[f64; 4]; 4]) -> Self { Self { m } }
 }
 
 // Matrix + Matrix

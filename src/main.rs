@@ -7,7 +7,7 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::mouse::MouseButton;
 use user_interface::make_ui;
-use utils::Vec3;
+use utils::{save_surface_as_ppm, Vec3};
 use std::{f64::consts::PI, time::{Duration, Instant}};
 use imgui::Context;
 use imgui_glow_renderer::{
@@ -28,7 +28,7 @@ fn glow_context(window: &Window) -> glow::Context {
 
 fn main() {
     let (mut scene, mut camera, window_width, window_height) = scenes::beach();
-    let scale = 2.0;
+    let scale = 1.0;
 
     // Inicializando SDL
     let sdl_context = sdl2::init().unwrap();
@@ -37,7 +37,7 @@ fn main() {
     let window = video_subsystem // a janela do computador em si
         .window("CG1 - engine", ((window_width as f64)*scale) as u32, ((window_height as f64)*scale) as u32)
         .position_centered()
-        .resizable()
+        // .resizable()
         .opengl()
         .build()
         .unwrap();
@@ -59,6 +59,10 @@ fn main() {
     // END_IMGUI
 
     let mut selected_shape: Option<usize> = None;
+
+    camera.draw_scene(&scene);
+    save_surface_as_ppm(&camera.sdl_surface, "output.ppm").unwrap();
+
     
     // main loop do programa
     let mut frame_count = 0; // contador de FPS no terminal
