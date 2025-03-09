@@ -40,8 +40,8 @@
 	2. [x] Ortográfica (+ 0.5)
 	3. [x] Obliqua (+0.5)
 4. [x] **Sombra (Obrigatório)**
-5. [ ] **Interatividade**
+5. [x] **Interatividade**
 	1. [x] Implementar a função de pick (Obrigatório)
-	2. [ ] Uso de interface gráfica (Bônus de 0.5 a 1.0)
+	2. [x] Uso de interface gráfica (Bônus de 0.5 a 1.0)
 6. [x] **Imagem gerada por ray casting com pelo menos 500 x 500 pixels (Obrigatório)**
 7. [x] **Bônus de criatividade e beleza (até 1.0)**
