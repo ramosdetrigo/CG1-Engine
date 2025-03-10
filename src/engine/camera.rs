@@ -161,13 +161,13 @@ impl <'a> Camera<'a> {
                     Projection::Oblique => {
                         let mut dr = -coord_system[2];
                         if obliqueness.x != 0.0 {
-                            dr.transform(&rotation_around_axis(coord_system[0], obliqueness.x.to_radians()));
+                            dr.transform(&rotation_around_axis(coord_system[0], obliqueness.x.to_radians(), Vec3::NULL));
                         }
                         if obliqueness.y != 0.0 {
-                            dr.transform(&rotation_around_axis(coord_system[1], obliqueness.y.to_radians()));
+                            dr.transform(&rotation_around_axis(coord_system[1], obliqueness.y.to_radians(), Vec3::NULL));
                         }
                         if obliqueness.z != 0.0 {
-                            dr.transform(&rotation_around_axis(coord_system[2], obliqueness.z.to_radians()));
+                            dr.transform(&rotation_around_axis(coord_system[2], obliqueness.z.to_radians(), Vec3::NULL));
                         }
                         Ray::new(viewport.p00, dr)
                     }
@@ -221,7 +221,7 @@ impl <'a> Camera<'a> {
                             Light::Spotlight { pos, dr, angle, intensity } => {
                                 ldr = *pos - p_i;
                                 light_intensity = *intensity;
-                                if dr.dot(ldr.normalized()) <= angle.cos() { continue 'lights; }
+                                if dr.dot(ldr.normalized()) <= angle.to_radians().cos() { continue 'lights; }
                             }
                             Light::Directional { dr, intensity } => {
                                 ldr = *dr;
@@ -332,7 +332,7 @@ impl <'a> Camera<'a> {
 
     pub fn rotate(&mut self, axis: Vec3, angle: f64) {
         let translation_vector = self.pos;
-        let transformation_matrix = rotation_around_axis(axis, angle);
+        let transformation_matrix = rotation_around_axis(axis, angle, Vec3::NULL);
 
         self.pos -= translation_vector;
         self.viewport.pos -= translation_vector;
@@ -354,7 +354,7 @@ impl <'a> Camera<'a> {
     }
 
     pub fn look_at(&mut self, point: Vec3, mut up: Vec3) {
-        up = up.normalized();
+        up = (up - self.pos).normalized();
         // Calculate the forward direction (view direction)
         let forward = (point - self.pos).normalized();
         

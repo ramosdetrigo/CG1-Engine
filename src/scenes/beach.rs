@@ -205,10 +205,10 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     
     let mut chair_middle = Mesh::cube(chair_material);
     let transform1 = translation_matrix(snowman1_x + 0.65, 0.4, snowman1_z - 1.2)
-        * rotation_around_axis(Vec3::Y, -PI/2.0)
+        * rotation_around_axis(Vec3::Y, -PI/2.0, Vec3::NULL)
         * shear_matrix_y(0.15, 0.0)
-        * rotation_around_axis(Vec3::Y, PI/2.0)
-        * scale_matrix(0.75, 0.12, 1.2);
+        * rotation_around_axis(Vec3::Y, PI/2.0, Vec3::NULL)
+        * scale_matrix(0.75, 0.12, 1.2, Vec3::NULL);
     chair_middle.apply_transform(&transform1);
 
     let max_y = chair_middle.vertices.iter().max_by(|vertex1, vertex2| {
@@ -216,10 +216,10 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     }).unwrap().y;
     let mut chair_top = Mesh::cube(chair_material);
     let transform2 = translation_matrix(snowman1_x + 0.65, max_y-0.12, snowman1_z)
-        * rotation_around_axis(Vec3::Y, -PI/2.0)
+        * rotation_around_axis(Vec3::Y, -PI/2.0,Vec3::NULL)
         * shear_matrix_y(0.7, 0.0)
-        * rotation_around_axis(Vec3::Y, PI/2.0)
-        * scale_matrix(0.75, 0.12, 0.75);
+        * rotation_around_axis(Vec3::Y, PI/2.0, Vec3::NULL)
+        * scale_matrix(0.75, 0.12, 0.75, Vec3::NULL);
     chair_top.apply_transform(&transform2);
 
     let max_y = chair_middle.vertices.iter().max_by(|vertex1, vertex2| {
@@ -227,10 +227,10 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     }).unwrap().y;
     let mut chair_leg_back = Mesh::cube(chair_material);
     let transform3 = translation_matrix(snowman1_x + 0.65, max_y-0.12, snowman1_z)
-        * rotation_around_axis(Vec3::Y, -PI/2.0)
+        * rotation_around_axis(Vec3::Y, -PI/2.0, Vec3::NULL)
         * shear_matrix_y(-0.7, 0.0)
-        * rotation_around_axis(Vec3::Y, PI/2.0)
-        * scale_matrix(0.75, 0.12, 0.75);
+        * rotation_around_axis(Vec3::Y, PI/2.0, Vec3::NULL)
+        * scale_matrix(0.75, 0.12, 0.75, Vec3::NULL);
     chair_leg_back.apply_transform(&transform3);
 
     let min_y = chair_middle.vertices.iter().min_by(|vertex1, vertex2| {
@@ -238,10 +238,10 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     }).unwrap().y;
     let mut chair_bottom = Mesh::cube(chair_material);
     let transform4 = translation_matrix(snowman1_x + 0.65, min_y-0.7_f64.tan()*0.75 + 0.107, snowman1_z - 1.95)
-        * rotation_around_axis(Vec3::Y, -PI/2.0)
+        * rotation_around_axis(Vec3::Y, -PI/2.0, Vec3::NULL)
         * shear_matrix_y(0.7, 0.0)
-        * rotation_around_axis(Vec3::Y, PI/2.0)
-        * scale_matrix(0.75, 0.12, 0.75);
+        * rotation_around_axis(Vec3::Y, PI/2.0, Vec3::NULL)
+        * scale_matrix(0.75, 0.12, 0.75, Vec3::NULL);
     chair_bottom.apply_transform(&transform4);
 
 
@@ -331,12 +331,12 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
     let hat2_height = 0.3;
     let hat2_radius = 0.5;
     let mut hat2_direction = (snowman2_torso_center - snowman2_feet_center).normalized();
-    let hat2_rotation_matrix = rotation_around_axis(Vec3::X, -PI/8.0);
+    let hat2_rotation_matrix = rotation_around_axis(Vec3::X, -PI/8.0, Vec3::NULL);
     hat2_direction.transform(&hat2_rotation_matrix);
     let hat2_center = snowman2_torso_center + hat2_direction * 0.35;
     
     let mut snowman2_nose_direction = hat2_direction;
-    let snowman2_rotation_matrix = rotation_around_axis(Vec3::X, PI/2.0);
+    let snowman2_rotation_matrix = rotation_around_axis(Vec3::X, PI/2.0, Vec3::NULL);
     snowman2_nose_direction.transform(&snowman2_rotation_matrix);
     let snowman2_nose_cb = snowman2_torso_center + snowman2_nose_direction * snowman2_torso_radius;
 
@@ -364,7 +364,7 @@ pub fn beach<'a>() -> (Scene, Camera<'a>, u32, u32) {
 
     let snowman3_up_direction = snowman3_head_center - snowman3_torso_center;
     let mut snowman3_nose_direction = snowman3_up_direction.normalized();
-    let snowman3_rotation_matrix = rotation_around_axis(Vec3::X, -PI/2.0);
+    let snowman3_rotation_matrix = rotation_around_axis(Vec3::X, -PI/2.0, Vec3::NULL);
     snowman3_nose_direction.transform(&snowman3_rotation_matrix);
     let snowman3_nose_cb = snowman3_head_center + snowman3_nose_direction * snowman3_head_radius;
 

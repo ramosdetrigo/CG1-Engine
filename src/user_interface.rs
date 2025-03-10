@@ -3,7 +3,6 @@
 // favor levar em consideração.
 #![allow(static_mut_refs)]
 use imgui::{TreeNodeFlags, Ui};
-use std::f64::consts::PI;
 
 use crate::engine::{Scene, Light};
 use crate::engine::camera::Camera;
@@ -23,13 +22,13 @@ static mut SH_Z: [f32; 2] = [0.0, 0.0]; // xy yx
 static mut SH_X_ANGLE: [f32; 2] = [0.0, 0.0]; // yz zy
 static mut SH_Y_ANGLE: [f32; 2] = [0.0, 0.0]; // xz zx
 static mut SH_Z_ANGLE: [f32; 2] = [0.0, 0.0]; // xy yx
-static mut HOUSEHOLDER_P0: [f32; 3] = [0.0, 0.0, 0.0];
 static mut HOUSEHOLDER_NORMAL: [f32; 3] = [0.0, 0.0, 0.0];
 static mut TRANSFORM_MATRIX: Matrix4 = Matrix4::I;
 static mut LOOK_AT: [f32; 3] = [0.0, 0.0, 0.0];
 static mut UP: [f32; 3] = [0.0, 1.0, 0.0];
 static mut RESOLUTION: [u32; 2] = [960, 540];
 static mut SELECTED_MATERIAL: Material = Material::WHITE;
+static mut PIVOT: [f32; 3] = [0.0, 0.0, 0.0];
 
 
 pub fn make_transformation_menu(ui: &Ui) {
@@ -41,9 +40,10 @@ pub fn make_transformation_menu(ui: &Ui) {
         .position([400.0, 0.0], imgui::Condition::FirstUseEver)
         .build(|| {
             ui.input_float3("\"look-at\" point", &mut LOOK_AT).build();
-            ui.input_float3("\"look-at\" up vector", &mut UP).build();
+            ui.input_float3("\"look-at\" up point", &mut UP).build();
 
             ui.separator();
+            ui.input_float3("Pivot", &mut PIVOT).build();
             ui.text("Select a transformation type:");
             if ui.button("Translation") { transformation_type = 0; }
             if ui.button("Scale") { transformation_type = 1; }
@@ -81,20 +81,21 @@ pub fn make_transformation_menu(ui: &Ui) {
                 },
                 5 => {
                     ui.text("Reflection: ");
-                    ui.input_float3("Plane p0", &mut HOUSEHOLDER_P0).build();
                     ui.input_float3("Plane normal", &mut HOUSEHOLDER_NORMAL).build();
                 }
                 _ => {},
             }
+            
+            let pivot = Vec3::new(PIVOT[0] as f64, PIVOT[1] as f64, PIVOT[2] as f64);
 
             if ui.button("Update Transformation") {
                 match transformation_type {
                     0 => TRANSFORM_MATRIX = translation_matrix(TRANSLATION[0] as f64, TRANSLATION[1] as f64, TRANSLATION[2] as f64),
-                    1 => TRANSFORM_MATRIX = scale_matrix(SCALE[0] as f64, SCALE[1] as f64, SCALE[2] as f64),
-                    2 => TRANSFORM_MATRIX = rotation_around_axis(Vec3::new(ROTATION_AXIS[0] as f64, ROTATION_AXIS[1] as f64, ROTATION_AXIS[2] as f64), ROTATION_ANGLE as f64),
+                    1 => TRANSFORM_MATRIX = scale_matrix(SCALE[0] as f64, SCALE[1] as f64, SCALE[2] as f64, pivot),
+                    2 => TRANSFORM_MATRIX = rotation_around_axis(Vec3::new(ROTATION_AXIS[0] as f64, ROTATION_AXIS[1] as f64, ROTATION_AXIS[2] as f64), ROTATION_ANGLE.to_radians() as f64, pivot),
                     3 => TRANSFORM_MATRIX = shear_matrix_x(SH_X[0] as f64, SH_X[1] as f64) * shear_matrix_y(SH_Y[0] as f64, SH_Y[1] as f64) * shear_matrix_z(SH_Z[0] as f64, SH_Z[1] as f64),
                     4 => TRANSFORM_MATRIX = shear_matrix_x_angle(SH_X_ANGLE[0] as f64, SH_X_ANGLE[1] as f64) * shear_matrix_y_angle(SH_Y_ANGLE[0] as f64, SH_Y_ANGLE[1] as f64) * shear_matrix_z_angle(SH_Z_ANGLE[0] as f64, SH_Z_ANGLE[1] as f64),
-                    5 => TRANSFORM_MATRIX = householder_reflection(Vec3::new(HOUSEHOLDER_P0[0] as f64, HOUSEHOLDER_P0[1] as f64, HOUSEHOLDER_P0[2] as f64), Vec3::new(HOUSEHOLDER_NORMAL[0] as f64, HOUSEHOLDER_NORMAL[1] as f64, HOUSEHOLDER_NORMAL[2] as f64)),
+                    5 => TRANSFORM_MATRIX = householder_reflection(pivot, Vec3::new(HOUSEHOLDER_NORMAL[0] as f64, HOUSEHOLDER_NORMAL[1] as f64, HOUSEHOLDER_NORMAL[2] as f64)),
                     _ => {}
                 }
             }
@@ -198,7 +199,7 @@ fn create_light_menu(ui: &Ui, scene: &mut Scene) {
             scene.add_light(Light::Spotlight {
                 pos: Vec3::NULL,
                 dr: Vec3::Y,
-                angle: PI/8.0,
+                angle: 22.5,
                 intensity: Vec3::all(1.0),
             });
         }
@@ -405,7 +406,7 @@ pub fn make_night(scene: &mut Scene) {
     let lights = vec![
         Light::spotlight(
             Vec3::new(14.0, 6.25, 4.0),
-            -Vec3::Y, PI/4.0,
+            -Vec3::Y, 45.0,
             light2_color,
             light2_intensity
         ),

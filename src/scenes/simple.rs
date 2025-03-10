@@ -74,7 +74,7 @@ pub fn simple<'a>() -> (Scene, Camera<'a>, u32, u32) {
     let trans_matrix2 = transform::translation_matrix(0.5, 0.0, -2.0) // mover ele pro lugar q eu quero
         * transform::translation_matrix(0.5, 0.5, 0.5) // desfazer a translação
         // * transform::rotation_around_axis(Vec3::X, PI*0.12) // girar ao redor do eixo X
-        * transform::rotation_around_axis(Vec3::Y, PI*0.125) // girar ao redor do eixo Y
+        * transform::rotation_around_axis(Vec3::Y, PI*0.125, Vec3::NULL) // girar ao redor do eixo Y
         * transform::translation_matrix(-0.5, -0.5, -0.5) // centralizar o cubo no 0,0
         // * transform::shear_matrix_y_angle(0.7) // shear é mó paia
         // * transform::scale_matrix(1.0, 0.1, 1.0); // amassa o cubo (scale no eixo Y)
@@ -101,7 +101,7 @@ pub fn simple<'a>() -> (Scene, Camera<'a>, u32, u32) {
 
     println!("imported {:} triangles!", teapot_triangles.len());
     let mut teapot = Mesh::new(teapot_vertices, teapot_triangles, Material::WHITE);
-    let teapot_trans = transform::rotation_around_axis(Vec3::Y, PI*0.5); // girar ao redor do eixo Y
+    let teapot_trans = transform::rotation_around_axis(Vec3::Y, PI*0.5, Vec3::NULL); // girar ao redor do eixo Y
     teapot.apply_transform(&teapot_trans);
     teapot.scale(Vec3::all(0.3));
     teapot.translate(Vec3::new(0.0, 0.0, -2.0));

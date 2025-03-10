@@ -9,13 +9,14 @@ pub fn translation_matrix(tx: f64, ty: f64, tz: f64) -> Matrix4 {
     ])
 }
 
-pub fn scale_matrix(sx: f64, sy: f64, sz: f64) -> Matrix4 {
-    Matrix4::new([
+pub fn scale_matrix(sx: f64, sy: f64, sz: f64, pc: Vec3) -> Matrix4 {
+    let scale_matrix = Matrix4::new([
         [sx, 0.0, 0.0, 0.0],
         [0.0, sy, 0.0, 0.0],
         [0.0, 0.0, sz, 0.0],
         [0.0, 0.0, 0.0, 1.0],
-    ])
+    ]);
+    translation_matrix(pc.x, pc.y, pc.z) * scale_matrix * translation_matrix(-pc.x, -pc.y, -pc.z)
 }
 
 pub fn shear_matrix_x(sh_yz: f64, sh_zy: f64) -> Matrix4 {
@@ -81,14 +82,14 @@ pub fn shear_matrix_z_angle(angle_xy: f64, angle_yx: f64) -> Matrix4 {
     ])
 }
 
-pub fn rotation_around_axis(axis: Vec3, angle: f64) -> Matrix4 {
+pub fn rotation_around_axis(axis: Vec3, angle: f64, pc: Vec3) -> Matrix4 {
     let axis = axis.normalized();
     let (x, y, z) = (axis.x, axis.y, axis.z);
     let cos_theta = angle.cos();
     let sin_theta = angle.sin();
     let one_minus_cos = 1.0 - cos_theta;
 
-    Matrix4::new([
+    let rotation_matrix = Matrix4::new([
         [
             cos_theta + x * x * one_minus_cos,
             x * y * one_minus_cos - z * sin_theta,
@@ -108,7 +109,9 @@ pub fn rotation_around_axis(axis: Vec3, angle: f64) -> Matrix4 {
             0.0,
         ],
         [0.0, 0.0, 0.0, 1.0],
-    ])
+    ]);
+
+    translation_matrix(pc.x, pc.y, pc.z) * rotation_matrix * translation_matrix(-pc.x, -pc.y, -pc.z)
 }
 
 pub fn householder_reflection(pc: Vec3, normal: Vec3) -> Matrix4 {
