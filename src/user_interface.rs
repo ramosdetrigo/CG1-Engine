@@ -10,7 +10,7 @@ use crate::engine::camera::Camera;
 use crate::utils::{save_surface_as_ppm, transform::*};
 use crate::utils::Matrix4;
 use crate::utils::Vec3;
-use crate::engine::shapes::{Cilinder, Cone, Mesh, Plane, Sphere};
+use crate::engine::shapes::{Cilinder, Cone, Material, Mesh, Plane, Sphere};
 
 static mut TRANSFORMATION_TYPE: i32 = 0;
 static mut TRANSLATION: [f32; 3] = [0.0, 0.0, 0.0];
@@ -29,6 +29,7 @@ static mut TRANSFORM_MATRIX: Matrix4 = Matrix4::I;
 static mut LOOK_AT: [f32; 3] = [0.0, 0.0, 0.0];
 static mut UP: [f32; 3] = [0.0, 1.0, 0.0];
 static mut RESOLUTION: [u32; 2] = [960, 540];
+static mut SELECTED_MATERIAL: Material = Material::WHITE;
 
 
 pub fn make_transformation_menu(ui: &Ui) {
@@ -148,6 +149,8 @@ fn mod_double(ui: &Ui, label: String, d: &mut f64) -> bool {
     false
 }
 
+
+
 /// Retorna TRUE se deletou um objeto etc bla bla bla
 fn mod_shape(ui: &Ui, scene: &mut Scene, index: usize, custom_label: Option<&str>) -> bool {
     let label = match custom_label {
@@ -189,6 +192,93 @@ fn mod_shape(ui: &Ui, scene: &mut Scene, index: usize, custom_label: Option<&str
     false
 }
 
+fn create_light_menu(ui: &Ui, scene: &mut Scene) {
+    if ui.collapsing_header("Create Light", TreeNodeFlags::empty()) {
+        if ui.button("Spotlight") {
+            scene.add_light(Light::Spotlight {
+                pos: Vec3::NULL,
+                dr: Vec3::Y,
+                angle: PI/8.0,
+                intensity: Vec3::all(1.0),
+            });
+        }
+        if ui.button("Directional Light") {
+            scene.add_light(Light::Directional {
+                dr: Vec3::Y,
+                intensity: Vec3::all(1.0),
+            });
+        }
+        if ui.button("Point Light") {
+            scene.add_light(Light::Point {
+                pos: Vec3::NULL,
+                intensity: Vec3::all(1.0),
+            });
+        }
+    }
+}
+
+fn create_shape_menu(ui: &Ui, scene: &mut Scene) {
+    let material = unsafe { SELECTED_MATERIAL };
+    if ui.collapsing_header("Create Shape", TreeNodeFlags::empty()) {
+        material_menu(ui);
+        ui.separator();
+        if ui.button("Sphere") {
+            scene.add_shape(Sphere::new(
+                Vec3::NULL,
+                1.0,
+                material,
+                None
+            ));
+        }
+        if ui.button("Plane") {
+            scene.add_shape(Plane::new(
+                Vec3::NULL, 
+                Vec3::X,
+                material, 
+                None,
+                0.0, 0.0,
+            ));
+        }
+        if ui.button("Cilinder") {
+            scene.add_shape(Cilinder::new(
+                1.0, 2.0,
+                Vec3::NULL,
+                Vec3::Y,
+                material,
+                true, true
+            ));
+        }
+        if ui.button("Cone") {
+            scene.add_shape(Cone::new(
+                1.0, 2.0,
+                Vec3::NULL,
+                Vec3::Y,
+                material,
+                true
+            ));
+        }
+        if ui.button("Mesh") {
+            scene.add_shape(Mesh::cube(material).into_shape());
+        }
+    }
+}
+
+fn material_menu(ui: &Ui) {
+    let mut material = unsafe { SELECTED_MATERIAL };
+    ui.text("Selected material:".to_string() + match material {
+        Material::WHITE => " WHITE",
+        Material::RED => " RED",
+        Material::GREEN => " GREEN",
+        Material::BLUE => " BLUE",
+        _ => ""
+    });
+    if ui.button("WHITE") { material = Material::WHITE; }
+    if ui.button("RED") { material = Material::RED; }
+    if ui.button("GREEN") { material = Material::GREEN; }
+    if ui.button("BLUE") { material = Material::BLUE; }
+    unsafe { SELECTED_MATERIAL = material; }
+}
+
 pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_shape: &mut Option<usize>) {
     ui.window("User interface")
     .collapsed(true, imgui::Condition::FirstUseEver)
@@ -197,7 +287,11 @@ pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_sha
     .build(|| {
         if ui.button("make day") { make_day(scene); }
         if ui.button("make night") { make_night(scene); }
-        
+
+        create_light_menu(ui, scene);
+        create_shape_menu(ui, scene);
+    
+
         // Menu de camera
         if ui.collapsing_header("Camera", TreeNodeFlags::empty()) {
             let mut cpos = camera.pos;
@@ -216,6 +310,8 @@ pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_sha
                 camera.set_resolution(RESOLUTION[0], RESOLUTION[1]);
             }}
 
+            if ui.small_button("reset rotation") { camera.set_coord_system([-Vec3::X, Vec3::Y, -Vec3::Z]); }
+            
             unsafe { if ui.small_button("look_at") {
                 let look_at = Vec3::new(LOOK_AT[0] as f64, LOOK_AT[1] as f64, LOOK_AT[2] as f64);
                 let up = Vec3::new(UP[0] as f64, UP[1] as f64, UP[2] as f64);

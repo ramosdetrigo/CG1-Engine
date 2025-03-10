@@ -380,6 +380,21 @@ impl <'a> Camera<'a> {
         self.viewport.dx = self.coord_system[0] * self.viewport.dx.length();
         self.viewport.dy = self.coord_system[1] * self.viewport.dy.length();
     }
+
+    pub fn set_coord_system(&mut self, coord_system: [Vec3; 3]) {
+        self.coord_system = coord_system;
+
+        self.viewport = Viewport::new(
+            Vec3::new(0.0, 0.0, -self.focal_distance), // posição da janela em relação ao observador (0, 0, -d)
+            self.viewport.width, self.viewport.height, // altura * largura da janela
+            self.viewport.cols, self.viewport.rows, // número de colunas e linhas, basicamente a resolução da câmera.
+        );
+        self.viewport.top_left_coords = self.camera_to_world(self.viewport.top_left_coords);
+        self.viewport.p00 = self.camera_to_world(self.viewport.p00);
+        self.viewport.pos = self.camera_to_world(self.viewport.pos);
+        self.viewport.dx = self.coord_system[0] * self.viewport.dx.length();
+        self.viewport.dy = self.coord_system[1] * self.viewport.dy.length();
+    }
 }
 
 
