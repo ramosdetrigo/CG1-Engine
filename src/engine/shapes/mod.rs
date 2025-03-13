@@ -1,3 +1,4 @@
+#![allow(clippy::new_ret_no_self)]
 mod material;
 pub use material::Material; 
 mod shape;

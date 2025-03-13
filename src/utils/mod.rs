@@ -14,7 +14,7 @@ pub use matrix4::Matrix4;
 // salva o canvas como uma imagem .ppm
 pub fn save_surface_as_ppm(surface: &Surface, file_name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let (w, h) = (surface.width(), surface.height());
-    let pixels: Vec<u8> = surface.without_lock().unwrap().iter().map(|n| *n).collect();
+    let pixels: Vec<u8> = surface.without_lock().unwrap().to_vec();
     
     let mut output = String::new(); 
     output += &format!("P3\n{} {}\n255\n", w, h); 

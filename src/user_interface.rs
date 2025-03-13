@@ -343,13 +343,13 @@ pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_sha
                 match light {
                     Light::Point { pos, intensity } => {
                         let name = format!("{counter}. LUZ PONTUAL");
-                        ui.text(format!("{name}"));
+                        ui.text(name);
                         mod_point(ui, format!("{counter}. Posição"), pos, true);
                         mod_point(ui, format!("{counter}. Intensidade"), intensity, false);
                     }
                     Light::Spotlight { pos, dr, angle, intensity } => {
                         let name = format!("{counter}. LUZ SPOT");
-                        ui.text(format!("{name}"));
+                        ui.text(name);
                         mod_point(ui, format!("{counter}. Posição"), pos, true);
                         mod_dr(ui, format!("{counter}. "), dr, Some(*pos));
                         mod_double(ui, format!("{counter}. Ângulo"), angle);
@@ -357,7 +357,7 @@ pub fn make_ui(ui: &mut Ui, scene: &mut Scene, camera: &mut Camera, selected_sha
                     }
                     Light::Directional { dr, intensity } => {
                         let name = format!("{counter}. LUZ DIRECIONAL");
-                        ui.text(format!("{name}"));
+                        ui.text(name);
                         mod_dr(ui, format!("{counter}. "), dr, None);
                         mod_point(ui, format!("{counter}. Intensidade"), intensity, false);
                     }

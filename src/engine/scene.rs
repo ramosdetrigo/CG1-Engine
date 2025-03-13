@@ -44,6 +44,7 @@ impl Scene {
         self.lights.remove(i);
     }
 
+    #[allow(clippy::borrowed_box)]
     /// Retorna a interseção com um raio de menor t ou None se não há interseção
     pub fn get_intersection(&self, ray: &Ray) -> Option<(&Box<dyn Shape>, f64, Vec3, Material)> {
         self.shapes.iter()

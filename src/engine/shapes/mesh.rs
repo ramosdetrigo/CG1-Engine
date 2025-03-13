@@ -54,8 +54,8 @@ impl Mesh {
 
     fn calculate_bounding_box(vertices: &Vec<Vec3>) -> (Vec3, Vec3) {
         // Calculate the minimum and maximum bounds of the bounding box
-        let mut min_bound = vertices[0].clone();
-        let mut max_bound = vertices[0].clone();
+        let mut min_bound = vertices[0];
+        let mut max_bound = vertices[0];
 
         for vertex in vertices {
             min_bound.x = min_bound.x.min(vertex.x);
@@ -148,7 +148,7 @@ impl Mesh {
         let s = r.origin - v0;
         let u = f * s.dot(h);
 
-        if u < 0.0 || u > 1.0 {
+        if !(0.0 ..= 1.0).contains(&u) {
             return f64::NEG_INFINITY; // O ponto está fora do triângulo
         }
 
@@ -162,9 +162,9 @@ impl Mesh {
         // Cálculo do t para encontrar o ponto de interseção
         let t = f * edge2.dot(q);
         if t > 1e-8 { // O raio intersecta o triângulo
-            return t;
+            t
         } else {
-            return f64::NEG_INFINITY; // O triângulo está atrás do raio
+            f64::NEG_INFINITY // O triângulo está atrás do raio
         }
     }
 }

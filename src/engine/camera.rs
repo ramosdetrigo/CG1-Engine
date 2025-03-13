@@ -87,20 +87,18 @@ impl <'a> Camera<'a> {
 
     pub fn world_to_camera(&self, point: Vec3) -> Vec3 {
         let point_translated = point - self.pos;
-        let point_rotated = Vec3::new(
+        Vec3::new(
             point_translated.dot(self.coord_system[0]),
             point_translated.dot(self.coord_system[1]),
             point_translated.dot(self.coord_system[2]),
-        );
-        point_rotated
+        )
     }
 
     pub fn camera_to_world(&self, point: Vec3) -> Vec3 {
         let point_rotated = point.x * self.coord_system[0]
             + point.y * self.coord_system[1]
             + point.z * self.coord_system[2];
-        let point_translated = point_rotated + self.pos;
-        point_translated
+        point_rotated + self.pos
     }
 
     

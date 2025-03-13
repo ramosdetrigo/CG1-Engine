@@ -59,8 +59,8 @@ impl Shape for Plane {
                     let mut u = (p - self.pc).dot(basis1) / self.ty_scale;
                     let mut v = (p - self.pc).dot(basis2) / self.tx_scale;
                     
-                    u = (u - u.floor()).max(0.0).min(1.0);
-                    v = (v - v.floor()).max(0.0).min(1.0);
+                    u = (u - u.floor()).clamp(0.0, 1.0);
+                    v = (v - v.floor()).clamp(0.0, 1.0);
 
                     let uv_color = texture.sample(u, v);
 
@@ -80,7 +80,7 @@ impl Shape for Plane {
     }
 
     fn transform(&mut self, matrix: &Matrix4) {
-        self.pc.transform(&matrix);
+        self.pc.transform(matrix);
     }
 
     fn material(&self) -> &Material { &self.material }

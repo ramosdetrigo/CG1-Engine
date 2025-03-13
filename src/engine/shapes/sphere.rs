@@ -78,7 +78,7 @@ impl Shape for Sphere {
     }
 
     fn transform(&mut self, matrix: &Matrix4) {
-        self.center.transform(&matrix);
+        self.center.transform(matrix);
     }
 
     #[inline]

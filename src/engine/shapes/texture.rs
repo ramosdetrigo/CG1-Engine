@@ -22,11 +22,7 @@ impl Texture {
         let height = surface.height();
         let pitch = surface.pitch();
         let bpp = pitch / width;
-        let texture_data: Vec<u8> = surface.without_lock()
-            .unwrap()
-            .iter()
-            .map(|n| *n)
-            .collect();
+        let texture_data: Vec<u8> = surface.without_lock().unwrap().to_vec();
         Self {
             width, height, pitch,
             texture_data, bpp

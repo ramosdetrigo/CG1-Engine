@@ -120,7 +120,7 @@ impl Vec4 {
         )
     }
 
-    pub const fn into_vec3(&self) -> Vec3 {
+    pub const fn into_vec3(self) -> Vec3 {
         Vec3 { x: self.x, y: self.y, z: self.z }
     }
 }

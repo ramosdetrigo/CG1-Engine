@@ -142,7 +142,7 @@ impl Vec3 {
 
     #[inline]
     #[must_use]
-    pub fn into_vec4(&self) -> Vec4 {
+    pub fn into_vec4(self) -> Vec4 {
         Vec4 {
             x: self.x,
             y: self.y,
@@ -157,9 +157,7 @@ impl Vec3 {
         let magnitude_other = other.length();
 
         let cos_theta = dot_product / (magnitude_self * magnitude_other);
-        let theta = cos_theta.acos();
-
-        theta
+        cos_theta.acos()
     }
 }
 
